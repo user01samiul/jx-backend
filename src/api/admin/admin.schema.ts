@@ -98,9 +98,9 @@ export const UpdateUserBalanceInput = z.object({
 });
 
 export const AdminCreateUserInput = z.object({
-  username: z.string().min(5, "Username must be at least 5 characters"),
+  username: z.string().min(3, "Username must be at least 3 characters"), // Relaxed for dev
   email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(4, "Password must be at least 4 characters"), // Relaxed for dev
   type: z.string().min(3, "Role type must be at least 3 characters"),
   first_name: z.string().optional(),
   last_name: z.string().optional(),

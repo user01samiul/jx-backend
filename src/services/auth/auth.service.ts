@@ -13,6 +13,8 @@ import { getUserByUsernameService, getUserRolesService, getUserByEmailService } 
 import { logUserActivity } from "../user/user-activity.service";
 import { captchaService } from "../captcha/captcha.service";
 import axios from "axios";
+import speakeasy from "speakeasy";
+import QRCode from "qrcode";
 
 const jwtService = new JwtService();
 
@@ -181,25 +183,62 @@ export const loginService = async (
 };
 
 /**
- * Fetch QR code data from external API
+ * Generate 2FA QR code locally using speakeasy + qrcode
+ * This is used as fallback when external API fails
  */
-const fetchQRData = async (email: string): Promise<{ secret: string; qr_code: string }> => {
+const generateLocalQRCode = async (email: string, username: string): Promise<{ secret: string; qr_code: string }> => {
+  try {
+    // Generate secret
+    const secret = speakeasy.generateSecret({
+      name: `JackpotX (${username})`,
+      issuer: 'JackpotX',
+      length: 32
+    });
+
+    // Generate QR code as data URL
+    const qrCodeDataURL = await QRCode.toDataURL(secret.otpauth_url || '');
+
+    console.log('[QR] Generated 2FA QR code locally for:', username);
+
+    return {
+      secret: secret.base32,
+      qr_code: qrCodeDataURL
+    };
+  } catch (error) {
+    console.error('[QR] Local QR generation failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetch QR code data from external API with local fallback
+ * Returns null on failure to allow registration to continue
+ */
+const fetchQRData = async (email: string, username: string = 'user'): Promise<{ secret: string; qr_code: string } | null> => {
+  // Try external API first (with short timeout)
   try {
     const response = await axios.get('http://46.250.232.119:86/api/get-qr-with-secret', {
-      params: { email }
+      params: { email },
+      timeout: 3000 // 3 second timeout
     });
 
     if (response.data.status === 'success') {
+      console.log('[QR] Generated QR code via external API');
       return {
         secret: response.data.secret,
         qr_code: response.data.qr_code
       };
-    } else {
-      throw new Error('Failed to generate QR code');
     }
   } catch (error) {
-    console.error('QR API Error:', error);
-    throw new ApiError(ErrorMessages.QR_GENERATION_FAILED, 500);
+    console.warn('[QR] External API failed, using local generation:', error.message);
+  }
+
+  // Fallback to local generation
+  try {
+    return await generateLocalQRCode(email, username);
+  } catch (error) {
+    console.error('[QR] Both external and local QR generation failed - continuing without 2FA');
+    return null;
   }
 };
 
@@ -217,21 +256,21 @@ export const registerService = async (
       }
     }
 
-    // Fetch QR data from external API
-    const qrData = await fetchQRData(email);
+    // Fetch QR data with local fallback (optional - can be null)
+    const qrData = await fetchQRData(email, username);
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Start transaction
     const client = await pool.connect();
-    
+
     try {
       await client.query('BEGIN');
 
-      // Create user with QR data
+      // Create user with QR data (null if QR generation failed)
       const userResult = await client.query(
         Query.REGISTER_USER,
-        [username, email, hashedPassword, qrData.secret, qrData.qr_code]
+        [username, email, hashedPassword, qrData?.secret || null, qrData?.qr_code || null]
       );
 
       if (userResult.rows.length === 0) {
@@ -303,17 +342,17 @@ export const registerService = async (
       // Log user registration activity
       await client.query(
         `
-        INSERT INTO user_activity_logs 
+        INSERT INTO user_activity_logs
         (user_id, action, category, description, metadata)
         VALUES ($1, 'register', 'auth', 'User registered', $2)
         `,
         [
           userId,
-          JSON.stringify({ 
-            username: username, 
+          JSON.stringify({
+            username: username,
             email: email,
             registration_method: 'email',
-            qr_generated: true,
+            qr_generated: qrData !== null,
             referral_code: referral_code || null
           })
         ]

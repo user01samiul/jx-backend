@@ -19,7 +19,8 @@
       "Bash(pm2 start:*)",
       "Bash(pm2 logs:*)",
       "Bash(pm2 save:*)",
-      "Bash(PGPASSWORD=2025 psql:*)"
+      "Bash(PGPASSWORD=2025 psql:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

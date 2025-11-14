@@ -1,0 +1,431 @@
+{
+  "authentication": {
+    "login": {
+      "username": {
+        "type": "string",
+        "minLength": 3,
+        "required": true,
+        "errorMessage": "Invalid email or password"
+      },
+      "password": {
+        "type": "string",
+        "optional": true,
+        "note": "Either password or auth_code required"
+      },
+      "auth_code": {
+        "type": "string",
+        "optional": true,
+        "note": "Either password or auth_code required"
+      },
+      "role_id": {
+        "type": "number",
+        "optional": true
+      }
+    },
+    "register": {
+      "username": {
+        "type": "string",
+        "minLength": 5,
+        "required": true,
+        "errorMessage": "Username minimum 5 characters"
+      },
+      "email": {
+        "type": "string",
+        "format": "email",
+        "required": true,
+        "errorMessage": "Invalid email format"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 8,
+        "required": true,
+        "errorMessage": "Password minimum 8 characters"
+      },
+      "type": {
+        "type": "string",
+        "minLength": 3,
+        "required": true
+      },
+      "captcha_id": {
+        "type": "string",
+        "minLength": 1,
+        "required": true,
+        "errorMessage": "Captcha ID is required"
+      },
+      "captcha_text": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 10,
+        "required": true,
+        "errorMessage": "Captcha text is required"
+      },
+      "referral_code": {
+        "type": "string",
+        "optional": true
+      }
+    },
+    "adminCreateUser": {
+      "username": {
+        "type": "string",
+        "minLength": 3,
+        "required": true,
+        "errorMessage": "Username must be at least 3 characters",
+        "note": "Production: 5 characters"
+      },
+      "email": {
+        "type": "string",
+        "format": "email",
+        "required": true,
+        "errorMessage": "Invalid email format"
+      },
+      "password": {
+        "type": "string",
+        "minLength": 4,
+        "required": true,
+        "errorMessage": "Password must be at least 4 characters",
+        "note": "Production: 8 characters"
+      },
+      "type": {
+        "type": "string",
+        "minLength": 3,
+        "required": true
+      },
+      "first_name": {
+        "type": "string",
+        "optional": true
+      },
+      "last_name": {
+        "type": "string",
+        "optional": true
+      },
+      "phone": {
+        "type": "string",
+        "optional": true
+      },
+      "country": {
+        "type": "string",
+        "optional": true
+      },
+      "timezone": {
+        "type": "string",
+        "optional": true
+      },
+      "is_active": {
+        "type": "boolean",
+        "default": true
+      },
+      "send_welcome_email": {
+        "type": "boolean",
+        "default": false
+      }
+    }
+  },
+  "userProfile": {
+    "updateProfile": {
+      "first_name": {
+        "type": "string",
+        "maxLength": 100,
+        "optional": true
+      },
+      "last_name": {
+        "type": "string",
+        "maxLength": 100,
+        "optional": true
+      },
+      "phone_number": {
+        "type": "string",
+        "maxLength": 20,
+        "optional": true
+      },
+      "date_of_birth": {
+        "type": "string",
+        "format": "YYYY-MM-DD",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "optional": true,
+        "errorMessage": "Date must be in YYYY-MM-DD format"
+      },
+      "nationality": {
+        "type": "string",
+        "maxLength": 100,
+        "optional": true
+      },
+      "country": {
+        "type": "string",
+        "maxLength": 100,
+        "optional": true
+      },
+      "city": {
+        "type": "string",
+        "maxLength": 100,
+        "optional": true
+      },
+      "address": {
+        "type": "string",
+        "maxLength": 500,
+        "optional": true
+      },
+      "postal_code": {
+        "type": "string",
+        "maxLength": 20,
+        "optional": true
+      },
+      "gender": {
+        "type": "enum",
+        "values": ["male", "female", "other"],
+        "optional": true
+      },
+      "timezone": {
+        "type": "string",
+        "maxLength": 50,
+        "optional": true
+      },
+      "language": {
+        "type": "string",
+        "maxLength": 10,
+        "optional": true
+      },
+      "currency": {
+        "type": "string",
+        "maxLength": 3,
+        "optional": true
+      }
+    },
+    "changePassword": {
+      "current_password": {
+        "type": "string",
+        "minLength": 1,
+        "required": true,
+        "errorMessage": "Current password is required"
+      },
+      "new_password": {
+        "type": "string",
+        "minLength": 8,
+        "required": true,
+        "errorMessage": "New password must be at least 8 characters"
+      },
+      "confirm_password": {
+        "type": "string",
+        "minLength": 1,
+        "required": true,
+        "errorMessage": "Password confirmation is required",
+        "customValidation": "Must match new_password"
+      }
+    }
+  },
+  "games": {
+    "placeBet": {
+      "game_id": {
+        "type": "number",
+        "minimum": 1,
+        "required": true,
+        "errorMessage": "Game ID must be a positive number"
+      },
+      "bet_amount": {
+        "type": "number",
+        "minimum": 0.01,
+        "required": true,
+        "errorMessage": "Bet amount must be positive"
+      },
+      "game_data": {
+        "type": "any",
+        "optional": true
+      },
+      "user_id": {
+        "type": "number",
+        "minimum": 1,
+        "optional": true
+      }
+    },
+    "toggleFavorite": {
+      "game_id": {
+        "type": "number",
+        "minimum": 1,
+        "required": true
+      }
+    },
+    "filters": {
+      "provider": {
+        "type": "string",
+        "optional": true
+      },
+      "category": {
+        "type": "string",
+        "optional": true
+      },
+      "is_active": {
+        "type": "boolean",
+        "optional": true
+      },
+      "is_featured": {
+        "type": "boolean",
+        "optional": true
+      },
+      "is_new": {
+        "type": "boolean",
+        "optional": true
+      },
+      "is_hot": {
+        "type": "boolean",
+        "optional": true
+      },
+      "search": {
+        "type": "string",
+        "optional": true
+      },
+      "page": {
+        "type": "number",
+        "minimum": 1,
+        "optional": true
+      },
+      "limit": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100,
+        "optional": true
+      }
+    }
+  },
+  "promotions": {
+    "claimPromotion": {
+      "promotion_id": {
+        "type": "number",
+        "minimum": 1,
+        "required": true,
+        "errorMessage": "Promotion ID must be a positive number"
+      }
+    },
+    "filters": {
+      "type": {
+        "type": "enum",
+        "values": [
+          "welcome_bonus",
+          "deposit_bonus",
+          "free_spins",
+          "cashback",
+          "reload_bonus",
+          "tournament"
+        ],
+        "optional": true
+      },
+      "status": {
+        "type": "enum",
+        "values": ["active", "completed", "expired", "cancelled"],
+        "optional": true
+      },
+      "limit": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 100,
+        "optional": true
+      },
+      "offset": {
+        "type": "number",
+        "minimum": 0,
+        "optional": true
+      }
+    }
+  },
+  "admin": {
+    "updateUserStatus": {
+      "status": {
+        "type": "enum",
+        "values": ["Active", "Inactive", "Suspended", "Banned"],
+        "required": true
+      },
+      "reason": {
+        "type": "string",
+        "optional": true
+      }
+    },
+    "updateUserBalance": {
+      "amount": {
+        "type": "number",
+        "required": true
+      },
+      "type": {
+        "type": "enum",
+        "values": ["deposit", "withdrawal", "adjustment"],
+        "required": true
+      },
+      "reason": {
+        "type": "string",
+        "optional": true
+      },
+      "category": {
+        "type": "string",
+        "optional": true
+      }
+    },
+    "kycApproval": {
+      "document_id": {
+        "type": "number",
+        "minimum": 1,
+        "required": true
+      },
+      "status": {
+        "type": "enum",
+        "values": ["approved", "rejected"],
+        "required": true
+      },
+      "rejection_reason": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "enums": {
+    "userStatus": ["Active", "Inactive", "Suspended", "Banned"],
+    "userRoles": ["Player", "Admin", "Support", "Manager"],
+    "gender": ["male", "female", "other"],
+    "transactionTypes": [
+      "deposit",
+      "withdrawal",
+      "bet",
+      "win",
+      "bonus",
+      "cashback",
+      "refund",
+      "adjustment"
+    ],
+    "transactionStatus": ["pending", "completed", "failed", "cancelled"],
+    "paymentGatewayType": ["deposit", "withdrawal", "both"],
+    "gameVolatility": ["low", "medium", "high"],
+    "promotionTypes": [
+      "welcome_bonus",
+      "deposit_bonus",
+      "free_spins",
+      "cashback",
+      "reload_bonus",
+      "tournament"
+    ],
+    "promotionStatus": ["active", "completed", "expired", "cancelled"],
+    "betOutcome": ["win", "lose"],
+    "kycStatus": ["approved", "rejected"],
+    "reportTypes": ["user_activity", "financial", "gaming", "kyc", "transactions"],
+    "reportFormats": ["json", "csv", "pdf"]
+  },
+  "errorMessages": {
+    "USER_NOT_FOUND": "User not found.",
+    "INVALID_CREDENTIALS": "Invalid email or password.",
+    "SERVER_ERROR": "Something went wrong. Please try again.",
+    "INTERNAL_SERVER_ERROR": "Internal server error. Please try again later.",
+    "INVALID_EMAIL": "Invalid email format",
+    "INVALID_USERNAME": "Username minimum 5 characters",
+    "INVALID_PASSWORD": "Password minimum 8 characters",
+    "EXPIRED_ACCESS_TOKEN": "Access token expired",
+    "INVALID_ACCESS_TOKEN": "Invalid access token",
+    "EXPIRED_REFRESH_TOKEN": "Refresh token expired",
+    "INVALID_REFRESH_TOKEN": "Invalid refresh token",
+    "INVALID_CAPTCHA": "Invalid captcha",
+    "CAPTCHA_EXPIRED": "Captcha has expired",
+    "CAPTCHA_REQUIRED": "Captcha is required",
+    "QR_GENERATION_FAILED": "Failed to generate QR code",
+    "INVALID_2FA_CODE": "Invalid 2FA authentication code",
+    "TWOFA_REQUIRED": "2FA authentication code is required"
+  },
+  "successMessages": {
+    "USER_CREATED": "User created successfully.",
+    "REGISTER_SUCCESS": "Registered Successfully",
+    "LOGIN_SUCCESS": "Login Successfully"
+  }
+}
