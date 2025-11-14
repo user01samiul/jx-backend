@@ -1,0 +1,51 @@
+{
+  "host": "0.0.0.0",
+  "port": 8443,
+  "ssl": {
+    "enabled": true,
+    "cert": "/etc/letsencrypt/live/backend.jackpotx.net/fullchain.pem",
+    "key": "/etc/letsencrypt/live/backend.jackpotx.net/privkey.pem"
+  },
+  "backend": {
+    "api_url": "https://backend.jackpotx.net/api/jxoriginals/callback",
+    "operator_id": "jackpotx_operator",
+    "secret_key": "jxoriginals_secret_key_2024"
+  },
+  "games_path": "/var/www/html/backend.jackpotx.net/JxOriginalGames",
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "db": 1,
+    "password": null
+  },
+  "database": {
+    "host": "localhost",
+    "user": "postgres",
+    "password": "12358Voot#",
+    "database": "jackpotx-db",
+    "port": 5432
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "file": "/var/log/jxoriginals-ws.log",
+    "console": true
+  },
+  "performance": {
+    "max_connections": 1000,
+    "ping_interval": 30000,
+    "ping_timeout": 5000
+  },
+  "security": {
+    "cors_origins": [
+      "https://jackpotx.net",
+      "https://www.jackpotx.net",
+      "https://backend.jackpotx.net"
+    ],
+    "rate_limit": {
+      "enabled": true,
+      "max_requests": 100,
+      "window_ms": 60000
+    }
+  }
+}

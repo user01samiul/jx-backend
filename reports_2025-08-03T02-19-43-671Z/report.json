@@ -1,0 +1,1053 @@
+{
+  "summary": {
+    "totalTests": 25,
+    "passed": 25,
+    "failed": 0,
+    "startTime": 1754187574711,
+    "endTime": 1754187583670,
+    "duration": 8959
+  },
+  "tests": [
+    {
+      "id": 1,
+      "name": "Ping Test",
+      "command": "ping",
+      "timestamp": "2025-08-03T02:19:35.766Z",
+      "request": null,
+      "response": {
+        "data": {
+          "status": "OK",
+          "response_timestamp": "2025-08-03 02:19:35",
+          "hash": "e6e7bca102ac82a93ed048da878b8c5789bc108f",
+          "data": {
+            "status": "pong",
+            "timestamp": "2025-08-03T02:19:35.586Z"
+          }
+        },
+        "status": 200,
+        "responseTime": 1055
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 1055
+    },
+    {
+      "id": 2,
+      "name": "Authenticate - Valid Token",
+      "command": "authenticate",
+      "timestamp": "2025-08-03T02:19:36.098Z",
+      "request": {
+        "command": "authenticate",
+        "request_timestamp": "2025-08-03 02:19:35",
+        "hash": "aab38d931cbb510373c715b1095933905872095a",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "authenticate",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8"
+            },
+            "request_timestamp": "2025-08-03 02:19:35",
+            "hash": "aab38d931cbb510373c715b1095933905872095a"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 331
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 331
+    },
+    {
+      "id": 3,
+      "name": "Authenticate - Invalid Token",
+      "command": "authenticate",
+      "timestamp": "2025-08-03T02:19:36.429Z",
+      "request": {
+        "command": "authenticate",
+        "request_timestamp": "2025-08-03 02:19:36",
+        "hash": "c2f61792e3be68091809735c190ec88ed7f6ccde",
+        "data": {
+          "token": "invalid_token_123"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "authenticate",
+            "data": {
+              "token": "invalid_token_123"
+            },
+            "request_timestamp": "2025-08-03 02:19:36",
+            "hash": "c2f61792e3be68091809735c190ec88ed7f6ccde"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 331
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 331
+    },
+    {
+      "id": 4,
+      "name": "Authenticate - Missing Token",
+      "command": "authenticate",
+      "timestamp": "2025-08-03T02:19:36.758Z",
+      "request": {
+        "command": "authenticate",
+        "request_timestamp": "2025-08-03 02:19:36",
+        "hash": "9587c09c5bdf3aec36433ac700668cc2ba825442",
+        "data": {}
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "authenticate",
+            "data": {},
+            "request_timestamp": "2025-08-03 02:19:36",
+            "hash": "9587c09c5bdf3aec36433ac700668cc2ba825442"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 329
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 329
+    },
+    {
+      "id": 5,
+      "name": "Authenticate - Token with Game ID",
+      "command": "authenticate",
+      "timestamp": "2025-08-03T02:19:37.087Z",
+      "request": {
+        "command": "authenticate",
+        "request_timestamp": "2025-08-03 02:19:36",
+        "hash": "e29786f1288171338d2186f370889a09a5b2f7aa",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "game_id": 53
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "authenticate",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "game_id": 53
+            },
+            "request_timestamp": "2025-08-03 02:19:36",
+            "hash": "e29786f1288171338d2186f370889a09a5b2f7aa"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 329
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 329
+    },
+    {
+      "id": 6,
+      "name": "Balance - Valid Token",
+      "command": "balance",
+      "timestamp": "2025-08-03T02:19:37.417Z",
+      "request": {
+        "command": "balance",
+        "request_timestamp": "2025-08-03 02:19:37",
+        "hash": "8d0c2471ac32b2a5b1e8d5ddc883966e56946c13",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "balance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8"
+            },
+            "request_timestamp": "2025-08-03 02:19:37",
+            "hash": "8d0c2471ac32b2a5b1e8d5ddc883966e56946c13"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 329
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 329
+    },
+    {
+      "id": 7,
+      "name": "Balance - Invalid Token",
+      "command": "balance",
+      "timestamp": "2025-08-03T02:19:37.748Z",
+      "request": {
+        "command": "balance",
+        "request_timestamp": "2025-08-03 02:19:37",
+        "hash": "b5ede7d4743add3d932eb0c7d67e253488fcb352",
+        "data": {
+          "token": "invalid_token_123"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "balance",
+            "data": {
+              "token": "invalid_token_123"
+            },
+            "request_timestamp": "2025-08-03 02:19:37",
+            "hash": "b5ede7d4743add3d932eb0c7d67e253488fcb352"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 331
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 331
+    },
+    {
+      "id": 8,
+      "name": "Balance - Missing Token",
+      "command": "balance",
+      "timestamp": "2025-08-03T02:19:38.077Z",
+      "request": {
+        "command": "balance",
+        "request_timestamp": "2025-08-03 02:19:37",
+        "hash": "6eab4877b1541f1d63a479fcc8382e942fc10441",
+        "data": {}
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "balance",
+            "data": {},
+            "request_timestamp": "2025-08-03 02:19:37",
+            "hash": "6eab4877b1541f1d63a479fcc8382e942fc10441"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 9,
+      "name": "ChangeBalance - Bet Transaction (Negative Amount)",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:38.408Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:38",
+        "hash": "67446b5990664623d338e9031cdb6a110e4a3ae7",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1,
+          "amount": -10,
+          "transaction_id": "test_bet_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1,
+              "amount": -10,
+              "transaction_id": "test_bet_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446"
+            },
+            "request_timestamp": "2025-08-03 02:19:38",
+            "hash": "67446b5990664623d338e9031cdb6a110e4a3ae7"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 331
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 331
+    },
+    {
+      "id": 10,
+      "name": "ChangeBalance - Win Transaction (Positive Amount)",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:38.737Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:38",
+        "hash": "5ab000c529bd3e9309a6345daee6492985217c24",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1,
+          "amount": 15,
+          "transaction_id": "test_win_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1,
+              "amount": 15,
+              "transaction_id": "test_win_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446"
+            },
+            "request_timestamp": "2025-08-03 02:19:38",
+            "hash": "5ab000c529bd3e9309a6345daee6492985217c24"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 11,
+      "name": "ChangeBalance - Zero Amount (Balance Check)",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:39.066Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:38",
+        "hash": "52ce14566b401ccaaca58e6ec780f76d8308f16e",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1,
+          "amount": 0,
+          "transaction_id": "test_zero_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1,
+              "amount": 0,
+              "transaction_id": "test_zero_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446"
+            },
+            "request_timestamp": "2025-08-03 02:19:38",
+            "hash": "52ce14566b401ccaaca58e6ec780f76d8308f16e"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 12,
+      "name": "ChangeBalance - New Format - BET Transaction",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:39.396Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:39",
+        "hash": "d54fb1f8e52fe072d6599de866143e656446f461",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1,
+          "amount": 10,
+          "transaction_id": "test_new_bet_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446",
+          "transaction_type": "BET",
+          "round_id": "round_1754187578077",
+          "round_finished": false
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1,
+              "amount": 10,
+              "transaction_id": "test_new_bet_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446",
+              "transaction_type": "BET",
+              "round_id": "round_1754187578077",
+              "round_finished": false
+            },
+            "request_timestamp": "2025-08-03 02:19:39",
+            "hash": "d54fb1f8e52fe072d6599de866143e656446f461"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 330
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 330
+    },
+    {
+      "id": 13,
+      "name": "ChangeBalance - New Format - WIN Transaction",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:39.724Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:39",
+        "hash": "7c9144006005f411968f6b0a4fd10a5395e281f0",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1,
+          "amount": 25,
+          "transaction_id": "test_new_win_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446",
+          "transaction_type": "WIN",
+          "round_id": "round_1754187578077",
+          "round_finished": true
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1,
+              "amount": 25,
+              "transaction_id": "test_new_win_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446",
+              "transaction_type": "WIN",
+              "round_id": "round_1754187578077",
+              "round_finished": true
+            },
+            "request_timestamp": "2025-08-03 02:19:39",
+            "hash": "7c9144006005f411968f6b0a4fd10a5395e281f0"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 14,
+      "name": "ChangeBalance - New Format - LOSS Transaction (Zero Win)",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:40.052Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:39",
+        "hash": "5201c781ded7f10e79da1e04b2bb861092b46b93",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1,
+          "amount": 0,
+          "transaction_id": "test_new_loss_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446",
+          "transaction_type": "WIN",
+          "round_id": "round_1754187578077",
+          "round_finished": true
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1,
+              "amount": 0,
+              "transaction_id": "test_new_loss_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446",
+              "transaction_type": "WIN",
+              "round_id": "round_1754187578077",
+              "round_finished": true
+            },
+            "request_timestamp": "2025-08-03 02:19:39",
+            "hash": "5201c781ded7f10e79da1e04b2bb861092b46b93"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 15,
+      "name": "ChangeBalance - Invalid Token",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:40.380Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:40",
+        "hash": "dbefbaf31b2defd6177845d3d59c305496ba3e09",
+        "data": {
+          "token": "invalid_token",
+          "user_id": 1,
+          "amount": 10,
+          "transaction_id": "test_invalid_1754187578077",
+          "game_id": 53,
+          "session_id": "1_53_1752376795446"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "invalid_token",
+              "user_id": 1,
+              "amount": 10,
+              "transaction_id": "test_invalid_1754187578077",
+              "game_id": 53,
+              "session_id": "1_53_1752376795446"
+            },
+            "request_timestamp": "2025-08-03 02:19:40",
+            "hash": "dbefbaf31b2defd6177845d3d59c305496ba3e09"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 16,
+      "name": "ChangeBalance - Missing Required Fields",
+      "command": "changebalance",
+      "timestamp": "2025-08-03T02:19:40.708Z",
+      "request": {
+        "command": "changebalance",
+        "request_timestamp": "2025-08-03 02:19:40",
+        "hash": "2ac6d6699d390219199bc84898120e8554313074",
+        "data": {
+          "token": "87794f8b2f27f64e3a51b5ef342334c8",
+          "user_id": 1
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "changebalance",
+            "data": {
+              "token": "87794f8b2f27f64e3a51b5ef342334c8",
+              "user_id": 1
+            },
+            "request_timestamp": "2025-08-03 02:19:40",
+            "hash": "2ac6d6699d390219199bc84898120e8554313074"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 17,
+      "name": "Status - Valid Transaction ID",
+      "command": "status",
+      "timestamp": "2025-08-03T02:19:41.036Z",
+      "request": {
+        "command": "status",
+        "request_timestamp": "2025-08-03 02:19:40",
+        "hash": "b3fe70c0f24bbb85c25d2c54e1bd052500c3a7d3",
+        "data": {
+          "transaction_id": "test_status_1754187580708"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "status",
+            "data": {
+              "transaction_id": "test_status_1754187580708"
+            },
+            "request_timestamp": "2025-08-03 02:19:40",
+            "hash": "b3fe70c0f24bbb85c25d2c54e1bd052500c3a7d3"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 18,
+      "name": "Status - Invalid Transaction ID",
+      "command": "status",
+      "timestamp": "2025-08-03T02:19:41.362Z",
+      "request": {
+        "command": "status",
+        "request_timestamp": "2025-08-03 02:19:41",
+        "hash": "ed88daf14477aaf82f1b0461efd445fdca88779e",
+        "data": {
+          "transaction_id": "invalid_transaction_123"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "status",
+            "data": {
+              "transaction_id": "invalid_transaction_123"
+            },
+            "request_timestamp": "2025-08-03 02:19:41",
+            "hash": "ed88daf14477aaf82f1b0461efd445fdca88779e"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 326
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 326
+    },
+    {
+      "id": 19,
+      "name": "Status - Missing Transaction ID",
+      "command": "status",
+      "timestamp": "2025-08-03T02:19:41.689Z",
+      "request": {
+        "command": "status",
+        "request_timestamp": "2025-08-03 02:19:41",
+        "hash": "d2101a71202143cce5770b458f741296bf7f74b8",
+        "data": {}
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "status",
+            "data": {},
+            "request_timestamp": "2025-08-03 02:19:41",
+            "hash": "d2101a71202143cce5770b458f741296bf7f74b8"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 327
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 327
+    },
+    {
+      "id": 20,
+      "name": "Cancel - Valid Transaction ID",
+      "command": "cancel",
+      "timestamp": "2025-08-03T02:19:42.018Z",
+      "request": {
+        "command": "cancel",
+        "request_timestamp": "2025-08-03 02:19:41",
+        "hash": "98ad32426d418ab8f00f9afd25e998cd50b3e25c",
+        "data": {
+          "transaction_id": "test_cancel_1754187581690",
+          "user_id": 1,
+          "amount": 10
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "cancel",
+            "data": {
+              "transaction_id": "test_cancel_1754187581690",
+              "user_id": 1,
+              "amount": 10
+            },
+            "request_timestamp": "2025-08-03 02:19:41",
+            "hash": "98ad32426d418ab8f00f9afd25e998cd50b3e25c"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 328
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 328
+    },
+    {
+      "id": 21,
+      "name": "Cancel - Invalid Transaction ID",
+      "command": "cancel",
+      "timestamp": "2025-08-03T02:19:42.357Z",
+      "request": {
+        "command": "cancel",
+        "request_timestamp": "2025-08-03 02:19:42",
+        "hash": "b81bec0a3a616582cbcebb09a43f4056a97e160f",
+        "data": {
+          "transaction_id": "invalid_transaction_123",
+          "user_id": 1,
+          "amount": 10
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "cancel",
+            "data": {
+              "transaction_id": "invalid_transaction_123",
+              "user_id": 1,
+              "amount": 10
+            },
+            "request_timestamp": "2025-08-03 02:19:42",
+            "hash": "b81bec0a3a616582cbcebb09a43f4056a97e160f"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 339
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 339
+    },
+    {
+      "id": 22,
+      "name": "Cancel - Missing Required Fields",
+      "command": "cancel",
+      "timestamp": "2025-08-03T02:19:42.683Z",
+      "request": {
+        "command": "cancel",
+        "request_timestamp": "2025-08-03 02:19:42",
+        "hash": "4ab53e810540a2e870068ca3207421419056895c",
+        "data": {
+          "transaction_id": "test_cancel_missing_1754187581690"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "cancel",
+            "data": {
+              "transaction_id": "test_cancel_missing_1754187581690"
+            },
+            "request_timestamp": "2025-08-03 02:19:42",
+            "hash": "4ab53e810540a2e870068ca3207421419056895c"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 326
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 326
+    },
+    {
+      "id": 23,
+      "name": "FinishRound - Valid Round Data",
+      "command": "finishround",
+      "timestamp": "2025-08-03T02:19:43.011Z",
+      "request": {
+        "command": "finishround",
+        "request_timestamp": "2025-08-03 02:19:42",
+        "hash": "7d00ed5d0d285c623074d0e7f18c7f61786b6efd",
+        "data": {
+          "round_id": "round_1754187582684",
+          "user_id": 1,
+          "game_id": 53,
+          "session_id": "1_53_1752376795446",
+          "final_balance": 100
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "finishround",
+            "data": {
+              "round_id": "round_1754187582684",
+              "user_id": 1,
+              "game_id": 53,
+              "session_id": "1_53_1752376795446",
+              "final_balance": 100
+            },
+            "request_timestamp": "2025-08-03 02:19:42",
+            "hash": "7d00ed5d0d285c623074d0e7f18c7f61786b6efd"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 327
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 327
+    },
+    {
+      "id": 24,
+      "name": "FinishRound - Invalid Round ID",
+      "command": "finishround",
+      "timestamp": "2025-08-03T02:19:43.343Z",
+      "request": {
+        "command": "finishround",
+        "request_timestamp": "2025-08-03 02:19:43",
+        "hash": "bb9a93f4571d14237f449e19445caa1a1d9da3c7",
+        "data": {
+          "round_id": "invalid_round_123",
+          "user_id": 1,
+          "game_id": 53,
+          "session_id": "1_53_1752376795446",
+          "final_balance": 100
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "finishround",
+            "data": {
+              "round_id": "invalid_round_123",
+              "user_id": 1,
+              "game_id": 53,
+              "session_id": "1_53_1752376795446",
+              "final_balance": 100
+            },
+            "request_timestamp": "2025-08-03 02:19:43",
+            "hash": "bb9a93f4571d14237f449e19445caa1a1d9da3c7"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 332
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 332
+    },
+    {
+      "id": 25,
+      "name": "FinishRound - Missing Required Fields",
+      "command": "finishround",
+      "timestamp": "2025-08-03T02:19:43.670Z",
+      "request": {
+        "command": "finishround",
+        "request_timestamp": "2025-08-03 02:19:43",
+        "hash": "447610c3b2a5bf6d9e04e3b41284658591e463ee",
+        "data": {
+          "round_id": "round_missing_1754187582684"
+        }
+      },
+      "response": {
+        "data": {
+          "request": {
+            "command": "finishround",
+            "data": {
+              "round_id": "round_missing_1754187582684"
+            },
+            "request_timestamp": "2025-08-03 02:19:43",
+            "hash": "447610c3b2a5bf6d9e04e3b41284658591e463ee"
+          },
+          "response": {
+            "data": {
+              "error_code": "OP_99",
+              "error_message": "Invalid authorization"
+            },
+            "status": "ERROR"
+          }
+        },
+        "status": 200,
+        "responseTime": 326
+      },
+      "success": true,
+      "error": null,
+      "responseTime": 326
+    }
+  ],
+  "errors": [],
+  "recommendations": []
+}

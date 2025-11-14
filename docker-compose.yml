@@ -1,0 +1,82 @@
+services:
+  api:
+    build: .
+    container_name: casino_api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      - MONGO_URI=mongodb://admin:jackpotxPassword_145225@mongo_db:27017/jackpotx-db?authSource=jackpotx-db
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_ACCESS_TOKEN_EXPIRES=${JWT_ACCESS_TOKEN_EXPIRES}
+      - JWT_REFRESH_TOKEN_EXPIRES=${JWT_REFRESH_TOKEN_EXPIRES}
+      # Provider Configuration
+      - SUPPLIER_API_KEY=${SUPPLIER_API_KEY}
+      - SUPPLIER_SECRET_KEY=${SUPPLIER_SECRET_KEY}
+      - SUPPLIER_GAME_LIST_URL=${SUPPLIER_GAME_LIST_URL}
+      - SUPPLIER_LAUNCH_HOST=${SUPPLIER_LAUNCH_HOST}
+      - SUPPLIER_CALLBACK_URL=https://backend.jackpotx.net/innova/
+      - SUPPLIER_OPERATOR_ID=${SUPPLIER_OPERATOR_ID}
+      - OPERATOR_HOME_URL=${OPERATOR_HOME_URL}
+      - GGR_FILTER_PERCENT=${GGR_FILTER_PERCENT}
+      - GGR_TOLERANCE=${GGR_TOLERANCE}
+      - PROVIDER_GGR_ENDPOINT=${PROVIDER_GGR_ENDPOINT}
+      - PROVIDER_API_KEY=${PROVIDER_API_KEY}
+      - DISABLE_CRON_JOBS=true
+    depends_on:
+      db:
+        condition: service_healthy
+      mongo_db:
+        condition: service_healthy
+    working_dir: /app
+    command: npm run dev
+
+  db:
+    image: postgres:16
+    container_name: pg_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgresql-burst-optimized.conf:/var/lib/postgresql/data/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo_db:
+    image: mongo:6
+    container_name: mongo_db
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  mongo_data:

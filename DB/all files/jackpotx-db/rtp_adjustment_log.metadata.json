@@ -1,0 +1,1 @@
+{"indexes":[{"v":{"$numberInt":"2"},"key":{"_id":{"$numberInt":"1"}},"name":"_id_"}],"uuid":"8df1bc902bac48fa8ad616b7bc4832a9","collectionName":"rtp_adjustment_log","type":"collection"}

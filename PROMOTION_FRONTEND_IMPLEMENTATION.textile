@@ -1,0 +1,276 @@
+h1. Promotion System Frontend Implementation
+
+h2. Overview
+The promotion system allows users to claim bonuses, perform daily spins, and track wagering progress. All endpoints require authentication.
+
+h2. API Base URL
+<pre>
+http://localhost:3000/api
+</pre>
+
+h2. Authentication
+All requests require Bearer token in Authorization header:
+<pre>
+Authorization: Bearer {jwt_token}
+</pre>
+
+h2. Endpoints
+
+h3. 1. Get Available Promotions
+*URL:* GET /promotions
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Welcome Bonus",
+      "description": "Get 100% bonus on your first deposit",
+      "type": "welcome_bonus",
+      "bonus_percentage": 100.00,
+      "max_bonus_amount": 500.00,
+      "min_deposit_amount": 20.00,
+      "wagering_requirement": 35.00,
+      "is_claimed": false,
+      "can_claim": true
+    }
+  ]
+}
+</pre>
+
+*Frontend Implementation:*
+- Display promotions in cards/grid
+- Show "Claim" button if can_claim is true
+- Show "Already Claimed" if is_claimed is true
+
+h3. 2. Claim Promotion
+*URL:* POST /promotions/claim
+
+*Request:*
+<pre>
+{
+  "promotion_id": 1
+}
+</pre>
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "message": "Promotion claimed successfully",
+  "data": {
+    "bonus_amount": 100.00,
+    "wagering_requirement": 35.00
+  }
+}
+</pre>
+
+*Frontend Implementation:*
+- Call this endpoint when user clicks "Claim"
+- Show success message with bonus amount
+- Update user's bonus balance display
+
+h3. 3. Daily Spin
+*URL:* GET /promotions/daily-spin
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "can_spin": true,
+  "message": "Daily spin available"
+}
+</pre>
+
+*URL:* POST /promotions/daily-spin
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "data": {
+    "spin_result": {
+      "type": "bonus",
+      "amount": 5.00,
+      "description": "Medium bonus"
+    }
+  }
+}
+</pre>
+
+*Frontend Implementation:*
+- Show spin wheel if can_spin is true
+- Display "Already used today" if can_spin is false
+- Animate spin wheel and show result
+
+h3. 4. Wagering Progress
+*URL:* GET /promotions/wagering-progress
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "data": [
+    {
+      "promotion_id": 1,
+      "wagering_requirement": 1000.00,
+      "wagering_completed": 500.00,
+      "progress_percentage": 50.00,
+      "is_completed": false
+    }
+  ]
+}
+</pre>
+
+*Frontend Implementation:*
+- Display progress bars for each active promotion
+- Show percentage completion
+- Highlight completed promotions
+
+h3. 5. Bonus Balance Summary
+*URL:* GET /promotions/bonus-summary
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "data": {
+    "bonus_balance": 150.00,
+    "active_promotions": 2,
+    "wagering_progress": 50.00
+  }
+}
+</pre>
+
+*Frontend Implementation:*
+- Display bonus balance prominently
+- Show number of active promotions
+- Display overall wagering progress
+
+h3. 6. Transfer Bonus to Main Balance
+*URL:* POST /promotions/transfer-bonus
+
+*Request:*
+<pre>
+{
+  "amount": 50.00
+}
+</pre>
+
+*Response:*
+<pre>
+{
+  "success": true,
+  "message": "Bonus balance transferred successfully"
+}
+</pre>
+
+*Frontend Implementation:*
+- Show transfer button only after wagering completion
+- Allow user to specify amount
+- Update both bonus and main balance displays
+
+h2. Frontend Components Needed
+
+h3. 1. Promotion Cards
+- Promotion image/icon
+- Title and description
+- Bonus amount/percentage
+- Claim button (if eligible)
+- Status indicator (claimed/active/completed)
+
+h3. 2. Daily Spin Wheel
+- Animated spin wheel
+- Spin button
+- Result display
+- Countdown timer for next spin
+
+h3. 3. Wagering Progress Bars
+- Progress bar for each promotion
+- Percentage display
+- Remaining amount
+- Completion status
+
+h3. 4. Bonus Balance Display
+- Current bonus balance
+- Transfer button (when eligible)
+- Active promotions count
+
+h2. Error Handling
+
+*Common Error Responses:*
+<pre>
+400: "Promotion already claimed"
+400: "Minimum deposit of $20 required"
+400: "You have already used your daily spin today"
+401: "Missing or invalid token"
+</pre>
+
+*Frontend Implementation:*
+- Show error messages in toast/alert
+- Disable buttons on error
+- Retry mechanism for network errors
+
+h2. State Management
+
+*Required States:*
+- Available promotions list
+- User's claimed promotions
+- Wagering progress
+- Bonus balance
+- Daily spin availability
+
+*Updates:*
+- Refresh promotions after claiming
+- Update bonus balance after spin/claim
+- Update wagering progress after bets
+- Check daily spin availability on page load
+
+h2. UI/UX Guidelines
+
+*Colors:*
+- Success: Green (#28a745)
+- Warning: Orange (#ffc107)
+- Error: Red (#dc3545)
+- Info: Blue (#17a2b8)
+
+*Icons:*
+- Promotion: Gift icon
+- Daily spin: Wheel icon
+- Wagering: Progress bar
+- Bonus: Dollar sign
+
+*Animations:*
+- Smooth transitions for state changes
+- Spin wheel animation for daily spin
+- Progress bar animations
+- Toast notifications for actions
+
+h2. Testing Checklist
+
+- [ ] Login and get promotions list
+- [ ] Claim a promotion successfully
+- [ ] Handle already claimed promotions
+- [ ] Perform daily spin
+- [ ] Handle daily spin limit
+- [ ] Display wagering progress
+- [ ] Transfer bonus to main balance
+- [ ] Handle network errors
+- [ ] Update UI after actions
+- [ ] Responsive design on mobile
+
+h2. Notes
+
+*Important:*
+- Always check authentication before making requests
+- Handle loading states for better UX
+- Cache promotion data to reduce API calls
+- Implement proper error boundaries
+- Test on different screen sizes
+
+*Performance:*
+- Lazy load promotion images
+- Debounce API calls where appropriate
+- Use optimistic updates for better UX 

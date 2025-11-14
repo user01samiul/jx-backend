@@ -1,0 +1,32 @@
+To: support@innovagaming.com
+Subject: IP Whitelist Request - JackpotX Platform (Operator ID: thinkcode)
+
+Hi Innova Team,
+
+We are experiencing Cloudflare blocking when trying to access your game platform
+from our backend server.
+
+Please whitelist our server IP:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IP Address:    192.71.244.88
+Location:      Ljubljana, Slovenia
+Operator ID:   thinkcode
+Operator Name: JackpotX
+Platform URL:  https://jackpotx.net
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Current Error:
+- URL: https://gamerun-eu.gaminguniverse.fun/
+- Error: HTTP 403 Forbidden / Cloudflare Error 1000
+- Provider returns empty responses
+
+This IP will be used exclusively for game launch requests from our platform.
+
+We would appreciate if this could be processed within 24-48 hours.
+
+Thank you for your assistance!
+
+Best regards,
+JackpotX Technical Team
+https://jackpotx.net

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mongosh:*)",
+      "Bash(mongorestore:*)",
+      "Bash(powershell.exe -Command \"Get-Command mongosh, mongorestore -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(npm install:*)",
+      "Bash(npm init:*)",
+      "Bash(node restore.js:*)",
+      "Bash(node verify.js:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

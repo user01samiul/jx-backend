@@ -1,0 +1,76 @@
+:root
+{
+    --widget-sdk-background: white;
+    --widget-sdk-border: none;
+
+    --widget-sdk-font: black;
+    --widget-sdk-font-light: #404040;
+    --widget-sdk-font-lighter: #808080;
+
+    --widget-sdk-font-xxl: 2rem;
+    --widget-sdk-font-xl: 1.75rem;
+    --widget-sdk-font-lg: 1.4rem;
+    --widget-sdk-font-md: .875rem;
+    --widget-sdk-font-sm: .750rem;
+
+    --widget-sdk-lowlight: #e8e8e8;
+    --widget-sdk-lowlight-font: #000000;
+
+    --widget-sdk-lowlight-light: #fbfbfb;
+    --widget-sdk-lowlight-light-font: #000000;
+
+    --widget-sdk-highlight: #390099;
+    --widget-sdk-highlight-font: #ffffff;
+    --widget-sdk-highlight-border: none;
+
+    --widget-sdk-highlight-light: #aa88e3;
+    --widget-sdk-highlight-light-font: black;
+    --widget-sdk-highlight-light-border: none;
+
+    --widget-sdk-success: #41b373;
+    --widget-sdk-success-light: #cae9d3;
+    --widget-sdk-success-font: #000000;
+    --widget-sdk-success-border: none;
+
+    --widget-sdk-error: #bf3f54;
+    --widget-sdk-error-light: #ffc9d5;
+    --widget-sdk-error-font: #000000;
+    --widget-sdk-error-border: none;
+
+    --widget-sdk-scrollbar-shadow: #e8e8e8;
+    --widget-sdk-scrollbar-thumb: #3700953a;
+
+    --widget-sdk-padding-0: 0.125rem;
+    --widget-sdk-padding-1: 0.25rem;
+    --widget-sdk-padding-2: 0.50rem;
+    --widget-sdk-padding-3: 0.75rem;
+    --widget-sdk-padding-4: 1.00rem;
+    --widget-sdk-padding-5: 1.50rem;
+
+    --widget-sdk-radius-0: .25rem;
+    --widget-sdk-radius-1: .625rem;
+    --widget-sdk-radius-2: 1.25rem;
+    --widget-sdk-radius-3: 2.5rem;
+    --widget-sdk-radius-full: 50%;
+
+    --widget-sdk-color-pending: #FF5400;
+    --widget-sdk-color-pending-font: #ffffff;
+    --widget-sdk-color-active: #FF0054;
+    --widget-sdk-color-active-font: #ffffff;
+    --widget-sdk-color-finished: #FFBD00;
+    --widget-sdk-color-finished-font: #ffffff;
+
+    --widget-sdk-color-positive: #41b373;
+    --widget-sdk-color-negative: #bf3f54;
+
+    --widget-sdk-dim-background: #00000094;
+    --widget-sdk-dim-color: #ffffff;
+
+    --widget-sdk-overlay-shadow: 0 0 5px 0px #0000004d;
+
+    --widget-sdk-input-border: 2px solid #b7b7b7;
+    --widget-sdk-input-background: #e8e8e8;
+    --widget-sdk-input-font: #000;
+
+    --widget-sdk-input-active-border: 2px solid #808080;
+}

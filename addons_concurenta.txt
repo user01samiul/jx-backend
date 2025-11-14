@@ -1,0 +1,3983 @@
+CatoriTech API Integration
+Change Log
+API Token
+API Meta Data
+Get Currency API
+Get Mo
+b
+ile Prefix API
+Get Country API
+API Player
+Login API
+Register API
+Forgot Password Flow
+Lost Password Flow 1 - Recover Account
+Lost Password Flow 2.1 - Verify Channel
+Lost Password Flow 2.2 - Verify Channel
+- SMS
+Lost Password Flow 3 - Set New Password
+Get Balance API
+Get Player Profile API
+Update Player Profile API
+Get Player Casino Bets
+Get Player Sportsb
+ook Bets
+Get Deposit List
+Get Withdraw List
+Send email notification
+Send SMS notification
+Player Status
+Update Player Status API
+Get Bonus Balance
+Upload File
+- for KYC
+Get Player documents - for KYC
+Refresh Token
+Get Player Settings
+Update Marketing Preferences
+Update Player Setting Session Timeout
+Create Deposit Limit
+Update Deposit Limit
+Active Limits Grouped by Type
+Description
+Query Param:
+Success Response
+API Payment
+Get Payment URL
+Get Withdrawal URL
+Make Deposit
+Make Withdraw
+Make Cash Deposit
+Make Cash Withdraw
+Cancel Voucher
+Get Cash Withdrawal
+API Casino Games
+Download Games
+Launch URL
+API Multilanguage
+API to get Multilanguage
+CMS
+Get Pages by Slug
+Get Carousel and Banners
+EXAMPLE OF RESPONSE PER PAGE TYPE : Contact page and its components :
+GRID Page type :
+Example in A
+bacus :
+External page type :
+Example of External page in A
+bacus :
+Accordion type page example :
+Simple Page type in A
+bacus :
+API Sportsb
+ook
+Get launch url
+Get Player Bets
+API Bonus
+Check By Promotional Code
+Get Bonus Offers (Offline)
+Get Pending Bonus Offers (Online)
+Get Profile Bonus Offers
+Get Active Bonus Offer
+Activate Bonus Offer
+Update Wagering Points
+Validate Game
+Validate Deposit Bonus Activation
+Retail
+Voucher Login
+Voucher Logout
+Change Log
+Author Description Date
+@Bojan Vrshkovski Creating the first
+documentation for the
+main API requested
+@Fisnik Shatri Creating
+documentation for
+Payment
+deposit/withdraw
+@Fisnik Shatri
+Added Refresh Token
+API documentation
+@Fisnik Shatri Updated
+documentation for
+makeDeposit and
+makeWithdraw
+@Bojan Vrshkovski Updated the
+documentation added
+the Carousel and
+Banners APIs
+@donald Wagering points
+calculated on closing
+round
+Jan 23, 2025
+Fe
+b 2, 2025
+Fe
+b 5, 2025
+Fe
+b 20, 2025
+Fe
+b 27, 2025
+Jul 9, 2025
+Automatic gameplay
+balance switch to
+real
+balance after a
+b
+onus gets
+cleared/cancelled
+(Updated API
+Casino Games →
+Launch URL)
+@Fisnik Shatri
+Added Documentation
+for payment new
+methods
+@Bojan Vrshkovski add header
+configuration for FE to
+send X- Pub
+lic-IP to
+backend
+@Fisnik Shatri
+Added
+acc
+ountType for
+bank transaction.
+Account type can
+b
+e
+Credit or Saving
+@antonio.cacciotti lunch url now return in
+the property
+gameLaunchUrl
+b
+oth
+url for demo and real
+@antonio.cacciotti Release 44.1 has
+important security
+update which requires
+the client to get a token
+b
+efore sending a
+request to catoritech
+API
+@alexander.gerontas New query params
+currency added in
+Altenar launch url
+@Fisnik Shatri Status inconsistency
+for bank withdraws has
+b
+een fixed
+@Enis Zenuni
+(Unlicensed)
+Added documentation
+for player limits
+@Bojan Vrshkovski
+Added the affiliateShop
+and affiliateAgent ids to
+Apr 22, 2025
+Jun 12, 2025
+Jun 13, 2025
+Jun 19, 2025
+TO BE RELEASE
+TO BE RELEASE
+TO BE RELEASE
+Jul 8, 2025
+Jul 11 2025
+the query params of
+the registration API
+CatoriTech API Integ
+ration | :check_mark: R
+egister API
+TO BE RELEASE
+API Token
+Description: This endpoint provides a token for accessing pub
+licly availab
+le APIs that do not require player
+authentication, such as: registration login, forgot password, casino game launch endpoint and others.
+With this API the client can generated a valid token to use in API calls made b
+player is authenticated, a player-specific token should b
+e used instead.
+efore a player is logged in.
+Once the
+The Access Token is present in the response
+Http method: POST
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+Query param (Mandatory):
+BrandName : Name of the
+brand requesting the token. You can also use this parameter to specify the realm name.
+API Path: ?
+{{BasePath}}/wallet/{version}/{operatorId}/{brandId}/token
+randName={
+b
+b
+randName}
+Authorization: Required
+Authorized client is: 502-client - which creds have
+b
+een given already.
+Request
+1 {
+2client_id:catoritech-wallet-client,
+3 grant_type:client_
+credentials,
+4client_secret:a
+c123
+b
+5 }
+Response:
+1 {
+2 "data":
+{
+3 "id_token":
+null,
+4 "access_token": "ey.....",
+5 "expires_in": 3600,
+6 "refresh_expires_in": 0,
+7 "refresh_token":
+null,
+8 "session_state":
+null,
+9 "sc
+ope": "player profile email",
+10 "token_type": "Bearer",
+11 "error":
+null,
+12 "error_description":
+null,
+13 "errorMessage":
+null
+14}
+,
+15 "errors":
+[],
+16 "retry": false
+17 }
+API Meta Data
+Get Currency API
+Description: Fetches currency details for a given
+brand and operator.
+Http method: GET
+Path Params(Mandatory):
+String version
+Query Params(Mandatory):
+int brandId
+int operatorId
+API Path:
+{{BasePath}}/backoffice
+-rest-client/{version}/currency
+Response:
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "Fiat":
+5 {
+6 "id": 116,
+7 "c
+ountry": "Romania",
+8 "c
+odeName": "RON",
+9 "curren
+c
+yName": "Leu",
+10 "type": "Fiat",
+11 "ic
+onUrl": "https://catoritech-pu
+b
+1.amazonaws.c
+om/curren
+c
+yic
+on/casino
+b
+rillo/RON.svg"
+lic.s3.eu-central-
+12}
+,...
+13 ]
+14}
+15 }
+[
+Get Mo
+b
+ile Prefix API
+Description: Retrieves the mo
+b
+ile num
+b
+Http method: GET
+Path Params(Mandatory):
+String version
+Query Params(Mandatory):
+int brandId
+API Path:
+{{BasePath}}/backoffice
+-rest-client/{version}/prefix
+Response:
+er prefix details associated with a specific brand.
+1 {
+2 "resultCode": 0,
+3 "data":
+4 {
+5 "id": 8,
+6 "prefix": "+34",
+7 "c
+ountry": "Spain",
+8 "state":
+null
+9}
+,.....
+[
+10 ]
+11}
+Get Country API
+Description: Fetches the country details associated with a specific brand.
+Http method: GET
+Path Params(Mandatory):
+String version
+Query Params(Mandatory):
+int brandId
+API Path:
+{{BasePath}}/backoffice
+-rest-client/{version}/country
+Response:
+1 {
+2 "resultCode": 0,
+3 "data":
+4 {
+5 "id": 4,
+6 "c
+ountryName": "ANGOLA",
+7 "c
+ountryCode": "A
+O",
+8 "longitude":
+null,
+9 "latitude":
+null
+10
+}
+,......
+11 ]
+12}
+[
+API Player
+Login API
+Description: The Login API allows players to authenticate and o
+btain a session token along with other essential details
+for accessing the platform.
+Http method: POST
+Query Params:
+String lang
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+Headers(Mandatory):
+X-Pub
+lic-IP: The pub
+lic IP address of the player at the time of login. This value is stored to track the player's login
+activity and IP history for security monitoring and auditing purposes.
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/signin
+Request Body:
+1 {
+2 "loginIdentifier": "player_temail@example.c
+om",
+3 "password": "player_password"
+4}
+Response Body:
+1 {
+2 "data":
+{
+3 "token":
+null,
+4 "refreshToken":
+"eyJh
+b
+GciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiYTQ2Y2FhYi0yM2MxL
+TRjMDItOGMxZS02ZmE0NDRmMjkwYzkifQ.eyJleHAiOjE3MzY4NjI0NzIsImlhdCI6MTcz
+Nj
+c3NjA3MiwianRpIjoiMmJlYTBjNjktYTljZi00ZTQ0LTkzMzAtNTM2ZjhlMmFlYTgwIi
+wiaXNzIjoiaHR0cHM6Ly9pZGVudGl0eS5p
+b
+nQuZGV2LmNhdG9yaXRlY2guY29tL3JlYWxt
+c
+y9pZGVudGl0eSIsImF1ZCI6Imh0dHBzOi8vaWRl
+nRpdHkuaW50LmRldi5jYXRvcml0ZW
+b
+NoLmNv
+b
+S9yZWFs
+XMvaWRl
+b
+b
+nRpdHkiLCJzdWIiOiJiMDJjNGU1OS1jM2ZkLTQxZjItYTQ0
+ZS00YmJkNjMwYTE2MzUiLCJ0eXAiOiJSZWZyZXNoIiwiYXpwIjoiZ2FtZS1w
+3J0YWwiLC
+b
+JzaWQiOiJlOTBlOTlkMy1iZjE5LTQ2MTAtYTgwNy03YTFjMTQyOTJlM2YiLCJzY29wZSI6
+Im9wZW5pZCBw
+b
+GF5ZXIgcHJvZmlsZSBl
+bWFp
+b
+CByb
+2xlc
+yBiYXNpYyB3ZWIt
+3JpZ2luc
+b
+y
+BhY3IifQ.zaTLa
+b
+pu46nRffhaF5udQJUYIt7TeUoTYs9I2pg71FVvY
+J_vJE1
+o2U0TKLr
+b
+b
+FczC7t
+b
+cXi8Q3a-G-qq0
+AFZfA",
+5 "expiresIn": "2025-01-13T14:47:52.313Z",
+6 "refreshTokenExpireIn": "2025-01-14T13:47:52.315Z",
+7 "playerStatus":
+{
+8 "status": "Verified",
+9 "login": true,
+10 "deposit": true,
+11 "withdraw": true,
+12 "play": true
+13}
+,
+14 "permissions":
+15 {
+16 "isPlayer": true
+17 }
+18 ],
+19 "networkShopId": "1"
+20
+,
+}
+21 "errors":
+[]
+22}
+[
+Register API
+Description: The Register API allows new players to create an account on the platform
+and account-related details.
+by providing essential personal
+Http method: POST
+Query Params:
+String lang
+String networkShopId (NOT MANDATORY)
+String networkAgentId (NOT MANDATORY)
+String affiliateShopId (NOT MANDATORY)
+String affiliateAgentId (NOT MANDATORY)
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+Headers(Mandatory):
+X-Pub
+lic-IP: The pub
+player's original registration IP, which may b
+lic IP address of the player at the time of registration. This value is stored to record the
+e required for compliance, auditing,
+or security purposes.
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/
+API Path: register
+Request Body:
+1 {
+2 "userName": "example_username",
+3 "firstName":"exaple_first_name",
+4 "lastName" : "exaple_last_name",
+5 "password":
+"54de7f606f2523c
+a8efac173fa
+42f
+7f59d56ceff974c8fd
+7342cf2cfe345",
+b
+b
+b
+b
+6 "emailAddress": "example_email@example.c
+om",
+7 "dateOfBirth": "2001-01-10",
+8 "c
+ountryOfResiden
+ce": "ExampleCountry",
+9 "mo
+ileNum
+er": "111111111",
+b
+b
+10 "prefix": "+389",
+11 "preferredCurren
+c
+y": "EUR",
+12}
+Response Body:
+1 {
+2 "data":
+{
+3 "playerId": 5994,
+4 "userName": "example_username",
+5 "password":
+"54de7f606f2523c
+a8efac173fa
+42f
+7f59d56ceff974c8fd
+b
+b
+b
+6 "emailAddress": "example_email@example.c
+b
+om",
+7 "firstName":
+null,
+8 "lastName":
+null,
+9 "dateOfBirth": "2001-01-10",
+10 "postCode":
+null,
+11 "fullResidentialAddress":
+null,
+12 "c
+ountryOfResiden
+ce": "ExampleCountry",
+13 "provin
+ce":
+null,
+7342cf2cfe345",
+14 "region":
+null,
+15 "city":
+null,
+16 "mo
+ileNum
+er": "111111111",
+b
+b
+17 "prefix": "+389",
+18 "gender":
+null,
+19 "agreementToTermsAndConditions": false,
+20 "securityQuestion":
+null,
+21 "preferredCurren
+c
+y": "EUR",
+22 "marketingPreferen
+ces": false,
+23 "nationalIdNum
+er":
+null,
+b
+24 "ky
+cDo
+cumentType":
+null,
+25 "o
+ccupation":
+null,
+26 "sourceOfFunds":
+null,
+27 "
+ankA
+cc
+ountInformation":
+null,
+b
+28 "taxIdentificationNum
+er":
+null,
+b
+29 "politicalExposureAssessment": false,
+30 "gamingExperien
+ceLevel":
+null,
+31 "depositLimits": false,
+32 "selfExclusion": false,
+33 "responsi
+b
+leGamingA
+cknowledgment": false,
+34 "
+iometricVerification":
+null,
+b
+35 "amount":
+null,
+36 "limitTimePeriodId":
+null,
+37 "promoCode":
+null
+38 }
+,
+39 "errors":
+[]
+40
+}
+Forgot Password Flow
+The Forgot Password Flow provides a step-by-step mechanism for players to recover their accounts, verify their
+identity, and reset their passwords securely. This flow is divided into four key steps.
+Lost Password Flow 1 - Recover Account
+This step initiates the recovery process by sending a recovery code to the player's chosen communication channel
+(email or SMS).
+The code lasts 3 minutes.
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/
+Http method name: recoveraccount
+the code is send as sha-256 and value is either email or sms.
+Body:
+1 {"value":"
+b
+ojan.vrshkovski@
+:"verification_email"}
+catoritech.c
+om","channel":"email","template"
+Response:
+1 {
+2 "resultCode": 0,
+3 "description":
+4}
+null
+if we want to send sms
+Body:
+1 {
+2 "value": "12312332",
+3 "channel": "sms",
+4 "template": "verification_sms",
+5 "prefix": "+389"
+6 }
+Response:
+1 {
+2 "resultCode": 0,
+3 "description":
+4}
+null
+Lost Password Flow 2.1 - Verify Channel
+This step verifies the recovery code sent to the player's email.
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/
+Http method name: verifychannel
+Http method: POST
+the code is send as sha-251 and value is either email or sms.
+Body:
+1 {
+2 "c
+ode": "81dc9
+d
+b
+b
+3 "playerId": "5033",
+4 "channel": "email"
+5 }
+52d04dc20036d
+d8313ed055",
+b
+Response:
+1 {
+2 "resultCode": 0,
+3 "description":
+null
+4}
+Lost Password Flow 2.2 - Verify Channel
+- SMS
+This step verifies the recovery code sent to the player's mo
+b
+ile phone via SMS.
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/
+Http method name: verifychannel
+Http method: POST
+the code is send as sha-251 and value is either email or sms.
+Body:
+1 {
+2 "c
+ode": "81dc9
+d
+b
+b
+3 "playerId": "5033",
+4 "channel": "sms"
+5 }
+52d04dc20036d
+d8313ed055",
+b
+Response:
+1 {
+2 "resultCode": 0,
+3 "description":
+null
+4}
+Lost Password Flow 3 - Set New Password
+This step allows the player to set a new password after verifying their identity.
+Http method name: setnewpassword
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/
+Http method: POST
+the code is send as sha-251 and value is either email or sms.
+Body:
+1 {
+2 "value":"antonio.cacciotti@gmail.c
+om",
+3 "c
+ode":"81dc9
+d
+52d04dc20036d
+d8313ed055",
+b
+b
+b
+4 "password":"c545ee
+3
+012e3eaaf94e1af6a
+92d78",
+b
+b
+b
+5 "c
+onfirmPassword":"c545ee
+3
+012e3eaaf94e1af6a
+b
+b
+b
+92d78"
+6 }
+Response:
+1 {
+2 "resultCode": 0,
+3 "description":
+null
+4}
+Get Balance API
+Description: The Get Balance API retrieves the current wallet balance and associated details for a specific player.
+Http method: GET
+Query Params:
+curren
+c
+yCode : String (ex.
+EUR,USD..
+) Mandatory
+lang : String
+Path Params(Mandatory):
+String version
+Integer operatorId
+Integer brandId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/balance
+Authentication Bearer token mandatory
+Response:
+1 {
+2 "data":
+{
+3 "value": 100.00,
+4 "curren
+c
+y": "EUR",
+5 "mainCurren
+c
+y":
+null,
+6 "selectedCurren
+c
+y":
+null,
+7 "playerCurren
+c
+8 }
+,
+9 "errors":
+[]
+y":
+null
+10
+}
+Get Player Profile API
+Description: The Get Player Profile API retrieves detailed information ab
+account status, wallet balances, and preferences.
+out a player,
+including their personal details,
+Http method: GET
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerprofile/
+Authentication Bearer token mandatory
+Response:
+1 {
+2 "data":
+{
+3 "playerId": 4469,
+4 "username": "example_username",
+5 "emailAddress": "example_email@example.c
+om",
+6 "firstName": "Example_Name",
+7 "lastName": "Example_Last_Name",
+8 "language":
+null,
+9 "
+b
+irthday": "1992-01-14",
+10 "zipCode": "5000",
+11 "streetAddress": "test222",
+12 "c
+ountry": "C
+A",
+13 "provin
+ce":
+null,
+14 "region":
+null,
+15 "city": "Ohrid",
+16 "mo
+ileNum
+er": "fe69dadc-d756-4840-
+b
+b
+bb
+17 "gender": "M",
+18 "mainCurren
+c
+y": "EUR",
+19 "emailNotificationsEna
+led": true,
+b
+20 "o
+ccupation":
+null,
+21 "sourceOfFunds":
+null,
+22 "
+ankA
+cc
+ountInformation":
+null,
+b
+23 "taxIdentificationNum
+er":
+null,
+b
+24 "politicalExposureAssessment": false,
+25 "gamingExperien
+ceLevel":
+null,
+26 "responsi
+b
+leGamingA
+cknowledgment": false,
+27 "mo
+ileNum
+erNotificationsEna
+led": false,
+b
+b
+b
+28 "playerStatus":
+{
+29 "id": 3,
+30 "status": "Verified",
+31 "login": true,
+32 "deposit": true,
+33 "withdraw": true,
+34 "play": true
+35 }
+,
+36 "permissions":
+0e-36680de5f41d",
+37 {
+38 "isPlayer": true
+39}
+40 ],
+41 "playerWallet":
+42 {
+43 "playerWalletId": 1149,
+44 "realBalan
+ce": 100.00,
+45 "
+onus": 0,
+b
+46 "categoryId": 0,
+47 "curren
+c
+y": "EUR",
+48 "free
+et": 0,
+b
+49 "funBalan
+ce": 0,
+50 "selectedCurren
+c
+y": true
+51}
+,
+52 {
+53 "playerWalletId": 1722,
+54 "realBalan
+ce": 0,
+55 "
+onus": 0,
+b
+56 "categoryId": 0,
+57 "curren
+c
+y": "USD",
+58 "free
+et": 0,
+b
+59 "funBalan
+ce": 0,
+60 "selectedCurren
+c
+y": false
+61}
+62 ],
+63 "networkShopId": "1",
+64 "emailVerified": true,
+65 "smsVerified": true,
+66 "playerIpAddress": "11.11.11.11.11, 10.0.10.99",
+67 "lastLoginDate": "2025-01-13 14:16:07",
+68 "lastDepositDate": "2024-11-29 12:09:04",
+69 "mo
+ilePrefix": "+387"
+b
+70
+,
+}
+71 "errors":
+[]
+72}
+[
+[
+Update Player Profile API
+Description: The Update Player Profile API allows players to update their personal information, contact preferences,
+and other profile details.
+Http method: PUT
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerprofile/update
+-player-details
+Authentication Bearer token mandatory
+Request:
+1 {
+2 "address": "test2222",
+3 "city": "Ohrid2",
+4 "c
+ountry": "C
+A",
+5 "dateOfBirth": "1992-01-14T00:00:00.000+00:00",
+6 "firstName": "Kli2m",
+7 "gender": "female",
+8 "lastName": "Sid",
+9 "postCode": "5000",
+10 "emailNotifications": true,
+11 "mo
+ileNotifications" : true,
+b
+12 "mo
+ilePrefix": "+336",
+b
+13 "mo
+ileNum
+er": "8908901118902122"
+b
+b
+14}
+Response:
+1 {
+2 "data":
+{
+3 "firstName": "Kli2m",
+4 "lastName": "Sid",
+5 "dateOfBirth": "1992-01-14T00:00:00.000+00:00",
+6 "gender": "female",
+7 "c
+ountry": "C
+A",
+8 "city": "Ohrid2",
+9 "address": "test2222",
+10 "postCode": "5000",
+11 "emailNotifications": true,
+12 "mo
+ileNotifications": true,
+b
+13 "mo
+ilePrefix": "+336",
+b
+14 "mo
+ileNum
+er": "8908901118902122",
+b
+b
+15 "playerStatusDTO":
+{
+16 "status": "Verified",
+17 "login": true,
+18 "deposit": true,
+19 "withdraw": true,
+20 "play": true
+21}
+22}
+,
+23 "errors":
+[]
+24}
+Get Player Casino Bets
+Description: This endpoint is designed to return all the casino transaction for a player.
+Http method: GET
+Query Params(Mandatory):
+b
+etType: String (casino)
+timeFrame: String(1d,3d,7d,1m,3m,6m,1y)
+page: Integer
+size: Integer
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerprofile/b
+ets
+Authentication Bearer token mandatory
+Response:
+1 {
+2 "data":
+3 {
+4 "id": 2001346049,
+5 "date": "2024-06-25 07:24",
+6 "amount": 0.2,
+7 "amountBaseCurren
+c
+y": 0.04,
+8 "type": "Casino Bet",
+9 "status": "FAILED",
+10 "curren
+c
+y": "EUR",
+11 "gameName": "Hercules HD",
+12 "winAmount": 0,
+13 "winAmountBaseCurren
+c
+y": 0.00,
+14 "gameId": "10003"
+15 }
+,......
+16 ]
+17 }
+[
+Get Player Sportsb
+ook Bets
+Description: This endpoint is designed to return all the sports b
+ook transaction for a player.
+Http method: GET
+Query Params(Mandatory):
+b
+etType: String (sportsb
+ook)
+timeFrame: String(1d,3d,7d,1m,3m,6m,1y)
+page: Integer
+size: Integer
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerprofile/b
+ets
+Authentication Bearer token mandatory
+Response:
+1 {
+2 "data":
+3 {
+4 "id": 20,
+5 "date": "2024-06-28T07:53:40.441174Z",
+6 "amount": 0,
+7 "type": "Sports
+ook roll
+b
+C
+CELLED"
+ack",
+b
+8 "status": "TICKET_
+AN
+9}
+,
+10 {
+11 "id": 18,
+12 "date": "2024-06-28T07:53:21.449204Z",
+13 "amount": 0,
+14 "type": "Sports
+ook roll
+b
+b
+ack",
+15 "status": "RESERVE"
+16 }...
+17 ]
+18 }
+[
+Get Deposit List
+Description: This endpoint is designed to return all the deposit transactions for a player.
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+QueryParams(Mandatory):
+transactionType: String (deposit)
+timeFrame: String(1d,3d,7d,1m,3m,6m,1y)
+page: Integer
+size: Integer
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerprofile/transactions
+Authorization: Required
+Response:
+1 {
+2 "data":
+{
+3 "data":
+4 {
+5 "id": 728,
+6 "date": "2025-01-14 09:53",
+7 "amount": 100.00,
+8 "amountBaseCurren
+c
+y": 1.00,
+9 "type": "DEPOSIT",
+10 "status": "APPROVED",
+11 "curren
+c
+y": "EUR",
+12 "paymentMethodName": "Skrill"
+13}
+,
+14 {
+15 "id": 727,
+[
+16 "date": "2025-01-14 09:51",
+17 "amount": 50.00,
+18 "amountBaseCurren
+c
+y": 1.00,
+19 "type": "DEPOSIT",
+20 "status": "APPROVED",
+21 "curren
+c
+y": "EUR",
+22 "paymentMethodName": "Skrill"
+23}
+24 ],
+25 "totalItems": 2,
+26 "page": 1,
+27 "size": 10,
+28 "totalPages": 1
+29}
+,
+30 "errors":
+[]
+31}
+Get Withdraw List
+Description: This endpoint is designed to return all the withdraw transactions for a player.
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+QueryParams(Mandatory):
+transactionType: String (withdraw)
+timeFrame: String(1d,3d,7d,1m,3m,6m,1y)
+page: Integer
+size: Integer
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerprofile/transactions
+Authorization: Required
+Response:
+1 {
+2 "data":
+3 {
+4 "id": 2,
+5 "date": "2024-08-10 08:33",
+6 "amount": 50.00,
+7 "amountBaseCurren
+c
+y": 25.00,
+8 "type": "WITHDRAWAL",
+9 "status": "PENDING",
+10 "curren
+c
+y": "EUR",
+11 "paymentMethodName": "Skrill"
+12}
+,
+13 {
+14 "id": 1,
+15 "date": "2024-07-10 16:13",
+16 "amount": 50.00,
+17 "amountBaseCurren
+c
+y": 50.00,
+18 "type": "WITHDRAWAL",
+19 "status": "PENDING",
+20 "curren
+c
+y": "EUR",
+21 "paymentMethodName": "ICard"
+22}
+23 ]
+24}
+[
+Send email notification
+Description: Sends email notification to the player.
+Http method: POST
+Path Params(Mandatory):
+String version
+int brandId
+short operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/notification
+Request:
+1 {
+2 "playerId": "5052",
+3 "channel": "email",
+4 "template": "verification_email" //or any template you want to send
+5 }
+Response:
+1 {
+2 "data":
+3 "errors":
+null,
+[]
+4}
+Send SMS notification
+Description: Sends SMS notification to the player.
+Http method: POST
+Path Params(Mandatory):
+String version
+int brandId
+short operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/notification
+Request:
+1 {
+2 "playerId": "5052",
+3 "channel": "sms",
+4 "template": "verification_sms" //or any template you want to send
+5 }
+Response:
+1 {
+2 "data":
+3 "errors":
+null,
+[]
+4}
+Player Status
+Player status Tech Analysis
+Update Player Status API
+Description: This API updates the playerStatus if the player is Suspended,Frozen, Self-
+Excluded, Closed and Verified
+and if the player has any of the first 4 statuses he can not login and we get proper exception for each status.
+Http method: PUT
+Path Params(Mandatory):
+String version
+int brandId
+short operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/player-status
+Authorization: Required
+Request:
+1 {
+2 "id": 4, // id of the status
+3 "status": "Suspended", // status name
+4 "reason": "The status is updated
+ecause of the reason", // the
+b
+reason is when the operator updates the status of the player
+5 "toDate": "1d",//the toDate is only used when we update the status
+to Self-Excluded for the other statuses we dont need it
+6 "playerId":166
+7 }
+Response(200 OK):
+1 {
+2 "data":
+3}
+null
+Statuses
+1 // "id": 1,
+2 // "status": "Registered",
+3
+4 // "id": 4,
+5 // "status": "Suspended",
+6
+7 // "id": 3,
+8 // "status": "Verified",
+9
+10 // "id": 5,
+11 // "status": "Frozen",
+12
+13 // "id": 7,
+14 // "status": "Closed",
+15
+16 // "id": 2,
+17 // "status": "A
+ctivated",
+18
+19 // "id": 6,
+20 // "status": "Self-Excluded",
+21
+22
+23 // Please note that if you want the reason to
+e populated in the
+b
+ackoffice
+b
+24 // you need to put the operator token instead of the player token
+25
+Get Bonus Balance
+Description: The Get Bonus Balance API retrieves b
+ab
+out the
+b
+onus amounts and currencies.
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+QueryParams(Mandatory):
+playerId : Long
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/player-wallet-b
+Authorization: Required
+Response:
+onus balances associated with a player's wallet,
+including details
+onus
+1 {
+2 "data":
+3 {
+4 "id": 2,
+5 "playerWalletId": 1063,
+6 "playerId": 4708,
+7 "createdAt": "2024-10-25T15:59:52.432448Z",
+8 "
+alan
+ce": 5.00,
+b
+9 "curren
+c
+y": "EUR"
+10
+,
+}
+11 {
+12 "id": 11,
+13 "playerWalletId": 1064,
+14 "playerId": 4708,
+15 "createdAt": "2024-12-06T10:44:52.432448Z",
+16 "
+alan
+ce": 5.00,
+b
+17 "curren
+c
+y": "USD"
+18 }
+19 ],
+20 "errors":
+[]
+21}
+[
+Upload File
+- for KYC
+Description: Sends the KYC document to the operator.
+Http method: POST
+Path Params(Mandatory):
+String version
+int brandId
+short operatorId
+QueryParams(subType & documentSide & playerId Mandatory):
+subType: String can
+b
+e: poi
+(prof of identity), poa(prof of address), pop(proof of payment)
+lang : String
+documentSide(
+back or front) : String
+playerId : Long
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerkyc/player/uploadfile
+Authorization: Required
+Request(ONLY THE FILE IN THE REQUEST IS NEEDED(check the image
+b
+elow)):
+the Text in the filedata:
+1 {
+2 "do
+cumentId": 1,
+3 "statusDescription": "This is a sample do
+cument c
+ontent.",
+4 "file": "SGVs
+G8sIFdvcmxkIQ==",
+b
+5 "fileName": 123456789,
+6 "fileType": "pdf",
+7 "do
+cumentType": "Passport",
+8 "do
+cumentNum
+er": "X12345678",
+b
+9 "issueDate": "2023-01-01",
+10 "expiryDate": "2030-01-01",
+11 "issuingCountry": "CountryName1"
+12}
+Response: 200 OK
+Get Player documents - for KYC
+Description: This endpoint is designed to return all the documents that the player uploaded.
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+QueryParams:
+lang: String
+playerId: Long MANDATORY
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/playerkyc/player/documents
+Authorization: Required
+Response:
+1 {
+2 "data":
+{
+3 "pop":
+4 {
+5 "do
+cumentId": 299,
+6 "playerId": 5030,
+7 "do
+cumentType":
+null,
+8 "do
+cumentNum
+er":
+null,
+b
+9 "fileName": "Group 428.png",
+10 "fileType": ".png",
+11 "file": "...",
+12 "issueDate":
+null,
+13 "expiryDate":
+null,
+14 "issuingCountry":
+null,
+15 "status": "PENDING_
+APPROVAL",
+16 "statusDescription":
+null,
+17 "do
+cumentSide":
+null,
+18 "su
+b
+Type": "pop",
+19 "firstName":
+null,
+20 "lastName":
+null,
+21 "additionalNote":
+null,
+22 "city":
+null,
+23 "address":
+null,
+24 "postalCode":
+null,
+25 "nameOnCard":
+null,
+26 "cardNum
+er":
+null,
+b
+27 "
+b
+irthDate":
+null
+28 }
+29 ],
+30 "poa":
+31 {
+32 "do
+cumentId": 297,
+33 "playerId": 5030,
+34 "do
+cumentType": "Passport",
+35 "do
+cumentNum
+er": "X12345678",
+b
+36 "fileName": "_gam
+b
+ling_therapy_
+, Gam
+b
+ling Therap.txt",
+37 "fileType": ".txt",
+38 "file": "...",
+39 "issueDate": "2023-01-01T00:00:00.000+00:00",
+40 "expiryDate": "2030-01-01T00:00:00.000+00:00",
+41 "issuingCountry": "CountryName1",
+42 "status": "PENDING_
+APPROVAL",
+43 "statusDescription":
+null,
+44 "do
+cumentSide":
+null,
+45 "su
+b
+Type": "poa",
+46 "firstName":
+null,
+47 "lastName":
+null,
+48 "additionalNote":
+null,
+49 "city":
+null,
+50 "address":
+null,
+51 "postalCode":
+null,
+52 "nameOnCard":
+null,
+53 "cardNum
+er":
+null,
+b
+54 "
+b
+irthDate":
+null
+55 }
+,...
+56 ],
+57 "poi":
+58 {
+59 "do
+cumentId": 279,
+60 "playerId": 5030,
+61 "do
+cumentType": "id",
+62 "do
+cumentNum
+er":
+null,
+b
+63 "fileName": "c
+ode_7",
+64 "fileType": ".png",
+[
+[
+[
+65 "file": "...",
+66 "issueDate":
+null,
+67 "expiryDate":
+null,
+68 "issuingCountry":
+null,
+69 "status": "PENDING_
+APPROVAL",
+70 "statusDescription": "PENDING_
+APPROVAL",
+71 "do
+cumentSide": "front",
+72 "su
+b
+Type": "poi",
+73 "firstName":
+null,
+74 "lastName":
+null,
+75 "additionalNote":
+null,
+76 "city":
+null,
+77 "address":
+null,
+78 "postalCode":
+null,
+79 "nameOnCard":
+null,
+80 "cardNum
+er":
+b
+81 "
+b
+irthDate":
+null,
+null
+82}
+,...
+83 ]
+84}
+85 }
+Refresh Token
+Description: This endpoint refreshes the token
+The Access Token is present in the Cookie
+Http method: POST
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/refreshtoken
+Authorization: Required
+Response:
+200 OK
+1 {
+2 "data":
+3 "errors":
+4}
+null,
+[]
+Get Player Settings
+Description: This endpoint returns the player settings
+The Access Token is present in the Cookie
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/player-setting
+Authorization: Required
+Response:
+200 OK
+1 {
+2 "data":
+{
+3 "id": 46,
+4 "emailOffers": true,
+5 "smsOffers": true,
+6 "sessionTimeout": 2000,
+7 "playerId": 117
+8 }
+,
+9 "errors":
+[],
+10 "retry": false
+11}
+Update Marketing Preferences
+Description: This endpoint updates the marketing preferences for the player
+The Access Token is present in the Cookie
+Http method: PUT
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/player-setting/marketing-preferences
+Authorization: Required
+Request:
+1 {
+2 "emailOffers": true,
+3 "smsOffers": true
+4}
+Response:
+200 OK
+1 {
+2 "data":
+{
+3 "emailOffers": true,
+4 "smsOffers": true
+5 }
+,
+6 "errors":
+[],
+7 "retry": false
+8 }
+Update Player Setting Session Timeout
+Description: This endpoint updates the session timeout of the player in ms
+The Access Token is present in the Cookie
+Http method: PUT
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+API Path:
+{{BasePath}}/frontend/{version}/{operatorId}/{brandId}/player-setting/session
+-timeout
+Authorization: Required
+Request:
+1 {
+2 "sessionTimeout":"2000"
+3}
+Response:
+200 OK
+1 {
+2 "data":
+{
+3 "sessionTimeout": 2000
+4}
+,
+5 "errors":
+[],
+6 "retry": false
+7 }
+Create Deposit Limit
+Description: This endpoint creates a deposit limit for the player
+The Access Token is present in the Cookie
+Http method: POST
+API Path:
+{{BasePath}}/limits/deposit
+Authorization: Required
+Request:
+1 {
+2 "limitAmount": 1000,
+3 "limitType": "DAILY",
+4 "creationDate": "2025-04-23T12:15:50",
+5 "curren
+c
+y": "GTQ"
+6 }
+Response:
+200 OK
+1 {
+2 "data":
+{
+3 "creationDate": "2025-05-06T09:21:07.040769632",
+4 "curren
+c
+y": "GTQ",
+5 "endDate": "2025-05-06T23:59:59",
+6 "id": 4,
+7 "isA
+ctive": true,
+8 "limitAmount": 1000,
+9 "limitType": "DAILY",
+10 "percentage": 0.00,
+11 "playerId": 119,
+12 "remainingAmount": 1000,
+13 "spentAmount": 0
+14}
+15 }
+Update Deposit Limit
+Description: This endpoint updates a deposit limit for the player. If the update amount is less than the limit’s current
+amount. This action/the update will take place immediately. If the update amount is greater than the limit’s current
+amount. This action will take place tomorrow. The limit will have a new amount tomorrow.
+The Access Token is present in the Cookie
+Http method: PUT
+API Path:
+{{BasePath}}/limits/deposit/update
+Path Param:
+Integer: limitId
+Query Param:
+Doub
+le: amount
+Authorization: Required
+Response:
+1 {
+2 "data":
+{
+3 "creationDate": "2025-06-12T07:43:18.247358",
+4 "curren
+c
+y": "EUR",
+5 "endDate": "2025-06-12T23:59:59",
+6 "id": 4,
+7 "isA
+ctive": true,
+8 "limitAmount": 20,
+9 "limitType": "DAILY",
+10 "percentage": 0,
+11 "playerId": 63,
+12 "remainingAmount": 20,
+13 "spentAmount": 0,
+14 "updatedAt": "2025-06-12T08:06:30.112152685"
+15 }
+16 }
+1 {
+2 "data": "Your limit in
+crease has
+take place after midnight!"
+3}
+b
+een scheduled successfully. It will
+Active Limits Grouped by Type
+Http method: GET
+{{BasePath}}/limits/active
+-grouped-by-type
+Description
+Fetches all active limits for a player, grouped by their limit type ( DAILY, WEEKLY,
+or MONTHLY )
+.
+Query Param:
+String: playerId
+Authorization: Required
+Success Response
+Status Code: 200 OK
+Body:
+1 {
+2 "data":
+{
+3 "DAILY":
+4 {
+5 "id":1,
+6 "limit_amount":5000,
+7 "limit_type":"DAILY",
+8 "creation_date":"2024-11-20T00:00:00",
+9 "end_date":"2024-11-21T00:00:00",
+10 "player_id":123,
+11 "remaining_amount":3000,
+12 "curren
+c
+y":"USD",
+13 "percentage":60.0,
+14 "spent_amount":2000,
+15 "updated_at":"2024-11-20T10:00:00",
+16 "is_active":true,
+17 "reset_at":"2024-11-21T00:00:00"
+18 }
+19 ],
+20 "WEEKLY":
+21
+22 ],
+23 "MONTHLY":
+24 {
+25 "id":2,
+26 "limit_amount":20000,
+27 "limit_type":"MONTHLY",
+28 "creation_date":"2024-11-01T00:00:00",
+29 "end_date":"2024-12-01T00:00:00",
+30 "player_id":123,
+31 "remaining_amount":15000,
+32 "curren
+c
+y":"USD",
+33 "percentage":25.0,
+34 "spent_amount":5000,
+35 "updated_at":"2024-11-25T12:00:00",
+36 "is_active":true,
+37 "reset_at":"2024-12-01T00:00:00"
+38 }
+39 ]
+40
+}
+41}
+[
+[
+[
+API Payment
+Get Payment URL
+Description: The Get Payment URL API generates a payment URL for processing deposits using a specified payment
+method and amount.
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+QueryParams:
+String lang
+short depositMethodId
+String amount
+String currencyCode
+String countryCode
+API Path:
+{{BasePath}}/payment/{version}/{operatorId}/{brandId}/getpaymenturl
+Authorization: Required
+Response:
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "url": "https://www.apsp.
+b
+iz/pay/FP6/Checkout.aspx?
+FPToken=BB5C4A
+09EB054B7CB0FE
+AD90EB86C841",
+5 "paymentId": "488"
+6 }
+,
+7 "errors":
+[]
+8 }
+During deposit, player can select a b
+onus offer to opt in for activation later. This is the first step for the deposit
+b
+onus activation process. In this phase, b
+efore completing the deposit, Validate Deposit Bonus Activation API
+can
+b
+e called to check eligi
+b
+ility to activate the selected b
+onus based on the deposit parameters/inputs. In any
+case, the
+b
+onus assignment in this step will not b
+lock the overall deposit flow. But in case,
+eligi
+b
+ility check
+passes successfully, b
+onus will
+b
+e assigned to the player (an offer with playerBonusId will
+b
+e created) and the
+activation follows in a second step via Activate Bonus Offer API.
+Get Withdrawal URL
+Description: The Get Withdrawal URL API generates a withdrawal URL for processing withdrawals using a specified
+payment method and amount.
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+int operatorId
+QueryParams:
+lang : String
+paymentMethodId : short
+amount : BigDecimal
+currencyCode : String
+countryCode : String
+API Path:
+{{BasePath}}/payment/{version}/{operatorId}/{brandId}/getwithdrawalurl
+Authorization: Required
+Response:
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "url":
+null,
+5 "paymentId": "1194"
+6 }
+,
+7 "errors":
+[]
+8 }
+Make Deposit
+Description: Processes a deposit transaction. Bank details are mandatory for bank deposits ( isBank=true )
+.
+approved transactions (with valid statusId ) can
+b
+e sub
+mitted.
+UPDATE:
+We have added the requested payment methods:
+Payment Method
+Name
+Payment Method Id Usage
+iPay88 1 Deposit
+PayPhone 2 Deposit
+PayCash 3 Deposit
+Fri 4 Deposit
+N1CO 5 Deposit
+Bank Transfer 6 Deposit
+Only
+HTTP Method: POST
+API Path: {{BasePath}}/payment/{version}/{operatorId}/{
+randId}/make-deposit
+b
+Authorization: Required
+Consumes: application/json
+Produces: application/json
+Path Parameters (Mandatory)
+version (String): API version (e.g., "v1")
+.
+operatorId (
+int): Unique identifier for the operator.
+randId (
+int): Unique identifier for the
+brand.
+b
+Request Body
+Send a JSON o
+bject of type with these fields:
+1 {
+2 "statusId": 1, - APPROVED only
+3 "additionalNotes": "string",
+4 "paymentMethodId": 0, - Required
+5 "amount": 0, - Required
+6 "playerId": 0, - Required
+7 "curren
+c
+yCode": "string", - Required e.g ("EUR", "USD")
+8 "c
+ountryCode": "string", - Required e.g ("MT", "US")
+9 "
+ank": true, - true/false, when
+ank transfer than true
+b
+b
+10 11 "lang": "string", - required e.g ("en", "de")
+"paymentExtId": "string", - Required ( UNIQUE ) - can
+b
+transactionId
+12 "acc
+ountHolderName": "string", - Required in
+case is a
+13 "
+b
+ankName": "string", - Optional
+14 "
+b
+ankAddress": "string", - Optional
+15 "
+b
+ankCountry": "string", - Optional
+16 "i
+b
+an": "string", - Required ( Unique )
+17 "
+b
+ankSwift": "string", - Optional
+18 "acc
+ountType": "string" - Mandatory
+19}
+e your
+ank transfer
+b
+Bank Details (Required if isBank=true )
+Note: acc
+ountType can
+b
+e: “SAVINGS”, “CURRENT”, “OTHER”
+Response
+Returns a JSON o
+bject with the structure:
+1 {
+2 "message": "Deposit made successfully",
+3 "data":
+{
+4 "url":
+null,
+5 "paymentId": "3346"
+6 }
+7 retry
+: true/false;
+8 }
+Make Withdraw
+Description: Processes a deposit transaction. Bank details are mandatory for bank withdraws ( isBank=true )
+.
+Only approved transactions (with valid statusId ) can
+b
+e sub
+mitted.
+UPDATE:
+We have added the requested payment methods:
+Payment Method
+Name
+Payment Method Id Usage
+iPay88 1 Withdraw
+PayPhone 2 Withdraw
+PayCash 3 Withdraw
+Fri 4 Withdraw
+N1CO 5 Withdraw
+Bank Transfer 6 Withdraw
+HTTP Method: POST
+API Path: {{BasePath}}/payment/{version}/{operatorId}/{
+randId}/make-withdraw
+b
+Authorization: Required
+Consumes: application/json
+Produces: application/json
+Path Parameters (Mandatory)
+version (String): API version (e.g., "v1")
+.
+operatorId (
+int): Unique identifier for the operator.
+randId (
+int): Unique identifier for the
+b
+brand.
+Request Body
+Send a JSON o
+bject of type with these fields:
+1 {
+2 "statusId": 1, - 1 - Approved, 0 - Pending
+3 "additionalNotes": "string",
+4 "paymentMethodId": 0, - Required
+5 "amount": 0, - Required
+6 "playerId": 0, - Required
+7 "curren
+c
+yCode": "string", - Required e.g ("EUR", "USD")
+8 "c
+ountryCode": "string", - Required e.g ("MT", "US")
+9 "
+b
+ank": true, - mandatory for withdraw
+10 "lang": "string", - required e.g ("en", "de")
+11 "paymentExtId": "string", - Required ( UNIQUE ) - can
+b
+transactionId
+12 "acc
+ountHolderName": "string", - Required in
+case is a
+13 "
+b
+ankName": "string", - Optional
+14 "
+b
+ankAddress": "string", - Optional
+15 "
+b
+ankCountry": "string", - Optional
+16 "i
+b
+an": "string", - Required ( Unique )
+17 "
+b
+ankSwift": "string", - Optional
+18 "acc
+ountType": "string" - Mandatory
+19}
+e your
+ank transfer
+b
+Bank Details (Required if isBank=true )
+Note: acc
+ountType can
+b
+e: “SAVINGS”, “CURRENT”, “OTHER”
+Change on Jul 7, 2025 : For bank withdraws the status needs to
+b
+Response
+Returns a JSON o
+bject with the structure:
+1 {
+2 "message": "Withdraw made successfully",
+3 "data":
+{
+4 "url":
+null,
+5 "paymentId": "3347"
+6 }
+7 retry
+: true/false;
+8 }
+e send as PENDING or 0 in this case.
+Make Cash Deposit
+Description: This API is used to validate the cash deposit, when player gets the voucher along with id and PIN it can
+insert and redeem the money
+POST request to process a cash deposit using a voucher.
+Endpoint: {{Basepath}}/payment/{version}/{operatorId}/{
+randId}/make-cash-
+b
+deposit
+Consumes: application/json
+Produces: application/json
+Path Parameters:
+version (String): API version (e.g., "v1")
+operatorId (
+int): Unique identifier for the operator
+brandId (
+int): Unique identifier for the
+brand
+Header Parameters:
+Authorization (String): Bearer token for authentication
+Request Body:
+1 {
+2 "voucherId": "string", - voucher's provided id from the system
+3 "voucherPin": "string", - voucher's provided pin from the system
+4 "curren
+c
+yCode": "string", - Curren
+c
+c
+y
+ode of the player's
+5 "c
+ountryCode": "string", - Country
+c
+ode of the player's
+6 "lang": "string", - Language
+7 "playerId": 0 - Player's c
+orrect Id
+8 }
+Response:
+1 {
+2 "message": "Voucher deposit made successfully",
+3 "data":
+{
+4 "url":
+null,
+5 "paymentId": "99"
+6 }
+7 }
+Make Cash Withdraw
+Description: This API is used for player to initiate a cash withdraw.
+POST request to initiate a cash withdrawal.
+Endpoint: {{Basepath}}/payment/{version}/{operatorId}/{
+randId}/make-cash-
+b
+withdraw
+Consumes: application/json
+Produces: application/json
+Path Parameters:
+version (String): API version (e.g., "v1")
+operatorId (
+int): Unique identifier for the operator
+brandId (
+int): Unique identifier for the
+brand
+Header Parameters:
+Authorization (String): Bearer token for authentication
+Request Body:
+1 {
+2 "amount": 0, - Desired amount for withdraw
+3 "curren
+c
+yCode": "string", - Curren
+c
+4 "c
+ountryCode": "string", - Country
+5 "lang": "string", - language c
+ode can
+6 "playerId": 0 - Player's c
+orrect Id
+7 }
+c
+y
+ode of the player's
+c
+ode of the player's
+e "en", "fr" etc.
+b
+Response:
+1 {
+2 "message": "Withdrawal made successfully",
+3 "data":
+{
+4 "cashWithdrawId": "120",
+5 "requestedAmount": 25,
+6 "createdAt": "2025-04-22T10:17:46.096+00:00",
+7 "status": "PENDING"
+8 }
+9}
+Cancel Voucher
+POST request to cancel a voucher.
+Endpoint: {{Basepath}}/payment/{version}/{operatorId}/{
+randId}/can
+cel-
+b
+voucher
+Consumes: application/json
+Produces: application/json
+Path Parameters:
+version (String): API version (e.g., "v1")
+operatorId (
+int): Unique identifier for the operator
+brandId (
+int): Unique identifier for the
+brand
+Query Parameters:
+cashWithdrawalId (String): Code of the voucher to cancel
+Header Parameters:
+Authorization (String): Bearer token for authentication
+Response:
+1 {
+2 "message": "Voucher can
+celled successfully",
+3 "data":
+null
+4}
+Get Cash Withdrawal
+GET request to retrieve cash withdrawal details for a player only PENDING transactions.
+Endpoint: {{Basepath}}/payment/{version}/{operatorId}/{
+b
+randId}/get-cash-
+withdrawal
+Produces: application/json
+Path Parameters:
+version (String): API version (e.g., "v1")
+operatorId (
+int): Unique identifier for the operator
+brandId (
+int): Unique identifier for the
+brand
+Query Parameters:
+playerId (Long): Unique identifier for the player
+page (
+int): Page num
+b
+er for pagination
+size (
+int): Num
+b
+er of records per page
+Header Parameters:
+Authorization (String): Bearer token for authentication
+Response:
+1 {
+2 "message": "Cash withdrawal retrieved successfully",
+3 "data":
+{
+4 "items":
+5 {
+6 "cashWithdrawId": "3",
+7 "requestedAmount": 25.00,
+8 "createdAt": "2025-04-05T14:38:09.379+00:00",
+9 "status": "PENDING"
+10
+,
+}
+11 {
+12 "cashWithdrawId": "2",
+13 "requestedAmount": 25.00,
+14 "createdAt": "2025-04-05T14:36:28.762+00:00",
+15 "status": "PENDING"
+16 }
+,
+17 {
+18 "cashWithdrawId": "1",
+19 "requestedAmount": 25.00,
+20 "createdAt": "2025-04-05T14:17:46.096+00:00",
+21 "status": "PENDING"
+22}
+23 ],
+24 "totalItems": 3,
+25 "page": 1,
+26 "size": 3,
+27 "totalPages": 1
+28 }
+29}
+[
+API Casino Games
+Download Games
+Description: This API downlaods the games and export game from game service.
+Http method: GET
+Query params:
+operatorId: REQUIRED
+brandId: REQUIRED
+page: REQUIRED
+size: REQUIRED
+gameProviderId: NOT REQUIRED
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+API Path:
+https://game
+-portal.
+int.dev.catoritech.com/gameservice/version/operatorId/brandId/downloadgames
+Authentication Bearer token mandatory
+Response:
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "data":
+5 {
+6 "gameId": 10009,
+7 "gameExtId": "KJHDI",
+8 "gameProviderId": 1,
+9 "gameProviderName": "WM",
+10 "gameName": "Happy Diamonds",
+11 "active": true
+12}
+,......
+13 ],
+14 "totalItems": 12,
+15 "page": 3,
+16 "size": 5,
+17 "totalPages": 3
+18 }
+,
+19 "retry": false
+20
+}
+[
+Launch URL
+Description: Returns the Launch URL of the game
+Http method: GET
+Path Params(Mandatory):
+String version
+short operatorId
+long brandId
+Query params:
+String currency = 3 digit code
+language = 2 digit code List of ISO 639 language codes
+Long playerWalletBonusId (
+if launching game with
+b
+onus balance)
+Boolean usesBonus (
+if launching game with
+b
+onus balance)
+isDemo=false
+Dev env sample URL:
+https://game
+-portal.
+int.dev.catoritech.com/gameservice/1/100/10/casino/launchurl/1535?
+currency=EUR&playerWalletBonusId=37&usesBonus=true&language=EN&isDemo=false
+API Path:
+{{BasePath}}/gameservice/{version}/{operatorId}/{brandId}/casino/launchurl/{gameId}
+Response:
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "id":
+null,
+5 "gameProviderId":
+6 "gameProviderName":
+7 "genre":
+null,
+8 "order":
+null,
+null,
+null,
+9 "name":
+null,
+10 "gameLaun
+chUrl":
+"https://casino.wmdev.eu/games/C
+ATORI/demo/105073?
+authuser=0&authkey=eyJh
+b
+GciOiJIUzI1NiJ9.eyJzdWIiOiJzdWJqZWN0IiwiZXhwIj
+oxNzIyMDgzNzU0LCJw
+GF5ZXJJZCI6IjAifQ.XSOdwf4J
+b
+bWN7hu36lgxZP6FMw5P4X
+-
+b
+n1H_DxpyxNOE&authskin=C
+ATORI&language=en
+&age=18&toggle=true&display=if
+rame&lo
+bbyurl=https://example.c
+om/lo
+bby",
+11 "gameLaun
+chUrlDemo":,
+12 "active": false,
+13 "thum
+nailUrl":
+null
+b
+14}
+,
+15 "retry": false
+16 }
+Update: When calling this API with query parameter usesBonus equal true, the game will launch with
+gameplay balance = real
+balance + b
+onus balance.
+If, during playing, b
+onus gets cleared/cancelled, system will automatically detect and update the game session
+to usesBonus equal false, and every casino transaction done after that will use real
+balance,
+only (
+by
+deafult)
+. (July 09, 2025)
+API Multilanguage
+API to get Multilanguage
+Description: This API returns all the lab
+els from the multilanguage this is a integration with the RestClient from the
+game
+-portal so we don't use directly the multilanguage API.
+Also in this scope is covered the preferred language for
+the player which means if the preferred language is changed also in the database the change will happen,
+lets say for
+example the player changes the preferred language to Espanol from English when this API is called the update will
+also happen if we provide the token for that player and the preferred language for the currently logged in player will
+b
+e
+changed in the database as well. If we don't provide a token we will get the lab
+els as well
+but the update in the
+database wont happen as the preferred language will
+b
+e the same as it is from sign in.
+For the lang param we have : en(English),
+es(Espanol), pt(Portugese),
+it(Italian)
+Http method: GET
+Path Params(Mandatory):
+String version
+lang lang
+Query Params(Mandatory):
+int brandId
+int operatorId
+API Path:
+{{BasePath}}/multilanguage/{version}/language/{lang}
+Response:
+1 {
+2 "data":
+{
+3 "_gam
+le_aware_": " Gam
+le Aware",
+b
+b
+4 "_I_am_hiding_my_finan
+cial_situation_from_those_
+close_to_me_":
+" I am hiding my finan
+cial situation from those close to me.",
+5 "_add_
+curren
+cies_": "Add Curren
+cies",
+6 "_fractional_": " Fractional",
+7 "_esports_": " eSports",
+8 "_send_us_message_": "Send us a message",
+9 "_limits_take_effect_immediately_": "Limits take effect
+immediately after
+b
+eing set.",
+10 "_error_updating_player_status_": "Error updating player
+status",
+11 "_
+b
+udget_for_your_gam
+b
+ling_actiivities_": " Budget for your
+gam
+b
+ling activities",
+12 "_retry_now_": "Retry Now",
+13 "_i_use_gam
+b
+ling_to_avoid_difficulties_": " I use gam
+b
+ling to
+avoid difficulties",
+14 "_make_transfer_": "Make a transfer",
+15 ....
+16 }
+17 }
+CMS
+Get Pages by Slug
+{{BasePath}}
+Endpoint: GET /{version}/dynamic-page/get-pages-
+by-slug
+Description: Retrieve pages and its components based on the provided slug and brand id .
+Parameters
+Name Description Type Param type
+slug The slug of the
+page.
+String Query param
+b
+randId The ID of the
+brand.
+Integer Query param
+version Path param
+version
+String Path Param
+Responses
+200 OK:
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "id": 1,
+5 "title": "string",
+6 "type": "string",
+7 "slug": "strinsg",
+8 "status": "DRAFT",
+9 "createdAt": "2025-01-29 15:50:49",
+10 "operatorId": 1,
+11 "
+randId": 1,b
+12 "c
+omponents":
+13 {
+14 "id": 1,
+15 "type": "test",
+16 "c
+ontent":
+{
+17 "empty": true,
+18 "something": "pizza",
+19 "num
+ers":
+b
+20 1,
+21 2,
+22 3,
+23 4,
+24 5,
+25 6
+26 ],
+27 "singleNum
+er": 1,
+b
+28 "image_url": "https://catoritech-games-assets.s3.eu-central-
+1.amazonaws.c
+om/Catori/c
+omponent-image/1739198107424_a
+b
+acus-logo.png"
+29}
+,
+30 "children":
+[]
+31}
+32 ]
+33}
+,
+34 "retry": false
+35 }
+[
+[
+Get Carousel and Banners
+{{BasePath}}
+GET /cms/{version}/get-carousel-and-
+b
+anners
+Fetches carousel and banners based on provided parameters.
+Request Parameters
+Parameter Type Location Required Description
+version String Path Yes API version
+operator
+Id
+int Query Yes Operator ID
+randIdint Query Yes Brand ID
+b
+carousel
+-id
+Integer Query No Carousel ID
+type String Query No Type of
+carousel
+active Boolean Query No Filter by
+active status
+visi
+leO
+Boolean Query No Show
+b
+nLogout
+carousels
+visi
+b
+le on
+logout
+page Integer Query Yes Page num
+b
+er
+(default: 1)
+size Integer Query Yes Page size
+(default: 10)
+Response
+1 {
+2 "resultCode": 0,
+3 "data":
+{
+4 "items":
+5 {
+6 "id": 1,
+7 "title":
+{
+8 "en": "Main Carousel edit",
+9 "fr": "Carrousel Prin
+cipal edit"
+,
+10
+}
+11 "rotationTime": 5000,
+12 "defaultBannerId":
+null,
+13 "active": true,
+14 "timeType": "milisec
+ondsedit",
+15 "
+anners":
+b
+16 {
+17 "id": 2,
+18 "title":
+{
+19 "en": "New Collection"
+20
+,
+}
+21 "imageUrl":
+null,
+22 "link": "https://example.c
+om/new-c
+ollection",
+23 "visi
+leFrom": "2024-02-01 00:00:00",
+b
+24 "visi
+leTo": "2024-12-31 23:59:59",
+b
+25 "visi
+b
+leOnLogout": true,
+26 "deleteOnExpiry": true,
+27 "active": true,
+28 "
+annerOrder": 0
+b
+29}
+,
+30 {
+31 "id": 1,
+32 "title":
+{
+33 "en": "Winter Sale",
+34 "fr": "Soldes d'hiver",
+35 "mk": "k15"
+36 }
+,
+37 "imageUrl":
+null,
+38 "link": "https://example.c
+om/winter-sale",
+39 "visi
+leFrom": "2024-01-01 00:00:00",
+b
+40 "visi
+leTo": "2024-12-31 23:59:59",
+b
+41 "visi
+b
+leOnLogout": false,
+42 "deleteOnExpiry": false,
+43 "active": true,
+44 "
+annerOrder": 1
+b
+45 }
+46 ],
+47 "page": "home",
+48 "type": "
+anner"
+b
+49}
+,.....
+50 ],
+51 "page": 1,
+52 "size": 10,
+53 "totalItems": 3,
+54 "totalPages": 1
+55 }
+,
+56 "retry": false
+57 }
+[
+[
+EXAMPLE OF RESPONSE PER PAGE TYPE :
+Contact page and its components :
+Contact page on A
+bacus :
+Response of the Contact page :
+1 {
+2 "id": 58,
+3 "title": "Contact",
+4 "type": "Contact",
+5 "slug": "c
+ontact",
+6 "status": "DRAFT",
+7 "createdAt": "2025-02-27 13:21:21",
+8 "operatorId": 1,
+9 "
+randId": 1,
+b
+10 "c
+omponents":
+11 {
+12 "id": 50,
+13 "type": "c
+ontact",
+14 "c
+ontent":
+{
+15 "0":
+{
+16 "fieldName": "Field 1"
+17 }
+18 }
+,
+19 "children":
+[]
+20
+}
+21 ]
+22}
+23
+[
+Note:
+Contact forms should by default have Name,
+Email and Message fields already set in the front-
+from the CMS are just extra fields that the contact form may require.
+end, the fields coming
+GRID Page type :
+Example in A
+bacus :
+Response of grid page and its layout :
+1 {
+2 "id": 60,
+3 "title": "Promotions-Page",
+4 "type": "Grid",
+5 "slug": "promotions-page",
+6 "status": "DRAFT",
+7 "createdAt": "2025-02-27 13:26:50",
+8 "operatorId": 1,
+9 "
+randId": 1,
+b
+10 "c
+omponents":
+11 {
+12 "id": 52,
+13 "type": "grid",
+14 "c
+ontent":
+{
+15 "listType": "grid",
+16 "gridItems":
+17 {
+18 "gridId": 1,
+19 "fileContent": "",
+20 "fileName": "",
+21 "title": "Title",
+22 "description": "Description",
+23 "
+uttonText": "
+utton text",
+b
+b
+24 "
+uttonUrl": "
+utton.link",
+b
+b
+25 "image": "https://catoritech-games-
+assets.s3.eu-central-
+1.amazonaws.c
+om/Catori/assets/1740662799458_a
+b
+acus-logo.png"
+26 }
+27 ]
+28 }
+,
+29 "children":
+[]
+30
+}
+31 ]
+32}
+33
+[
+[
+External page type :
+Example of External page in A
+bacus :
+Example response and layout of the External page :
+1 {
+2 "id": 61,
+3 "title": "External link",
+4 "type": "External",
+5 "slug": "external-link",
+6 "status": "DRAFT",
+7 "createdAt": "2025-02-27 13:27:48",
+8 "operatorId": 1,
+9 "
+randId": 1,
+b
+10 "c
+omponents":
+11 {
+12 "id": 53,
+13 "type": "external",
+14 "c
+ontent":
+{
+15 "externalUrl": "google.c
+16 }
+,
+17 "children":
+[]
+18 }
+19 ]
+20
+}
+[
+om"
+Accordion type page example :
+Note: accordion text returns html and json structure,
+either one of those will provide the necessary content depends
+on how it will
+b
+e setup,
+if its html setup then it will need to have some general CSS for lists, tab
+les etc...
+if its a json
+content that is needed to
+b
+e shown as components, then for each component type you generate the necessary UI
+Example of Accordion response :
+1 {
+2 "id": 63,
+3 "title": "New Faq Page",
+4 "type": "A
+cc
+ordion",
+5 "slug": "new-faq-page",
+6 "status": "DRAFT",
+7 "createdAt": "2025-02-27 13:46:52",
+8 "operatorId": 1,
+9 "
+randId": 1,
+b
+10 "c
+omponents":
+11 {
+12 "id": 55,
+13 "type": "acc
+ordion",
+14 "c
+ontent":
+{
+15 "0":
+{
+16 "acc
+ordionIdLo
+cal": 274337,
+[
+17 "acc
+ordionTitle": "Category",
+18 "c
+ontent":
+19 {
+20 "acc
+ordionIdLo
+cal": 326902,
+21 "acc
+ordionTitle": "Title",
+22 "acc
+ordionText":
+{
+23 "html": "<h3>Answer</h3><p></p>",
+24 "items":
+{
+25 "type": "do
+c",
+26 "c
+ontent":
+27 {
+28 "type": "heading",
+29 "attrs":
+{
+30 "textAlign":
+31 "level": 3
+32}
+,
+null,
+33 "c
+ontent":
+34 {
+35 "type":
+"text",
+36 "text":
+"Answer"
+37 }
+38 ]
+39}
+,
+40 {
+41 "type": "paragraph",
+42 "attrs":
+{
+43 "class":
+null,
+44 "textAlign":
+45 }
+null
+46 }
+47 ]
+48 }
+49}
+50
+}
+51 ]
+52}
+53}
+,
+54 "children":
+[]
+55 }
+56 ]
+57 }
+[
+[
+[
+Simple Page type in A
+bacus :
+Response example of simple page :
+1 {
+2 "id": 65,
+3 "title": "New Homepage Simple",
+4 "type": "Simple",
+5 "slug": "new-homepage-simple",
+6 "status": "DRAFT",
+7 "createdAt": "2025-02-27 13:52:48",
+8 "operatorId": 1,
+9 "
+randId": 1,
+b
+10 "c
+omponents":
+11 {
+12 "id": 57,
+13 "type": "do
+c",
+14 "c
+ontent":
+{
+15 "html": "<h3>Welc
+ome</h3><img
+src=\"https://catoritech-games-assets.s3.eu-central-
+1.amazonaws.c
+om/Catori/assets/1740664335945_a
+b
+acus-logo.png\" data-
+width=\"100%
+\" data-align=\"center\"><h2><strong>Paragraphs</strong>
+</h2><p>Lorem ipsum dolor sit amet, c
+onsectetuer adipiscing elit.
+Donec
+odio. Quisque volutpat mattis eros. Nullam malesuada erat ut
+turpis. Suspendisse urna ni
+h viverra non semper suscipit posuere a
+b
+pede.</p><h2><strong>Lists</strong></h2><ul><li><p>Lorem ipsum dolor
+sit amet, c
+onsectetuer adipiscing elit.</p></li><li><p>Aliquam
+tin
+cidunt mauris eu risus.</p></li><li><p>Donec quis dui at dolor
+tempor interdum.</p></li></ul><p></p>",
+16 "items":
+17 {
+18 "type": "heading",
+19 "attrs":
+{
+20 "textAlign":
+21 "level": 3
+22}
+,
+null,
+23 "c
+ontent":
+24 {
+25 "type": "text",
+26 "text": "Welc
+ome"
+27 }
+28 ]
+29}
+,
+30 {
+31 "type": "imageBlo
+ck",
+32 "attrs":
+{
+33 "src": "https://catoritech-games-
+assets.s3.eu-central-
+1.amazonaws.c
+om/Catori/assets/1740664335945_a
+b
+acus-logo.png",
+34 "width": "100%",
+35 "align": "center"
+36 }
+37 }
+,
+38 {
+39 "type": "heading",
+40 "attrs":
+{
+41 "textAlign":
+42 "level": 2
+43}
+,
+null,
+44 "c
+ontent":
+45 {
+46 "type": "text",
+47 "marks":
+48 {
+49 "type": "
+b
+old"
+50
+}
+51 ],
+52 "text": "Paragraphs"
+53}
+54 ]
+55 }
+,
+56 {
+57 "type": "paragraph",
+58 "attrs":
+{
+59 "class":
+null,
+60 "textAlign":
+null
+61}
+,
+[
+[
+[
+[
+[
+62 "c
+ontent":
+63 {
+64 "type": "text",
+65 "text": "Lorem ipsum dolor sit
+amet, c
+onsectetuer adipiscing elit. Donec
+odio. Quisque volutpat
+mattis eros. Nullam malesuada erat ut turpis. Suspendisse urna ni
+b
+viverra non semper suscipit posuere a pede."
+66 }
+67 ]
+h
+68 }
+,
+69 {
+70 "type": "heading",
+71 "attrs":
+{
+72 "textAlign":
+73 "level": 2
+74}
+,
+null,
+75 "c
+ontent":
+76 {
+77 "type": "text",
+78 "marks":
+79 {
+80 "type": "
+b
+81}
+82 ],
+83 "text": "Lists"
+old"
+84}
+85 ]
+86 }
+,
+87 {
+88 "type": "
+b
+89 "c
+ontent":
+ulletList",
+90 {
+91 "type": "listItem",
+92 "c
+ontent":
+93 {
+94 "type": "paragraph",
+95 "attrs":
+{
+96 "class":
+null,
+97 "textAlign":
+98 }
+,
+null
+99 "c
+ontent":
+100 {
+101 "type": "text",
+102 "text": "Lorem
+ipsum dolor sit amet, c
+onsectetuer adipiscing elit."
+103}
+104 ]
+105 }
+106 ]
+107 }
+,
+108 {
+109 "type": "listItem",
+110 "c
+ontent":
+111 {
+112 "type": "paragraph",
+113 "attrs":
+{
+114 "class":
+null,
+115 "textAlign":
+116 }
+,
+null
+117 "c
+ontent":
+118 {
+119 "type": "text",
+120 "text": "Aliquam
+tin
+cidunt mauris eu risus."
+121}
+122 ]
+123}
+124 ]
+125 }
+,
+126 {
+127 "type": "listItem",
+[
+[
+[
+[
+[
+[
+[
+[
+128 "c
+ontent":
+129 {
+130 "type": "paragraph",
+131 "attrs":
+{
+132 "class":
+null,
+133 "textAlign":
+134}
+,
+null
+135 "c
+ontent":
+136 {
+137 "type": "text",
+138 "text": "Donec
+quis dui at dolor tempor interdum."
+139}
+140 ]
+141}
+142 ]
+143}
+144 ]
+145 }
+,
+146 {
+147 "type": "paragraph",
+148 "attrs":
+{
+149 "class":
+null,
+150 "textAlign":
+151}
+null
+152}
+153 ]
+154}
+,
+155 "children":
+[]
+156 }
+157 ]
+158 }
+[
+[
+Note: The simple page editor returns in response HTML and json content, b
+oth of those have the exactly same result
+but its up to the development process to setup some general stuff,
+like if you use HTML it is necessary to have general
+list styles, tab
+le,
+image styles etc...
+or if going with json content, then its required to have a content UI generator based
+on item type, such as if a type is Paragraph, UI Text is displayed etc...
+API Sportsb
+ook
+Get launch url
+Description: With this method client can get a the sportsb
+ook iframe got logged in player and not logged in player
+Http method: GET
+Path Params(Mandatory):
+String version
+int brandId
+short operatorId
+Query Parameters:
+Query params are mandatory only for logged in players.
+Parameter Type Required Description
+walletId Integer Yes The selected
+wallet id.
+curren
+c
+y String Yes The selected
+currency.
+API Path:
+{{BasePath}}/altenar-sportsb
+Authorization: Required to get the token to place
+Response:
+ook/frontend/{operatorId}/{brandId}/launchurl
+b
+ets
+1 {
+2 "data":
+{
+3 "laun
+chUrl": "https://s
+2wsdk-altenar2-
+b
+stage.
+iahosted.c
+b
+om/altenarWSDK.js",
+4 "token": "e3a0d529d8c98c3649a2024f7eac6f5e"
+5 }
+6 }
+Response for not logged in users
+1 {
+2 "data":
+{
+3 "laun
+chUrl": "https://s
+2wsdk-altenar2-
+b
+stage.
+iahosted.c
+b
+om/altenarWSDK.js"
+4}
+5 }
+Get Player Bets
+Description: return the logged in user b
+ets placed.
+Http method: GET
+Query Param:
+Path Params(Mandatory):
+String version
+int brandId
+short operatorId
+API Path:
+{{BasePath}}/altenar-sportsb
+ascending=true&page=0&size=10&sort=b
+ook/frontend/{operatorId}/{brandId}/frontend/1/1/sportsb
+etStatus
+ook/player/tickets?
+Authorization: Required
+API Bonus
+Base url :
+https://game
+-portal.
+int.dev.yourdomain.com/b
+onus-tool/
+Check By Promotional Code
+Description:
+takes a string representing the promo code as input
+if such promo code exists,
+it returns 200,
+else it returns 400
+Http Method name : frontend/{version}/check-
+by-promo-c
+ode
+Http method: GET
+Request: Parameters
+Response: O
+bject
+1 {
+2 "message":
+null,
+3 "data": "<<found promotional c
+ode>>"
+4}
+Path Parameter: version (string)
+Query Parameter: curren
+c
+y (string)
+--currency code
+Query Parameter:
+randId (num
+b
+er)
+b
+Query Parameter: promoCode (string)
+Get Bonus Offers (Offline)
+Description:
+returns b
+onus promotions by brand
+Http Method name : frontend/{version}/
+Http method: GET
+Path Parameter: version (string)
+randId (num
+b
+er)
+b
+onus-promotion
+b
+Query Parameter:
+Response: O
+bject
+1 {
+2 "message":
+3 "data":
+null,
+4 {
+5 "
+onusId": 4,
+b
+6 "
+onusName": "test8",
+b
+7 "
+b
+onusExpirationDate": "2022-03-10T00:00:00Z",
+8 "promotionalAsset":
+{
+9 "id": 8,
+10 "thum
+b
+nailUrl": "payments_path",
+11 "title": "1st deposit
+onus",
+b
+12 "description":
+null,
+13 "cmsLink":
+null,
+14 "displayIn": "C
+MS"
+15 }
+16 }
+,
+17 {
+18 "
+onusId": 3,
+b
+19 "
+onusName": "test1",
+b
+20 "
+b
+onusExpirationDate": "2022-05-09T23:00:00Z",
+21 "promotionalAsset":
+{
+[
+22 "id": 6,
+23 "thum
+b
+nailUrl": "custom_page_path",
+24 "title": "1st deposit
+onus",
+b
+25 "description":
+null,
+26 "cmsLink":
+null,
+27 "displayIn": "C
+MS"
+28 }
+29}
+,
+30 {
+31 "
+onusId": 12,
+b
+32 "
+b
+onusName": "Registration Test Bonus",
+33 "
+b
+onusExpirationDate": "2025-03-10T16:15:50Z",
+34 "promotionalAsset":
+{
+35 "id": 16,
+36 "thum
+nailUrl": "https://www.cepolic
+b
+c
+ontent/uploads/2023/03/online-casino-welc
+ome-
+37 "title": "Welc
+ome Bonus",
+38 "description": "This is a welc
+ome
+onus",
+b
+39 "cmsLink": "test",
+40 "displayIn": "C
+MS"
+41}
+y.org/wp-
+b
+onuses.png",
+42}
+43 ]
+44}
+Get Pending Bonus Offers (Online)
+Description:
+returns pending player b
+onus offers by player (serve as an “info point” for player regarding b
+he/she can
+b
+e informed on current possi
+b
+b
+le
+onus offers that they can opt in to activate)
+onus offers where
+Http Method name : frontend/{version}/pending-
+onus-offers
+b
+Http method: GET
+Path Parameter: version (string)
+Query Parameter:
+randId (num
+b
+b
+er)
+Query Parameter: playerId (num
+b
+er)
+Query Parameter: displayIn (“PROMOTIONS” or “PAYMENTS”
+)
+Response: O
+bject
+1 {
+2 "message":
+3 "data":
+null,
+4 {
+5 "playerBonusId": 2873,
+6 "
+onusId": 12,
+b
+7 "
+b
+onusName": "Registration Test Bonus",
+8 "showInPromotions": true,
+9 "showInPayments": true,
+10 "
+b
+onusExpirationDate": "2025-03-10T16:15:50Z",
+11 "promotionalAsset":
+{
+12 "id": 16,
+13 "thum
+nailUrl": "https://www.cepolic
+b
+c
+ontent/uploads/2023/03/online-casino-welc
+ome-
+14 "title": "Welc
+ome Bonus",
+15 "description": "This is a welc
+ome
+onus",
+b
+16 "cmsLink": "test",
+y.org/wp-
+b
+onuses.png",
+[
+17 "displayIn": "PAYMENTS"
+18 }
+19}
+,
+20 {
+21 "playerBonusId": 2939,
+22 "
+onusId": 12,
+b
+23 "
+b
+onusName": "Registration Test Bonus",
+24 "showInPromotions": true,
+25 "showInPayments": true,
+26 "
+b
+onusExpirationDate": "2025-03-10T16:15:50Z",
+27 "promotionalAsset":
+{
+28 "id": 16,
+29 "thum
+nailUrl": "https://www.cepolic
+b
+c
+ontent/uploads/2023/03/online-casino-welc
+ome-
+30 "title": "Welc
+ome Bonus",
+31 "description": "This is a welc
+ome
+onus",
+b
+32 "cmsLink": "test",
+33 "displayIn": "PAYMENTS"
+34}
+y.org/wp-
+b
+onuses.png",
+35 }
+36 ]
+37 }
+Get Profile Bonus Offers
+Description:
+get assigned player b
+via Activate Bonus Offer API)
+onus offers ready to activate (contains all the data needed to activate a b
+onus for a player =>
+Http Method name : /frontend/{version}/
+onus-offers
+b
+Http method: GET
+Request:
+1 @PathParam("version") String version,
+2 @QueryParam("
+b
+randId") Integer
+randId,
+b
+3 @QueryParam("playerId") Long playerId)
+Response: O
+bject
+1 {
+2 "playerBonusId": 12345,
+3 "
+onusId": 67890,
+b
+4 "playerId": 54321,
+5 "triggerA
+ctionId": 1,
+6 "
+randId": 10,
+b
+7 "
+onusName": "Welc
+ome Bonus",
+b
+8 "validDays": "Monday,Wednesday,Friday",
+9 "validFrom": "2023-05-01T00:00:00+00:00",
+10 "validTo": "2023-05-31T23:59:59+00:00",
+11 "
+b
+onusExpirationDate": "2023-05-31T23:59:59+00:00"
+12}
+Get Active Bonus Offer
+Description:
+returns a list of active
+b
+onus offer for player
+Http Method name : /frontend/{version}/active-
+b
+onus-offer
+Http method: GET
+Path Parameter: version (string)
+Query Parameter: playerId (num
+Response: O
+bject
+b
+er)
+1 {
+2 "message":
+3 "data":
+null,
+[
+4 {
+5 "
+onusId": 12,
+b
+6 "
+b
+onusName": "Registration Test Bonus",
+7 "
+b
+onusExpirationDate": "2025-03-10T16:15:50Z",
+8 "promotionalAsset":
+{
+9 "id": 16,
+10 "thum
+nailUrl": "https://www.cepolic
+b
+c
+ontent/uploads/2023/03/online-casino-welc
+11 "title": "Welc
+ome Bonus",
+12 "description": "This is a welc
+ome
+b
+13 "cmsLink": "test",
+14 "displayIn": "C
+MS"
+15 }
+,
+ome-
+y.org/wp-
+b
+onuses.png",
+onus",
+16 "
+b
+onusProgress":
+{
+17 "playerBonusId": 2573,
+18 "pointsNeeded":
+null,
+19 "pointsCurrent":
+null,
+20 "
+onusAmount":
+null,
+b
+21 "status": "A
+CTIVE",
+22 "curren
+c
+y":
+null
+23}
+24}
+25 ]
+26 }
+Activate Bonus Offer
+Description:
+activates pending player b
+onus offer by player b
+onus id
+Http Method name : frontend/{version}/player-
+onus/activate-
+b
+b
+onus
+Http method: POST
+Path Parameter: version (string)
+Request Body:
+1 {
+2 "playerBonusId": 0, --- optional, usually for deposit
+there will always
+b
+e a playerBonusId so it is good to have it in
+onus offers
+b
+case
+of deposit
+onus activation
+b
+3 "playerId": 0, --- required for any type of
+onus
+b
+4 "
+b
+onusId": 0, --- required for any type of
+onus
+b
+5 "triggerA
+ctionId": 0, --- required for any type of
+onus
+b
+6 "operatorId": 0, --- optional
+7 "
+randId": 0, --- optional
+b
+8 "canBeAssignedToAll": true, --- required for registration
+onuses
+b
+9 "depositAmount": 0, --- optional
+10 "
+onusAmount": 0, --- optionalb
+11 "paymentMethodIntId": 0, --- optional
+12 "depositCount": 0, --- optional
+13 "actionDate": "2022-03-10T12:15:50-04:00", --- current action
+datetime required
+14 "curren
+cies":
+[ --- required for validation
+15 "string" --- "EUR","USD" etc.
+16 ]
+17 }
+Response: O
+bject
+1 {
+2 "message": "Player Bonus activated successfully",
+3 "data":
+null
+4}
+Deposit b
+onuses are activated in a two step process:
+- b
+- b
+onus assignment
+onus activation
+See more => CatoriTech API Integration | :check_mark: Get Payment URL
+Update Wagering Points
+Description:
+updates player b
+onus points until the wagering requirement is met
+Http Method name : frontend/{version}/player-
+b
+onus/update-wagering-points
+Http method: PUT
+Path Parameter: version (string)
+Request Body:
+1 {
+2 "playerId": 0,
+3 "
+et":
+{
+b
+4 "transactionId": 0,
+5 "gameId": 0,
+6 "type": "BET",
+7 "amount": 0,
+8 "curren
+c
+y": "string"
+9}
+10
+}
+Validate Game
+Description:
+validates if game is eligi
+b
+le to play with
+b
+onus or not
+Http Method name : frontend/{version}/validate-game
+Http method: POST
+Path Parameter: version (string)
+Request Body:
+1 {
+2 "playerId": 0,
+3 "gameIntId": 0
+4}
+Validate Deposit Bonus Activation
+Description:
+validates if a deposit b
+onus can
+b
+e activated or not based on certain inputs
+Http Method name : frontend/{version}/validate-
+onus-activation
+b
+Http method: POST
+Path Parameter: version (string)
+Request Body:
+1 {
+2 "triggerA
+ctionId": 0,
+3 "
+onusId": 0,
+b
+4 "playerId": 0,
+5 "depositAmount": 0,
+6 "paymentMethodId": 0,
+7 "curren
+cies":
+8 "string"
+9 ]
+10
+}
+[
+Retail
+Voucher Login
+Endpoint:
+POST /frontend/{version}/{operatorId}/{
+b
+randId}/voucher-signin
+Description:
+Allows a player to sign in using voucher credentials. Checks player status and permissions and returns a session
+token.
+Authentication Required:
+❌ No (open to all, but validated internally)
+Path Parameters:
+Parameter Type Required Description
+Parameter Type Required Description
+version String Yes API version
+operatorI
+d
+int Yes Operator ID
+randIdint Yes Brand ID
+b
+Query Parameters:
+Parameter Type Required Description
+lang String No Language code
+Request Body:
+LoginRequest – JSON o
+bject with login details.
+Example:
+1 {
+2 "loginIdentifier": "5064370f49", //we use voucherId/player username
+3 "password":
+"c07
+1af0f98240e255c751cc8
+1c
+e244f86722
+26859
+3f
+df755
+b
+b
+b
+bb
+b
+b
+b
+5f3020c2"
+4}
+Response:
+200 OK –
+Login successful, JWT returned via HTTP cookie
+400/401/403 –
+Authentication or validation failure
+500 Internal Server Error – Server-side error
+Voucher Logout
+Endpoint:
+POST /frontend/{version}/{operatorId}/{
+b
+randId}/logout-voucher
+Description:
+Logs out a voucher session
+based on the JWT's session ID (sid claim)
+.
+Authentication Required:
+✅ Yes (JWT required)
+Headers:
+Header Type Required Description
+Authorizat
+ion
+String Yes Bearer JWT
+token
+Path Parameters:
+Parameter Type Required Description
+Parameter Type Required Description
+version String Yes API version
+operatorI
+short Yes Operator ID
+d
+randId long Yes Brand ID
+b
+Query Parameters:
+Parameter Type Required Description
+lang String No Language code
+Response:
+200 OK –
+Logout successful
+400/401/403 –
+Authentication or token issues
+500 Internal Server Error – Unexpected error during logout

@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(kill:*)",
+      "Bash(pm2 list:*)",
+      "Bash(pm2 delete:*)",
+      "Bash(pkill:*)",
+      "Bash(xargs:*)",
+      "Bash(systemctl list-units:*)",
+      "Bash(pstree:*)",
+      "Bash(ps:*)",
+      "Bash(sudo -u ubuntu pm2 list:*)",
+      "Bash(sudo -u ubuntu pm2 delete:*)",
+      "Bash(sudo -u ubuntu pm2 start:*)",
+      "Bash(sudo -u ubuntu pm2 logs:*)",
+      "Bash(sudo -u ubuntu pm2 save:*)",
+      "Bash(pm2 start:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(pm2 save:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

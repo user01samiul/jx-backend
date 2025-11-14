@@ -1,0 +1,19 @@
+================================================================================
+PROVIDER CALLBACK TEST SUITE REPORT
+================================================================================
+
+SUMMARY:
+Total Tests: 25
+Passed: 25
+Failed: 0
+Success Rate: 100.00%
+Duration: 9472ms
+
+COMMAND BREAKDOWN:
+PING: 1/1 (100.00%)
+AUTHENTICATE: 4/4 (100.00%)
+BALANCE: 3/3 (100.00%)
+CHANGEBALANCE: 8/8 (100.00%)
+STATUS: 3/3 (100.00%)
+CANCEL: 3/3 (100.00%)
+FINISHROUND: 3/3 (100.00%)

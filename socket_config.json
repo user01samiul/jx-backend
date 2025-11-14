@@ -1,0 +1,24 @@
+{
+  "host": "backend.jackpotx.net",
+  "port": "8444",
+  "prefix": "https://",
+  "ssl": true,
+  "backend": {
+    "api_url": "https://backend.jackpotx.net/api/jxoriginals/callback",
+    "operator_id": "jackpotx_operator",
+    "secret_key": "jxoriginals_secret_key_2024"
+  },
+  "games_path": "/var/www/html/backend.jackpotx.net/JxOriginalGames",
+  "database": {
+    "host": "localhost",
+    "user": "postgres",
+    "password": "12358Voot#",
+    "database": "jackpotx-db",
+    "port": 5432
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "console": true
+  }
+}

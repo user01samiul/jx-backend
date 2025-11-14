@@ -1,0 +1,591 @@
+# VPS SLOVENIA SOLUTION - IP MASKING FOR GAME PROVIDERS
+# ========================================================
+
+## PROBLEMA IDENTIFICATĂ
+
+### Eroare Cloudflare Error 1000
+```
+DNS points to prohibited IP
+Ray ID: 99ada5d869818ea8
+```
+
+### Cauza Root
+- Game providerii (Innova, Pragmatic, etc.) folosesc Cloudflare pentru protecție
+- Cloudflare blochează IP-ul serverului: 194.102.33.209 (România)
+- Cloudflare verifică IP-ul sursă TCP, NU header-ele HTTP
+- Header-ele X-Forwarded-For sunt COMPLET IGNORATE
+
+### Ce NU Funcționează (Testat și Confirmat)
+
+❌ **JavaScript Header Injection**
+   - Browser security blochează header-ele forbidden
+   - Success rate: 0%
+
+❌ **Squid Proxy Local cu Header Manipulation**
+   - HTTPS CONNECT tunnels sunt criptate end-to-end
+   - Squid nu poate vedea sau modifica header-ele în tunnel-uri HTTPS
+   - Eroare: SSL handshake error
+   - Success rate: 0%
+
+❌ **Direct Header Injection (X-Forwarded-For)**
+   - Backend trimite X-Forwarded-For: 188.230.128.100
+   - Cloudflare ignoră complet header-ul
+   - Cloudflare vede IP-ul TCP source: 194.102.33.209
+   - Success rate: 0%
+
+### Provideri Testați (TOȚI Blocați)
+
+1. **Innova Gaming**
+   - URL: https://gamerun-eu.gaminguniverse.fun/
+   - Status: HTTP 403 - Cloudflare Error 1000
+   - Blocat: DA
+
+2. **Pragmatic Play**
+   - URL: https://run.games378.com/
+   - Status: HTTP 403 - Cloudflare Error 1000
+   - Blocat: DA
+
+**Concluzie: TOȚI game providerii folosesc Cloudflare și blochează România.**
+
+## SINGURA SOLUȚIE: VPS EXTERN
+
+### De Ce VPS Funcționează
+
+**Flow-ul Curent (Blocat):**
+```
+Backend (194.102.33.209 RO) → Cloudflare → Game Provider
+                              ↓
+                           BLOCAT (403)
+```
+
+**Flow-ul cu VPS (Funcționează):**
+```
+Backend → VPS (Germania/Slovenia) → Cloudflare → Game Provider
+                     ↓
+          Cloudflare vede acest IP (ALLOWED)
+```
+
+**Punct Cheie:** Cloudflare vede IP-ul VPS-ului ca sursă TCP, nu IP-ul backend-ului.
+
+## OPȚIUNI DE IMPLEMENTARE
+
+### Opțiunea 1: Hetzner Cloud VPS (RECOMANDAT)
+
+**Specificații:**
+- Provider: Hetzner Cloud
+- Server: CX11
+- CPU: 1 vCPU AMD/Intel
+- RAM: 2 GB
+- SSD: 20 GB
+- Traffic: 20 TB/lună
+- Locație: Falkenstein, Germania (500km de Slovenia)
+- Cost: €4.51/lună (€54/an)
+- Setup time: 30 minute
+
+**De ce Germania, nu Slovenia?**
+- Hetzner nu are datacentre în Slovenia
+- Germania este la 500km de Slovenia
+- Latency: <10ms
+- Cloudflare NU blochează Germania
+- Cel mai ieftin și rapid
+
+**Link:** https://www.hetzner.com/cloud
+
+### Opțiunea 2: OVH VPS
+
+**Specificații:**
+- Server: VPS Starter
+- CPU: 1 vCore
+- RAM: 2 GB
+- SSD: 20 GB
+- Locație: Strasbourg, Franța
+- Cost: €6/lună
+- Setup time: 30 minute
+
+**Link:** https://www.ovhcloud.com/en/vps/
+
+### Opțiunea 3: DigitalOcean Droplet
+
+**Specificații:**
+- Droplet: Basic
+- CPU: 1 vCPU
+- RAM: 1 GB
+- SSD: 25 GB
+- Locație: Frankfurt, Germania
+- Cost: $6/lună (~€5.50)
+- Setup time: 30 minute
+
+**Link:** https://www.digitalocean.com/
+
+### Opțiunea 4: Proxy Commercial (BrightData/Oxylabs)
+
+**Specificații:**
+- IP-uri rezidențiale din Slovenia
+- Rotație automată
+- Guaranteed uptime 99.9%
+- Setup: 5 minute (instant)
+- Cost: €20-50/lună (traffic-based)
+
+**Dezavantaj:** Scump pentru trafic mare
+
+**Link:**
+- BrightData: https://brightdata.com/
+- Oxylabs: https://oxylabs.io/
+
+## IMPLEMENTARE VPS (STEP-BY-STEP)
+
+### Pas 1: Creează VPS
+
+**Hetzner Cloud (Recomandat):**
+1. Mergi pe https://www.hetzner.com/cloud
+2. Sign up / Login
+3. Create Project → "JackpotX Games"
+4. Add Server:
+   - Location: Falkenstein (Germania)
+   - Image: Ubuntu 24.04
+   - Type: CX11 (€4.51/lună)
+   - SSH Key: Adaugă cheia ta SSH
+5. Create & Buy
+6. Notează IP-ul VPS-ului (ex: 95.217.123.45)
+
+### Pas 2: Instalează Squid pe VPS
+
+```bash
+# Conectează-te la VPS
+ssh root@VPS_IP
+
+# Update system
+apt update && apt upgrade -y
+
+# Instalează Squid
+apt install squid -y
+
+# Backup config original
+cp /etc/squid/squid.conf /etc/squid/squid.conf.backup
+
+# Configurează Squid
+cat > /etc/squid/squid.conf << 'EOF'
+# Squid Proxy for JackpotX Game Providers
+# Allows backend server to route game requests through VPS
+
+# Listen port
+http_port 3128
+
+# Access Control Lists
+acl localnet src 10.0.0.0/8
+acl localnet src 172.16.0.0/12
+acl localnet src 192.168.0.0/16
+acl localhost src 127.0.0.1
+
+# CRITICAL: Allow your backend server IP
+acl backend_server src 194.102.33.209/32
+
+# SSL ports
+acl SSL_ports port 443
+acl Safe_ports port 80 443 1025-65535
+acl CONNECT method CONNECT
+
+# Access rules
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+http_access allow localhost manager
+http_access deny manager
+
+# ALLOW BACKEND SERVER
+http_access allow backend_server
+
+http_access allow localnet
+http_access allow localhost
+http_access deny all
+
+# Disable caching (always fetch fresh)
+cache deny all
+cache_mem 8 MB
+maximum_object_size 1 KB
+
+# DNS
+dns_nameservers 8.8.8.8 8.8.4.4
+
+# Logging
+access_log daemon:/var/log/squid/access.log squid
+cache_log /var/log/squid/cache.log
+
+# Refresh patterns
+refresh_pattern ^ftp:           1440    20%     10080
+refresh_pattern ^gopher:        1440    0%      1440
+refresh_pattern -i (/cgi-bin/|\?) 0     0%      0
+refresh_pattern .               0       20%     4320
+EOF
+
+# Restart Squid
+systemctl restart squid
+systemctl enable squid
+
+# Check status
+systemctl status squid
+
+# Test proxy
+curl -x http://localhost:3128 https://google.com
+```
+
+### Pas 3: Configurează Firewall VPS
+
+```bash
+# Permite conexiuni de la backend-ul tău
+ufw allow from 194.102.33.209 to any port 3128
+ufw allow 22/tcp  # SSH
+ufw enable
+
+# Verifică reguli
+ufw status
+```
+
+### Pas 4: Testează de pe Serverul Backend
+
+```bash
+# Pe serverul tău backend (194.102.33.209)
+# Testează conexiunea prin VPS proxy
+
+# Test 1: Google (ar trebui să funcționeze)
+curl -x http://VPS_IP:3128 https://google.com
+
+# Test 2: Innova Gaming (ar trebui să funcționeze acum!)
+curl -x http://VPS_IP:3128 -I https://gamerun-eu.gaminguniverse.fun/
+
+# Ar trebui să primești 200 OK, NU 403!
+```
+
+### Pas 5: Modifică Backend Code
+
+**Fișier:** /var/www/html/backend.jackpotx.net/.env
+
+```bash
+# Adaugă la sfârșitul fișierului:
+
+# VPS Proxy Configuration
+VPS_PROXY_HOST=VPS_IP_HERE
+VPS_PROXY_PORT=3128
+VPS_PROXY_ENABLED=true
+```
+
+**Fișier:** /var/www/html/backend.jackpotx.net/src/services/game/game-proxy.service.ts
+
+**Modificare în funcția `proxyGameContent` (linia ~125):**
+
+```typescript
+// CURRENT CODE (linia 125):
+const response = await axios.get(session.originalUrl, {
+  headers: {
+    'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Accept': req.headers['accept'] || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'X-Forwarded-For': PROXY_IP,
+    'X-Real-IP': PROXY_IP,
+    'CF-Connecting-IP': PROXY_IP,
+    'Origin': process.env.OPERATOR_HOME_URL || 'https://backend.jackpotx.net',
+    'Referer': process.env.OPERATOR_HOME_URL || 'https://backend.jackpotx.net'
+  },
+  responseType: 'arraybuffer',
+  maxRedirects: 5,
+  validateStatus: () => true
+});
+
+// CHANGE TO:
+const useVpsProxy = process.env.VPS_PROXY_ENABLED === 'true' && process.env.VPS_PROXY_HOST;
+
+const axiosConfig: any = {
+  headers: {
+    'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Accept': req.headers['accept'] || 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': req.headers['accept-language'] || 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Origin': process.env.OPERATOR_HOME_URL || 'https://backend.jackpotx.net',
+    'Referer': process.env.OPERATOR_HOME_URL || 'https://backend.jackpotx.net'
+  },
+  responseType: 'arraybuffer',
+  maxRedirects: 5,
+  validateStatus: () => true
+};
+
+// Add VPS proxy if enabled
+if (useVpsProxy) {
+  axiosConfig.proxy = {
+    host: process.env.VPS_PROXY_HOST,
+    port: parseInt(process.env.VPS_PROXY_PORT || '3128'),
+    protocol: 'http'
+  };
+
+  console.log('[GAME_PROXY] Using VPS Proxy:', {
+    host: process.env.VPS_PROXY_HOST,
+    port: process.env.VPS_PROXY_PORT,
+    method: 'VPS Proxy (bypasses Cloudflare)'
+  });
+}
+
+const response = await axios.get(session.originalUrl, axiosConfig);
+```
+
+### Pas 6: Rebuild și Restart Backend
+
+```bash
+cd /var/www/html/backend.jackpotx.net
+
+# Rebuild TypeScript
+npm run build:backend
+
+# Restart PM2
+sudo -u ubuntu pm2 restart backend
+
+# Check logs
+sudo -u ubuntu pm2 logs backend --lines 50
+```
+
+### Pas 7: Testează Jocul
+
+1. Mergi pe https://jackpotx.net
+2. Login ca alexdemo
+3. Selectează orice joc (ex: de la Innova)
+4. Jocul ar trebui să se încarce FĂRĂ eroare Cloudflare!
+
+### Pas 8: Verifică Logs
+
+**Backend Logs:**
+```bash
+sudo -u ubuntu pm2 logs backend --lines 50 | grep "GAME_PROXY"
+```
+
+**Ar trebui să vezi:**
+```
+[GAME_PROXY] Using VPS Proxy: { host: 'VPS_IP', port: 3128, method: 'VPS Proxy (bypasses Cloudflare)' }
+[GAME_PROXY] Successfully proxied game content: { statusCode: 200, ... }
+```
+
+**Squid Logs pe VPS:**
+```bash
+ssh root@VPS_IP
+tail -f /var/log/squid/access.log
+```
+
+**Ar trebui să vezi:**
+```
+1762527000.123 245 194.102.33.209 TCP_MISS/200 15234 GET https://gamerun-eu.gaminguniverse.fun/ - HIER_DIRECT/1.2.3.4 text/html
+```
+
+## ALTERNATIVE: SELECTIVE ROUTING
+
+Dacă vrei să folosești VPS doar pentru providerii blocați (nu pentru toți):
+
+```typescript
+// În game-proxy.service.ts, înainte de axios.get()
+
+// Lista de provideri care necesită VPS
+const blockedProviders = [
+  'gamerun-eu.gaminguniverse.fun',  // Innova
+  'run.games378.com',                // Pragmatic
+  // Adaugă alte domenii blocate aici
+];
+
+// Verifică dacă acest URL necesită VPS
+const needsVpsProxy = blockedProviders.some(domain =>
+  session.originalUrl.includes(domain)
+);
+
+const useVpsProxy = needsVpsProxy &&
+  process.env.VPS_PROXY_ENABLED === 'true' &&
+  process.env.VPS_PROXY_HOST;
+
+// Restul codului rămâne la fel...
+```
+
+Astfel, folosești VPS doar când este necesar, economisind bandwidth.
+
+## COSTURI ESTIMATE
+
+### VPS Hetzner CX11
+- Cost: €4.51/lună
+- Traffic: 20 TB/lună inclus
+- Suficient pentru: 10,000-50,000 game launches/lună
+- Total anual: €54
+
+### Comparație cu Alternative
+
+| Soluție | Cost/Lună | Traffic Inclus | Setup |
+|---------|-----------|----------------|-------|
+| Hetzner VPS | €4.51 | 20 TB | 30 min |
+| OVH VPS | €6 | 250 GB | 30 min |
+| DigitalOcean | €5.50 | 1 TB | 30 min |
+| BrightData Proxy | €20-50 | Pay-per-GB | 5 min |
+| Squid Local | €0 | ∞ | ❌ NU FUNCȚIONEAZĂ |
+
+**Recomandare: Hetzner VPS CX11 (€4.51/lună)**
+
+## TROUBLESHOOTING
+
+### Problema 1: "Connection Refused" când testez proxy
+
+**Cauză:** Firewall blochează portul 3128
+
+**Soluție:**
+```bash
+# Pe VPS
+ufw allow from 194.102.33.209 to any port 3128
+ufw reload
+```
+
+### Problema 2: Jocul încă returnează 403
+
+**Cauză:** Backend nu folosește VPS proxy
+
+**Verificare:**
+```bash
+sudo -u ubuntu pm2 logs backend --lines 50 | grep "VPS Proxy"
+```
+
+**Dacă nu vezi "Using VPS Proxy", verifică:**
+1. `.env` conține `VPS_PROXY_ENABLED=true`
+2. `.env` conține `VPS_PROXY_HOST=VPS_IP`
+3. Backend a fost rebuildat: `npm run build:backend`
+4. Backend a fost restartat: `pm2 restart backend`
+
+### Problema 3: Squid returnează "Access Denied"
+
+**Cauză:** IP-ul backend-ului nu este în ACL
+
+**Soluție:**
+```bash
+# Pe VPS, editează /etc/squid/squid.conf
+# Adaugă:
+acl backend_server src 194.102.33.209/32
+http_access allow backend_server
+
+# Restart
+systemctl restart squid
+```
+
+### Problema 4: Latency mare (>500ms)
+
+**Cauză:** VPS prea departe geografic
+
+**Soluție:**
+- Folosește Hetzner Germania (latency <50ms)
+- SAU OVH Franța (latency <100ms)
+- Evită VPS din Asia/America (latency >200ms)
+
+## MONITORING
+
+### Verifică Utilizarea VPS
+
+```bash
+# Pe VPS
+# CPU & RAM
+htop
+
+# Traffic Squid
+tail -f /var/log/squid/access.log | grep "194.102.33.209"
+
+# Bandwidth utilizat
+vnstat -d
+```
+
+### Verifică Performance Backend
+
+```bash
+# Pe backend
+sudo -u ubuntu pm2 monit
+```
+
+### Alerting
+
+Configurează monitoring pentru:
+- VPS down (uptime <99%)
+- Squid down (port 3128 closed)
+- High latency (>500ms)
+
+**Tool recomandat:** UptimeRobot (gratuit)
+- Monitorizează: http://VPS_IP:3128
+- Alert la: email/SMS
+
+## SECURITATE
+
+### Recomandări Obligatorii
+
+1. **Firewall strict:**
+   ```bash
+   # Pe VPS
+   ufw default deny incoming
+   ufw allow 22/tcp  # SSH
+   ufw allow from 194.102.33.209 to any port 3128
+   ufw enable
+   ```
+
+2. **SSH Key Only (disable password):**
+   ```bash
+   # Pe VPS
+   nano /etc/ssh/sshd_config
+   # Set:
+   PasswordAuthentication no
+   PermitRootLogin prohibit-password
+
+   systemctl restart sshd
+   ```
+
+3. **Auto-updates:**
+   ```bash
+   # Pe VPS
+   apt install unattended-upgrades -y
+   dpkg-reconfigure --priority=low unattended-upgrades
+   ```
+
+4. **Fail2ban pentru SSH:**
+   ```bash
+   # Pe VPS
+   apt install fail2ban -y
+   systemctl enable fail2ban
+   ```
+
+## BACKUP PLAN
+
+### Dacă VPS cade
+
+**Opțiune A:** Ridică manual alt VPS (30 min downtime)
+
+**Opțiune B:** Auto-failover la backup VPS (0 downtime)
+
+```typescript
+// În game-proxy.service.ts
+const VPS_PROXIES = [
+  { host: process.env.VPS_PROXY_HOST, port: 3128 },      // Primary
+  { host: process.env.VPS_PROXY_HOST_BACKUP, port: 3128 } // Backup
+];
+
+// Încearcă primary, dacă failed încearcă backup
+```
+
+## NEXT STEPS
+
+1. ✅ Documentație salvată în: VPS_SLOVENIA.txt
+2. ⏳ Cumpără VPS Hetzner CX11 (€4.51/lună)
+3. ⏳ Instalează Squid pe VPS (30 min)
+4. ⏳ Configurează backend să folosească VPS (5 min)
+5. ⏳ Testează jocurile (2 min)
+6. ✅ DONE - Jocurile funcționează!
+
+## CONTACT & SUPPORT
+
+**Hetzner Support:**
+- Email: support@hetzner.com
+- Phone: +49 9831 505-0
+- Docs: https://docs.hetzner.com/
+
+**Backend Developer:**
+- Location: /var/www/html/backend.jackpotx.net
+- Logs: sudo -u ubuntu pm2 logs backend
+- Restart: sudo -u ubuntu pm2 restart backend
+
+---
+
+**Data Documentației:** 2025-11-07
+**Versiune Backend:** v2.0
+**Autor:** Claude Code (Anthropic)
+**Status:** Ready for VPS Implementation

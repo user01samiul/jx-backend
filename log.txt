@@ -1,0 +1,1937 @@
+
+> jackpotx-backend@1.0.0 dev
+> ts-node-dev --respawn --transpile-only index.ts
+
+[INFO] 11:58:35 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.8.3)
+[CRITICAL] Provider callback service loaded - VERSION 2.0
+[HEALTH_MONITOR] Starting health monitoring...
+Loaded Swagger paths: [
+  '/api/admin-modules/my-modules',
+  '/api/admin-modules/roles',
+  '/api/admin-modules/by-role/{roleId}',
+  '/api/admin-modules/all',
+  '/api/admin-modules',
+  '/api/admin-modules/{id}',
+  '/api/admin/provider/validate-transaction',
+  '/api/admin/provider/list-cancellable-transactions',
+  '/api/admin/provider/transaction-details',
+  '/api/admin/dashboard/stats',
+  '/api/admin/games',
+  '/api/admin/games/status',
+  '/api/admin/games/status/id',
+  '/api/admin/games/status/category',
+  '/api/admin/games/status/provider',
+  '/api/admin/games/status/bulk',
+  '/api/admin/games/status/stats',
+  '/api/admin/games/status/changes',
+  '/api/admin/games/{id}',
+  '/api/admin/categories',
+  '/api/admin/categories/{id}',
+  '/api/admin/categories/bulk',
+  '/api/admin/categories/stats',
+  '/api/admin/categories/hierarchy',
+  '/api/admin/categories/migrate',
+  '/api/admin/categories/{id}/games',
+  '/api/admin/roles',
+  '/api/admin/roles/{id}',
+  '/api/admin/users/{id}/roles',
+  '/api/admin/users/{id}/roles/{roleId}',
+  '/api/admin/users',
+  '/api/admin/users/{id}/status',
+  '/api/admin/users/{id}/balance',
+  '/api/admin/users/{id}/disable',
+  '/api/admin/users/{id}/enable',
+  '/api/admin/users/{id}/activate',
+  '/api/admin/users/{id}/deactivate',
+  '/api/admin/users/{id}/suspend',
+  '/api/admin/users/{id}/ban',
+  '/api/admin/affiliates',
+  '/api/admin/users/{id}/topup',
+  '/api/admin/providers',
+  '/api/admin/providers/{id}',
+  '/api/admin/providers/{id}/activate',
+  '/api/admin/transactions',
+  '/api/admin/transactions/{id}/approve',
+  '/api/admin/settings',
+  '/api/admin/analytics/revenue',
+  '/api/admin/analytics/users',
+  '/api/admin/game-provider',
+  '/api/admin/import-games',
+  '/api/admin/import-game',
+  '/api/admin/game-import/status',
+  '/api/admin/import-all-games',
+  '/api/admin/payment-gateways',
+  '/api/admin/payment-gateways/{id}',
+  '/api/admin/payment-gateways/active',
+  '/api/admin/payment-gateways/{id}/test',
+  '/api/admin/payment-gateways/{id}/stats',
+  '/api/admin/ggr-filter',
+  '/api/admin/ggr-audit-logs',
+  '/api/admin/ggr-report-summary',
+  '/api/admin/modules',
+  '/api/admin/modules/hierarchy',
+  '/api/admin/modules/{id}',
+  '/api/admin/activities',
+  '/api/admin/rtp/settings',
+  '/api/admin/rtp/analytics',
+  '/api/admin/rtp/bulk-update',
+  '/api/admin/rtp/report',
+  '/api/admin/bets',
+  '/api/admin/analytics/profit',
+  '/api/admin/rtp/target-profit',
+  '/api/admin/rtp/auto-adjustment',
+  '/api/admin/profit/analytics',
+  '/api/admin/profit/auto-adjustment',
+  '/api/admin/profit/performance',
+  '/api/admin/cron/status',
+  '/api/admin/cron/start',
+  '/api/admin/cron/stop',
+  '/api/admin/cron/trigger-auto-adjustment',
+  '/api/admin/cron/trigger-daily-summary',
+  '/api/admin/promotions',
+  '/api/admin/promotions/{id}',
+  '/api/admin/promotions/{id}/toggle',
+  '/api/admin/promotions/stats',
+  '/api/admin/promotions/stats/overview',
+  '/api/admin/promotions/{id}/claims',
+  '/api/admin/kyc/pending',
+  '/api/admin/kyc/{user_id}',
+  '/api/admin/kyc/{user_id}/approve',
+  '/api/admin/kyc/{user_id}/reject',
+  '/api/admin/kyc/documents',
+  '/api/admin/kyc/documents/{document_id}/verify',
+  '/api/admin/kyc/{user_id}/risk-assessment',
+  '/api/admin/kyc/reports',
+  '/api/admin/kyc/audit-logs',
+  '/api/admin/system/reset',
+  '/api/admin/system/reset/stats',
+  '/api/admin/users/bulk-status',
+  ... 118 more items
+]
+Server running on http://localhost:3000
+[APP] Starting background cron jobs...
+[CRON_MANAGER] Cron jobs disabled via DISABLE_CRON_JOBS environment variable
+[APP] Background cron jobs initialized
+MongoDB connected: mongo
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:05:00","hash":"70dbc3271e9c0037d5c022aeaf9e47c2264e2276","data":{"transaction_type":"BET","amount":0.75,"currency_code":"USD","transaction_id":2244871,"round_id":1354921,"round_finished":false,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790364ae62f5e-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790364ae62f5e-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:05:00',
+    hash: '70dbc3271e9c0037d5c022aeaf9e47c2264e2276',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.75,
+      currency_code: 'USD',
+      transaction_id: 2244871,
+      round_id: 1354921,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:58:49.804Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:05:00",
+  "hash": "70dbc3271e9c0037d5c022aeaf9e47c2264e2276",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.75,
+    "currency_code": "USD",
+    "transaction_id": 2244871,
+    "round_id": 1354921,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:05:00",
+  "hash": "70dbc3271e9c0037d5c022aeaf9e47c2264e2276",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.75,
+    "currency_code": "USD",
+    "transaction_id": 2244871,
+    "round_id": 1354921,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790364ae62f5e-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:05:00',
+    hash: '70dbc3271e9c0037d5c022aeaf9e47c2264e2276',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.75,
+      currency_code: 'USD',
+      transaction_id: 2244871,
+      round_id: 1354921,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:58:49.806Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'BET',
+    amount: 0.75,
+    currency_code: 'USD',
+    transaction_id: 2244871,
+    round_id: 1354921,
+    round_finished: false,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:05:00",
+  "hash": "70dbc3271e9c0037d5c022aeaf9e47c2264e2276",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.75,
+    "currency_code": "USD",
+    "transaction_id": 2244871,
+    "round_id": 1354921,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: BET, amount: 0.75, parsed: -0.75, type: BET
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($0.75)',
+  transaction_type: 'BET',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: false
+}
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: BET
+[DEBUG] CHANGEBALANCE: Validating game 4
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Found 0 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244871 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing bet of $0.75
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 0.75,
+  adjustedAmount: 0.75,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.75,
+      "currency_code": "USD",
+      "transaction_id": 2244871,
+      "round_id": 1354921,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:05:00",
+    "hash": "70dbc3271e9c0037d5c022aeaf9e47c2264e2276"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:58:49",
+    "hash": "d0a77aec7f784734563db7ffb75080bf2fd4b171",
+    "data": {
+      "transaction_id": 2244871,
+      "status": "OK",
+      "balance": 33.3,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.75,
+      "currency_code": "USD",
+      "transaction_id": 2244871,
+      "round_id": 1354921,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:05:00",
+    "hash": "70dbc3271e9c0037d5c022aeaf9e47c2264e2276"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:58:49",
+    "hash": "d0a77aec7f784734563db7ffb75080bf2fd4b171",
+    "data": {
+      "transaction_id": 2244871,
+      "status": "OK",
+      "balance": 33.3,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 150.019 ms - 543[0m
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d7909c0aafe545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d7909c0ab0e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[0mGET /api/user/balance [32m200[0m 46.995 ms - 592[0m
+[0mGET /api/user/category-balances [32m200[0m 39.767 ms - 135[0m
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:10:00","hash":"374436b774ffb412c7d6963037c6d97e4bbeeeda","data":{"transaction_type":"BET","amount":0.1,"currency_code":"USD","transaction_id":2244873,"round_id":1354923,"round_finished":false,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790af68a92f41-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af68a92f41-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244873,
+      round_id: 1354923,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:08.809Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244873,
+    "round_id": 1354923,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244873,
+    "round_id": 1354923,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af68a92f41-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244873,
+      round_id: 1354923,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:08.812Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'BET',
+    amount: 0.1,
+    currency_code: 'USD',
+    transaction_id: 2244873,
+    round_id: 1354923,
+    round_finished: false,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244873,
+    "round_id": 1354923,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: BET, amount: 0.1, parsed: -0.1, type: BET
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($0.10)',
+  transaction_type: 'BET',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: false
+}
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: BET
+[DEBUG] CHANGEBALANCE: Validating game 4
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Found 0 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244873 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing bet of $0.10
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 0.1,
+  adjustedAmount: 0.1,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244873,
+      "round_id": 1354923,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244873,
+      "status": "OK",
+      "balance": 33.2,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244873,
+      "round_id": 1354923,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244873,
+      "status": "OK",
+      "balance": 33.2,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 228.391 ms - 542[0m
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:10:00","hash":"374436b774ffb412c7d6963037c6d97e4bbeeeda","data":{"transaction_type":"BET","amount":0.1,"currency_code":"USD","transaction_id":2244875,"round_id":1354925,"round_finished":false,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790af5954f640-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af5954f640-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244875,
+      round_id: 1354925,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.165Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244875,
+    "round_id": 1354925,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244875,
+    "round_id": 1354925,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af5954f640-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244875,
+      round_id: 1354925,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.166Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'BET',
+    amount: 0.1,
+    currency_code: 'USD',
+    transaction_id: 2244875,
+    round_id: 1354925,
+    round_finished: false,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244875,
+    "round_id": 1354925,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: BET, amount: 0.1, parsed: -0.1, type: BET
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($0.10)',
+  transaction_type: 'BET',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: false
+}
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:10:00","hash":"374436b774ffb412c7d6963037c6d97e4bbeeeda","data":{"transaction_type":"BET","amount":0.1,"currency_code":"USD","transaction_id":2244876,"round_id":1354926,"round_finished":false,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790af4fc7cba7-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af4fc7cba7-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244876,
+      round_id: 1354926,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.198Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244876,
+    "round_id": 1354926,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244876,
+    "round_id": 1354926,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af4fc7cba7-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244876,
+      round_id: 1354926,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.198Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'BET',
+    amount: 0.1,
+    currency_code: 'USD',
+    transaction_id: 2244876,
+    round_id: 1354926,
+    round_finished: false,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244876,
+    "round_id": 1354926,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: BET, amount: 0.1, parsed: -0.1, type: BET
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($0.10)',
+  transaction_type: 'BET',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: false
+}
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: BET
+[DEBUG] CHANGEBALANCE: Validating game 4
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:10:00","hash":"374436b774ffb412c7d6963037c6d97e4bbeeeda","data":{"transaction_type":"BET","amount":0.1,"currency_code":"USD","transaction_id":2244874,"round_id":1354924,"round_finished":false,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790af4bcbd7a4-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af4bcbd7a4-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244874,
+      round_id: 1354924,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.203Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244874,
+    "round_id": 1354924,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244874,
+    "round_id": 1354924,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af4bcbd7a4-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244874,
+      round_id: 1354924,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.204Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'BET',
+    amount: 0.1,
+    currency_code: 'USD',
+    transaction_id: 2244874,
+    round_id: 1354924,
+    round_finished: false,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244874,
+    "round_id": 1354924,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: BET, amount: 0.1, parsed: -0.1, type: BET
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($0.10)',
+  transaction_type: 'BET',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: false
+}
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:10:00","hash":"374436b774ffb412c7d6963037c6d97e4bbeeeda","data":{"transaction_type":"BET","amount":0.1,"currency_code":"USD","transaction_id":2244877,"round_id":1354927,"round_finished":false,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790af7f9e7cfe-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af7f9e7cfe-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244877,
+      round_id: 1354927,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.216Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244877,
+    "round_id": 1354927,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244877,
+    "round_id": 1354927,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '326',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d790af7f9e7cfe-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:10:00',
+    hash: '374436b774ffb412c7d6963037c6d97e4bbeeeda',
+    data: {
+      transaction_type: 'BET',
+      amount: 0.1,
+      currency_code: 'USD',
+      transaction_id: 2244877,
+      round_id: 1354927,
+      round_finished: false,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:09.217Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'BET',
+    amount: 0.1,
+    currency_code: 'USD',
+    transaction_id: 2244877,
+    round_id: 1354927,
+    round_finished: false,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:10:00",
+  "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda",
+  "data": {
+    "transaction_type": "BET",
+    "amount": 0.1,
+    "currency_code": "USD",
+    "transaction_id": 2244877,
+    "round_id": 1354927,
+    "round_finished": false,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: BET, amount: 0.1, parsed: -0.1, type: BET
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($0.10)',
+  transaction_type: 'BET',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: false
+}
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: BET
+[DEBUG] CHANGEBALANCE: Validating game 4
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Found 1 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244875 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing bet of $0.10
+[IDEMPOTENCY] Found 1 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244876 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing bet of $0.10
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: BET
+[DEBUG] CHANGEBALANCE: Validating game 4
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: BET
+[DEBUG] CHANGEBALANCE: Validating game 4
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Found 1 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244877 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing bet of $0.10
+[IDEMPOTENCY] Found 1 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244874 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing bet of $0.10
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 0.1,
+  adjustedAmount: 0.1,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244875,
+      "round_id": 1354925,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244875,
+      "status": "OK",
+      "balance": 33.1,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244875,
+      "round_id": 1354925,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244875,
+      "status": "OK",
+      "balance": 33.1,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 178.342 ms - 542[0m
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 0.1,
+  adjustedAmount: 0.1,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244876,
+      "round_id": 1354926,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244876,
+      "status": "OK",
+      "balance": 33,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244876,
+      "round_id": 1354926,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244876,
+      "status": "OK",
+      "balance": 33,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 167.573 ms - 540[0m
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 0.1,
+  adjustedAmount: 0.1,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244877,
+      "round_id": 1354927,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244877,
+      "status": "OK",
+      "balance": 32.9,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244877,
+      "round_id": 1354927,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244877,
+      "status": "OK",
+      "balance": 32.9,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 188.351 ms - 542[0m
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 0.1,
+  adjustedAmount: 0.1,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244874,
+      "round_id": 1354924,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244874,
+      "status": "OK",
+      "balance": 32.8,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "BET",
+      "amount": 0.1,
+      "currency_code": "USD",
+      "transaction_id": 2244874,
+      "round_id": 1354924,
+      "round_finished": false,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:10:00",
+    "hash": "374436b774ffb412c7d6963037c6d97e4bbeeeda"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:09",
+    "hash": "6a9abf89457d56dcdd96455222102fa682dfd9dd",
+    "data": {
+      "transaction_id": 2244874,
+      "status": "OK",
+      "balance": 32.8,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 255.516 ms - 542[0m
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790f42adfd2eb-FRA, IP: 193.77.58.150
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d790f40adad2eb-FRA, IP: 193.77.58.150
+[0mGET /api/user/category-balances [32m200[0m 5.994 ms - 135[0m
+[0mGET /api/user/balance [32m200[0m 12.643 ms - 592[0m
+[APP DEBUG] Incoming request: POST /innova/changebalance body: {"command":"changebalance","request_timestamp":"2025-08-11 12:15:00","hash":"4a5c0168bd17b656aedabca5e55642b7a5ca3296","data":{"transaction_type":"WIN","amount":5,"currency_code":"USD","transaction_id":2244878,"round_id":1354928,"round_finished":true,"game_id":4,"user_id":"48","token":"b76af9d5b3b71987b3b2637863af4634"}}
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d79101dcfc7ec6-LAX, IP: 2407:3640:2275:22::1
+[PROVIDER DEBUG] {
+  path: '/innova/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '325',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d79101dcfc7ec6-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:15:00',
+    hash: '4a5c0168bd17b656aedabca5e55642b7a5ca3296',
+    data: {
+      transaction_type: 'WIN',
+      amount: 5,
+      currency_code: 'USD',
+      transaction_id: 2244878,
+      round_id: 1354928,
+      round_finished: true,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:22.374Z'
+}
+[TEST ROUTE] /changebalance route hit!
+[TEST ROUTE] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:15:00",
+  "hash": "4a5c0168bd17b656aedabca5e55642b7a5ca3296",
+  "data": {
+    "transaction_type": "WIN",
+    "amount": 5,
+    "currency_code": "USD",
+    "transaction_id": 2244878,
+    "round_id": 1354928,
+    "round_finished": true,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[ROUTE DEBUG] /innova route handler hit - VERSION 3.0
+[ROUTE DEBUG] Request path: /changebalance
+[ROUTE DEBUG] Request method: POST
+[ROUTE DEBUG] Request body: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:15:00",
+  "hash": "4a5c0168bd17b656aedabca5e55642b7a5ca3296",
+  "data": {
+    "transaction_type": "WIN",
+    "amount": 5,
+    "currency_code": "USD",
+    "transaction_id": 2244878,
+    "round_id": 1354928,
+    "round_finished": true,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+Provider callback received: {
+  path: '/changebalance',
+  method: 'POST',
+  headers: {
+    connection: 'upgrade',
+    host: 'backend.jackpotx.net',
+    'content-length': '325',
+    'x-forwarded-for': '2407:3640:2275:22::1',
+    'accept-encoding': 'gzip, br',
+    'user-agent': 'curl/8.5.0',
+    'x-authorization': '63116a7611437044617d6ac66069bfa6010e3d1f',
+    'content-type': 'application/json',
+    'cf-ray': '96d79101dcfc7ec6-LAX',
+    accept: '*/*',
+    'cdn-loop': 'cloudflare; loops=1',
+    'cf-connecting-ip': '2407:3640:2275:22::1',
+    'cf-ipcountry': 'SG',
+    'cf-visitor': '{"scheme":"https"}',
+    'x-forwarded-proto': 'https'
+  },
+  body: {
+    command: 'changebalance',
+    request_timestamp: '2025-08-11 12:15:00',
+    hash: '4a5c0168bd17b656aedabca5e55642b7a5ca3296',
+    data: {
+      transaction_type: 'WIN',
+      amount: 5,
+      currency_code: 'USD',
+      transaction_id: 2244878,
+      round_id: 1354928,
+      round_finished: true,
+      game_id: 4,
+      user_id: '48',
+      token: 'b76af9d5b3b71987b3b2637863af4634'
+    }
+  },
+  timestamp: '2025-08-11T11:59:22.376Z'
+}
+Processing provider callback: {
+  command: 'changebalance',
+  data: {
+    transaction_type: 'WIN',
+    amount: 5,
+    currency_code: 'USD',
+    transaction_id: 2244878,
+    round_id: 1354928,
+    round_finished: true,
+    game_id: 4,
+    user_id: '48',
+    token: 'b76af9d5b3b71987b3b2637863af4634'
+  }
+}
+[AUTH_DEBUG] Validating authorization for command: changebalance
+[AUTH_DEBUG] Received auth header: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Secret key configured: YES
+[AUTH_DEBUG] Expected hash: 63116a7611437044617d6ac66069bfa6010e3d1f
+[AUTH_DEBUG] Hash match: true
+CHANGEBALANCE request received: {
+  "command": "changebalance",
+  "request_timestamp": "2025-08-11 12:15:00",
+  "hash": "4a5c0168bd17b656aedabca5e55642b7a5ca3296",
+  "data": {
+    "transaction_type": "WIN",
+    "amount": 5,
+    "currency_code": "USD",
+    "transaction_id": 2244878,
+    "round_id": 1354928,
+    "round_finished": true,
+    "game_id": 4,
+    "user_id": "48",
+    "token": "b76af9d5b3b71987b3b2637863af4634"
+  }
+}
+[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0
+[DEBUG] CHANGEBALANCE: Provider format - transaction_type: WIN, amount: 5, parsed: 5, type: WIN
+CHANGEBALANCE parameters: {
+  token: 'present',
+  user_id: 'present',
+  amount: 'present ($5.00)',
+  transaction_type: 'WIN',
+  transaction_id: 'present',
+  game_id: 'present',
+  session_id: 'missing',
+  currency_code: 'present',
+  round_id: 'present',
+  round_finished: true
+}
+[DEBUG] CHANGEBALANCE: Starting game validation - game_id: 4, transactionType: WIN
+[DEBUG] CHANGEBALANCE: Validating game 4
+[IDEMPOTENCY] Checking for duplicate transactions for user 48
+[IDEMPOTENCY] Found 0 recent bet transactions with same amount
+[IDEMPOTENCY] Transaction 2244878 is new, proceeding with processing
+[DEBUG] CHANGEBALANCE: Processing win of $5.00
+[PROFIT_CONTROL] Processing win: $5.00, Provider RTP: 96.00%
+[PROFIT_CONTROL] Validated metrics: {
+  originalAmount: 5,
+  adjustedAmount: 5,
+  profitReduction: 0,
+  effectiveRtp: '100.00',
+  providerRtp: '96.00'
+}
+[PROFIT_CONTROL] Win adjustment: $5.00 → $5.00 (reduction: $0.00)
+[DEBUG] No bet found with session_id undefined, looking for bet with same round_id 1354928
+[DEBUG] No bet found with round_id 1354928, looking for most recent bet for game 4
+[DEBUG] Updated bet 1216 with adjusted win amount 5
+[WALLET_FIX] Processing win with category balance: $5.00
+[WALLET_FIX] Category balance calculation: 32.8 + 5 = 37.8
+[WALLET_FIX] Category balance updated: 32.8 + 5 = 37.8
+CHANGEBALANCE win processed: {
+  bet_id: 1216,
+  transaction_id: 2688,
+  balance_before: '$32.80',
+  balance_after: '$37.80',
+  win_amount: '$5.00'
+}
+[BALANCE_AUDIT] Win processed - Category: slots, Balance: 32.8 -> 37.8
+[TRANSACTION] Successfully committed transaction
+[TRANSACTION] Client released
+PROVIDER RESPONSE OUTPUT: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "WIN",
+      "amount": 5,
+      "currency_code": "USD",
+      "transaction_id": 2244878,
+      "round_id": 1354928,
+      "round_finished": true,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:15:00",
+    "hash": "4a5c0168bd17b656aedabca5e55642b7a5ca3296"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:22",
+    "hash": "0ac30e386d1e9b113370833eab21694d0fe7b71f",
+    "data": {
+      "transaction_id": 2244878,
+      "status": "OK",
+      "balance": 37.8,
+      "currency_code": "USD"
+    }
+  }
+}
+Provider callback response: {
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "transaction_type": "WIN",
+      "amount": 5,
+      "currency_code": "USD",
+      "transaction_id": 2244878,
+      "round_id": 1354928,
+      "round_finished": true,
+      "game_id": 4,
+      "user_id": "48",
+      "token": "b76af9d5b3b71987b3b2637863af4634"
+    },
+    "request_timestamp": "2025-08-11 12:15:00",
+    "hash": "4a5c0168bd17b656aedabca5e55642b7a5ca3296"
+  },
+  "response": {
+    "status": "OK",
+    "response_timestamp": "2025-08-11 11:59:22",
+    "hash": "0ac30e386d1e9b113370833eab21694d0fe7b71f",
+    "data": {
+      "transaction_id": 2244878,
+      "status": "OK",
+      "balance": 37.8,
+      "currency_code": "USD"
+    }
+  }
+}
+[0mPOST /innova/changebalance [32m200[0m 40.444 ms - 539[0m
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d791584c05e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d791584c04e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[0mGET /api/user/category-balances [32m200[0m 8.866 ms - 135[0m
+[0mGET /api/user/balance [32m200[0m 16.636 ms - 592[0m
+[INFO] 11:59:35 Restarting: /app/src/services/provider/provider-callback.service.ts has been modified
+[CRITICAL] Provider callback service loaded - VERSION 2.0
+[HEALTH_MONITOR] Starting health monitoring...
+Loaded Swagger paths: [
+  '/api/admin-modules/my-modules',
+  '/api/admin-modules/roles',
+  '/api/admin-modules/by-role/{roleId}',
+  '/api/admin-modules/all',
+  '/api/admin-modules',
+  '/api/admin-modules/{id}',
+  '/api/admin/provider/validate-transaction',
+  '/api/admin/provider/list-cancellable-transactions',
+  '/api/admin/provider/transaction-details',
+  '/api/admin/dashboard/stats',
+  '/api/admin/games',
+  '/api/admin/games/status',
+  '/api/admin/games/status/id',
+  '/api/admin/games/status/category',
+  '/api/admin/games/status/provider',
+  '/api/admin/games/status/bulk',
+  '/api/admin/games/status/stats',
+  '/api/admin/games/status/changes',
+  '/api/admin/games/{id}',
+  '/api/admin/categories',
+  '/api/admin/categories/{id}',
+  '/api/admin/categories/bulk',
+  '/api/admin/categories/stats',
+  '/api/admin/categories/hierarchy',
+  '/api/admin/categories/migrate',
+  '/api/admin/categories/{id}/games',
+  '/api/admin/roles',
+  '/api/admin/roles/{id}',
+  '/api/admin/users/{id}/roles',
+  '/api/admin/users/{id}/roles/{roleId}',
+  '/api/admin/users',
+  '/api/admin/users/{id}/status',
+  '/api/admin/users/{id}/balance',
+  '/api/admin/users/{id}/disable',
+  '/api/admin/users/{id}/enable',
+  '/api/admin/users/{id}/activate',
+  '/api/admin/users/{id}/deactivate',
+  '/api/admin/users/{id}/suspend',
+  '/api/admin/users/{id}/ban',
+  '/api/admin/affiliates',
+  '/api/admin/users/{id}/topup',
+  '/api/admin/providers',
+  '/api/admin/providers/{id}',
+  '/api/admin/providers/{id}/activate',
+  '/api/admin/transactions',
+  '/api/admin/transactions/{id}/approve',
+  '/api/admin/settings',
+  '/api/admin/analytics/revenue',
+  '/api/admin/analytics/users',
+  '/api/admin/game-provider',
+  '/api/admin/import-games',
+  '/api/admin/import-game',
+  '/api/admin/game-import/status',
+  '/api/admin/import-all-games',
+  '/api/admin/payment-gateways',
+  '/api/admin/payment-gateways/{id}',
+  '/api/admin/payment-gateways/active',
+  '/api/admin/payment-gateways/{id}/test',
+  '/api/admin/payment-gateways/{id}/stats',
+  '/api/admin/ggr-filter',
+  '/api/admin/ggr-audit-logs',
+  '/api/admin/ggr-report-summary',
+  '/api/admin/modules',
+  '/api/admin/modules/hierarchy',
+  '/api/admin/modules/{id}',
+  '/api/admin/activities',
+  '/api/admin/rtp/settings',
+  '/api/admin/rtp/analytics',
+  '/api/admin/rtp/bulk-update',
+  '/api/admin/rtp/report',
+  '/api/admin/bets',
+  '/api/admin/analytics/profit',
+  '/api/admin/rtp/target-profit',
+  '/api/admin/rtp/auto-adjustment',
+  '/api/admin/profit/analytics',
+  '/api/admin/profit/auto-adjustment',
+  '/api/admin/profit/performance',
+  '/api/admin/cron/status',
+  '/api/admin/cron/start',
+  '/api/admin/cron/stop',
+  '/api/admin/cron/trigger-auto-adjustment',
+  '/api/admin/cron/trigger-daily-summary',
+  '/api/admin/promotions',
+  '/api/admin/promotions/{id}',
+  '/api/admin/promotions/{id}/toggle',
+  '/api/admin/promotions/stats',
+  '/api/admin/promotions/stats/overview',
+  '/api/admin/promotions/{id}/claims',
+  '/api/admin/kyc/pending',
+  '/api/admin/kyc/{user_id}',
+  '/api/admin/kyc/{user_id}/approve',
+  '/api/admin/kyc/{user_id}/reject',
+  '/api/admin/kyc/documents',
+  '/api/admin/kyc/documents/{document_id}/verify',
+  '/api/admin/kyc/{user_id}/risk-assessment',
+  '/api/admin/kyc/reports',
+  '/api/admin/kyc/audit-logs',
+  '/api/admin/system/reset',
+  '/api/admin/system/reset/stats',
+  '/api/admin/users/bulk-status',
+  ... 118 more items
+]
+Server running on http://localhost:3000
+[APP] Starting background cron jobs...
+[CRON_MANAGER] Cron jobs disabled via DISABLE_CRON_JOBS environment variable
+[APP] Background cron jobs initialized
+MongoDB connected: mongo
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d792149eb0e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[0mGET /api/user/category-balances [32m200[0m 76.901 ms - 135[0m
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d79217ef74e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[0mGET /api/user/balance [32m200[0m 28.781 ms - 592[0m
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d7926afbb4360b-FRA, IP: 193.77.58.150
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d7926afbb3360b-FRA, IP: 193.77.58.150
+[0mGET /api/user/category-balances [32m200[0m 25.044 ms - 135[0m
+[0mGET /api/user/balance [32m200[0m 63.458 ms - 592[0m
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d792d0dea0e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[CLOUDFLARE] Request from Cloudflare - Ray: 96d792d0dea1e545-KUL, IP: 2001:e68:542f:1230:851b:9a6f:6a57:55ea
+[0mGET /api/user/category-balances [32m200[0m 16.901 ms - 135[0m
+[0mGET /api/user/balance [32m200[0m 36.049 ms - 592[0m

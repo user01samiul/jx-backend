@@ -1,0 +1,1195 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Provider Callback Test Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .summary { display: flex; gap: 20px; margin: 20px 0; }
+        .stat { background: #e8f5e8; padding: 15px; border-radius: 5px; flex: 1; text-align: center; }
+        .stat.failed { background: #ffe8e8; }
+        .test-results { margin: 20px 0; }
+        .test-item { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .test-item.passed { border-left: 5px solid #4caf50; }
+        .test-item.failed { border-left: 5px solid #f44336; }
+        .test-name { font-weight: bold; margin-bottom: 10px; }
+        .test-details { font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 10px; border-radius: 3px; }
+        .error { color: #f44336; }
+        .success { color: #4caf50; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Provider Callback Test Report</h1>
+        <p>Generated on: 2025-08-03T02:25:53.762Z</p>
+    </div>
+    
+    <div class="summary">
+        <div class="stat">
+            <h3>Total Tests</h3>
+            <p>26</p>
+        </div>
+        <div class="stat">
+            <h3>Passed</h3>
+            <p class="success">26</p>
+        </div>
+        <div class="stat ">
+            <h3>Failed</h3>
+            <p class="error">0</p>
+        </div>
+        <div class="stat">
+            <h3>Success Rate</h3>
+            <p>100.00%</p>
+        </div>
+    </div>
+    
+    <div class="test-results">
+        <h2>Test Results</h2>
+        
+            <div class="test-item passed">
+                <div class="test-name">Ping Test</div>
+                <div class="test-details">
+                    <strong>Command:</strong> ping<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.209Z<br>
+                    <strong>Response Time:</strong> 178ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>null</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "status": "OK",
+  "response_timestamp": "2025-08-03 02:25:53",
+  "hash": "54194d4b96549f74f989714b761e6b00b2079922",
+  "data": {
+    "status": "pong",
+    "timestamp": "2025-08-03T02:25:53.179Z"
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Authenticate - Valid Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> authenticate<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.231Z<br>
+                    <strong>Response Time:</strong> 21ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "authenticate",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "4da89583a7b235568971592e5de8b28ee663f836",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "authenticate",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "4da89583a7b235568971592e5de8b28ee663f836"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Authenticate - Invalid Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> authenticate<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.294Z<br>
+                    <strong>Response Time:</strong> 62ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "authenticate",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "e99b490399b5e7163f267769a134f70233cf9b58",
+  "data": {
+    "token": "invalid_token_123"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "authenticate",
+    "data": {
+      "token": "invalid_token_123"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "e99b490399b5e7163f267769a134f70233cf9b58"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Authenticate - Missing Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> authenticate<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.370Z<br>
+                    <strong>Response Time:</strong> 76ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "authenticate",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "060376575a257cd7508e2eb23724496fc53734ec",
+  "data": {}
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "authenticate",
+    "data": {},
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "060376575a257cd7508e2eb23724496fc53734ec"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Authenticate - Token with Game ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> authenticate<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.388Z<br>
+                    <strong>Response Time:</strong> 17ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "authenticate",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "d64daaa90929b96c1f48f6c9837facc7015724de",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "game_id": 53
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "authenticate",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "game_id": 53
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "d64daaa90929b96c1f48f6c9837facc7015724de"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Balance - Valid Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> balance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.409Z<br>
+                    <strong>Response Time:</strong> 20ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "balance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "4da89583a7b235568971592e5de8b28ee663f836",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "balance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "4da89583a7b235568971592e5de8b28ee663f836"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Balance - Invalid Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> balance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.429Z<br>
+                    <strong>Response Time:</strong> 20ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "balance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "e99b490399b5e7163f267769a134f70233cf9b58",
+  "data": {
+    "token": "invalid_token_123"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "balance",
+    "data": {
+      "token": "invalid_token_123"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "e99b490399b5e7163f267769a134f70233cf9b58"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Balance - Missing Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> balance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.451Z<br>
+                    <strong>Response Time:</strong> 22ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "balance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "060376575a257cd7508e2eb23724496fc53734ec",
+  "data": {}
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "balance",
+    "data": {},
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "060376575a257cd7508e2eb23724496fc53734ec"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - Bet Transaction (Negative Amount)</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.474Z<br>
+                    <strong>Response Time:</strong> 22ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "c2477c4bb4314ebec98b0f2d64d83eb3cdbeeb5e",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1,
+    "amount": -10,
+    "transaction_id": "test_bet_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1,
+      "amount": -10,
+      "transaction_id": "test_bet_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "c2477c4bb4314ebec98b0f2d64d83eb3cdbeeb5e"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - Win Transaction (Positive Amount)</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.493Z<br>
+                    <strong>Response Time:</strong> 19ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "685a1e0f7c614d6aa79faa4858c82d43a9c0f60e",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1,
+    "amount": 15,
+    "transaction_id": "test_win_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1,
+      "amount": 15,
+      "transaction_id": "test_win_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "685a1e0f7c614d6aa79faa4858c82d43a9c0f60e"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - Zero Amount (Balance Check)</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.512Z<br>
+                    <strong>Response Time:</strong> 18ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "298ddb15662fd5b1c80b13af18b2a03e98dda1e7",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1,
+    "amount": 0,
+    "transaction_id": "test_zero_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1,
+      "amount": 0,
+      "transaction_id": "test_zero_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "298ddb15662fd5b1c80b13af18b2a03e98dda1e7"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - New Format - BET Transaction</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.527Z<br>
+                    <strong>Response Time:</strong> 15ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "d6cd208ef495a53e132c9f3504fb8a3e77ca275e",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1,
+    "amount": 10,
+    "transaction_id": "test_new_bet_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446",
+    "transaction_type": "BET",
+    "round_id": "round_1754187953452",
+    "round_finished": false
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1,
+      "amount": 10,
+      "transaction_id": "test_new_bet_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446",
+      "transaction_type": "BET",
+      "round_id": "round_1754187953452",
+      "round_finished": false
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "d6cd208ef495a53e132c9f3504fb8a3e77ca275e"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - New Format - WIN Transaction</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.543Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "38be9476e25910828217c81d314311fd8066f6e4",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1,
+    "amount": 25,
+    "transaction_id": "test_new_win_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446",
+    "transaction_type": "WIN",
+    "round_id": "round_1754187953452",
+    "round_finished": true
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1,
+      "amount": 25,
+      "transaction_id": "test_new_win_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446",
+      "transaction_type": "WIN",
+      "round_id": "round_1754187953452",
+      "round_finished": true
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "38be9476e25910828217c81d314311fd8066f6e4"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - New Format - LOSS Transaction (Zero Win)</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.559Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "2199ac14b8b7430d030233b1a94b9bb62d094faf",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1,
+    "amount": 0,
+    "transaction_id": "test_new_loss_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446",
+    "transaction_type": "WIN",
+    "round_id": "round_1754187953452",
+    "round_finished": true
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1,
+      "amount": 0,
+      "transaction_id": "test_new_loss_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446",
+      "transaction_type": "WIN",
+      "round_id": "round_1754187953452",
+      "round_finished": true
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "2199ac14b8b7430d030233b1a94b9bb62d094faf"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - WIN Transaction with Null Token (Zero Amount)</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.576Z<br>
+                    <strong>Response Time:</strong> 17ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "ea5fa47c857aa5f254cec1e0824d7c740d67770f",
+  "data": {
+    "token": null,
+    "user_id": 1,
+    "amount": 0,
+    "transaction_id": "test_win_null_token_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446",
+    "transaction_type": "WIN",
+    "round_id": "round_1754187953452",
+    "round_finished": true
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": null,
+      "user_id": 1,
+      "amount": 0,
+      "transaction_id": "test_win_null_token_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446",
+      "transaction_type": "WIN",
+      "round_id": "round_1754187953452",
+      "round_finished": true
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "ea5fa47c857aa5f254cec1e0824d7c740d67770f"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - Invalid Token</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.592Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "fc81f9656093b49856ea6c978dc1c58827da7696",
+  "data": {
+    "token": "invalid_token",
+    "user_id": 1,
+    "amount": 10,
+    "transaction_id": "test_invalid_1754187953452",
+    "game_id": 53,
+    "session_id": "1_53_1752376795446"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "invalid_token",
+      "user_id": 1,
+      "amount": 10,
+      "transaction_id": "test_invalid_1754187953452",
+      "game_id": 53,
+      "session_id": "1_53_1752376795446"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "fc81f9656093b49856ea6c978dc1c58827da7696"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">ChangeBalance - Missing Required Fields</div>
+                <div class="test-details">
+                    <strong>Command:</strong> changebalance<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.608Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "changebalance",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "5ec2044559409f1a844665e4633bf73be5d50b12",
+  "data": {
+    "token": "87794f8b2f27f64e3a51b5ef342334c8",
+    "user_id": 1
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "changebalance",
+    "data": {
+      "token": "87794f8b2f27f64e3a51b5ef342334c8",
+      "user_id": 1
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "5ec2044559409f1a844665e4633bf73be5d50b12"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Status - Valid Transaction ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> status<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.624Z<br>
+                    <strong>Response Time:</strong> 15ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "status",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "0378b64bbb2a4e305e4d33fcb030642212fe6552",
+  "data": {
+    "transaction_id": "test_status_1754187953608"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "status",
+    "data": {
+      "transaction_id": "test_status_1754187953608"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "0378b64bbb2a4e305e4d33fcb030642212fe6552"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Status - Invalid Transaction ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> status<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.640Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "status",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "035eb8f55d14c212e18efd0ed601d2426ac3af10",
+  "data": {
+    "transaction_id": "invalid_transaction_123"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "status",
+    "data": {
+      "transaction_id": "invalid_transaction_123"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "035eb8f55d14c212e18efd0ed601d2426ac3af10"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Status - Missing Transaction ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> status<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.657Z<br>
+                    <strong>Response Time:</strong> 17ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "status",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "060376575a257cd7508e2eb23724496fc53734ec",
+  "data": {}
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "status",
+    "data": {},
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "060376575a257cd7508e2eb23724496fc53734ec"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Cancel - Valid Transaction ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> cancel<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.674Z<br>
+                    <strong>Response Time:</strong> 17ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "cancel",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "9fc3271622aeb4804cc5dbe1fbfb4e7a79a10537",
+  "data": {
+    "transaction_id": "test_cancel_1754187953657",
+    "user_id": 1,
+    "amount": 10
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "cancel",
+    "data": {
+      "transaction_id": "test_cancel_1754187953657",
+      "user_id": 1,
+      "amount": 10
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "9fc3271622aeb4804cc5dbe1fbfb4e7a79a10537"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Cancel - Invalid Transaction ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> cancel<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.690Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "cancel",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "f39ef022774b0e6d30e5bec0669bd9e308ca1b30",
+  "data": {
+    "transaction_id": "invalid_transaction_123",
+    "user_id": 1,
+    "amount": 10
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "cancel",
+    "data": {
+      "transaction_id": "invalid_transaction_123",
+      "user_id": 1,
+      "amount": 10
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "f39ef022774b0e6d30e5bec0669bd9e308ca1b30"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">Cancel - Missing Required Fields</div>
+                <div class="test-details">
+                    <strong>Command:</strong> cancel<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.706Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "cancel",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "00e8e8d7477ee53c0b64c598e207fd4f6d0356ac",
+  "data": {
+    "transaction_id": "test_cancel_missing_1754187953657"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "cancel",
+    "data": {
+      "transaction_id": "test_cancel_missing_1754187953657"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "00e8e8d7477ee53c0b64c598e207fd4f6d0356ac"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">FinishRound - Valid Round Data</div>
+                <div class="test-details">
+                    <strong>Command:</strong> finishround<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.723Z<br>
+                    <strong>Response Time:</strong> 17ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "finishround",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "fb754436bf0f1d1abb3f6316d416fc5482d9dc5e",
+  "data": {
+    "round_id": "round_1754187953706",
+    "user_id": 1,
+    "game_id": 53,
+    "session_id": "1_53_1752376795446",
+    "final_balance": 100
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "finishround",
+    "data": {
+      "round_id": "round_1754187953706",
+      "user_id": 1,
+      "game_id": 53,
+      "session_id": "1_53_1752376795446",
+      "final_balance": 100
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "fb754436bf0f1d1abb3f6316d416fc5482d9dc5e"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">FinishRound - Invalid Round ID</div>
+                <div class="test-details">
+                    <strong>Command:</strong> finishround<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.739Z<br>
+                    <strong>Response Time:</strong> 16ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "finishround",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "076fecd6ed2dd62df64556c3fb612861f8da72f0",
+  "data": {
+    "round_id": "invalid_round_123",
+    "user_id": 1,
+    "game_id": 53,
+    "session_id": "1_53_1752376795446",
+    "final_balance": 100
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "finishround",
+    "data": {
+      "round_id": "invalid_round_123",
+      "user_id": 1,
+      "game_id": 53,
+      "session_id": "1_53_1752376795446",
+      "final_balance": 100
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "076fecd6ed2dd62df64556c3fb612861f8da72f0"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+            <div class="test-item passed">
+                <div class="test-name">FinishRound - Missing Required Fields</div>
+                <div class="test-details">
+                    <strong>Command:</strong> finishround<br>
+                    <strong>Status:</strong> <span class="success">PASSED</span><br>
+                    <strong>Timestamp:</strong> 2025-08-03T02:25:53.760Z<br>
+                    <strong>Response Time:</strong> 21ms<br>
+                    
+                    <strong>Request:</strong><br>
+                    <pre>{
+  "command": "finishround",
+  "request_timestamp": "2025-08-03 02:25:53",
+  "hash": "1aa82213cb4d8689da14817ec56a4583b6f6bc04",
+  "data": {
+    "round_id": "round_missing_1754187953706"
+  }
+}</pre>
+                    <strong>Response:</strong><br>
+                    <pre>{
+  "request": {
+    "command": "finishround",
+    "data": {
+      "round_id": "round_missing_1754187953706"
+    },
+    "request_timestamp": "2025-08-03 02:25:53",
+    "hash": "1aa82213cb4d8689da14817ec56a4583b6f6bc04"
+  },
+  "response": {
+    "status": "ERROR",
+    "response_timestamp": "2025-08-03 02:25:53",
+    "hash": "c4107258b2ddf06ab549c0005ba5048e17b94248",
+    "data": {
+      "error_code": "OP_99",
+      "error_message": "Invalid authorization"
+    }
+  }
+}</pre>
+                </div>
+            </div>
+        
+    </div>
+</body>
+</html>
