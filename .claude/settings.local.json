@@ -18,7 +18,8 @@
       "Bash(sudo -u ubuntu pm2 save:*)",
       "Bash(pm2 start:*)",
       "Bash(pm2 logs:*)",
-      "Bash(pm2 save:*)"
+      "Bash(pm2 save:*)",
+      "Bash(PGPASSWORD=2025 psql:*)"
     ],
     "deny": [],
     "ask": []

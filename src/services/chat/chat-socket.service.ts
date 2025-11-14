@@ -36,7 +36,7 @@ export class ChatSocketService {
       path: '/socket.io',
     });
 
-    this.initializeRedis();
+    // this.initializeRedis(); // Disabled: Redis not used yet
     this.initializeSocketHandlers();
   }
 
