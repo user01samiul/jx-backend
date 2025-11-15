@@ -156,10 +156,10 @@ export class AdminKYCService {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       const query = `
-        UPDATE kyc_verifications 
-        SET 
+        UPDATE kyc_verifications
+        SET
           status = $1,
           reason = $2,
           admin_notes = $3,
@@ -171,7 +171,7 @@ export class AdminKYCService {
         WHERE user_id = $8
         RETURNING *
       `;
-      
+
       const values = [
         data.status,
         data.reason,
@@ -182,17 +182,29 @@ export class AdminKYCService {
         data.compliance_level,
         userId
       ];
-      
+
       const result = await client.query(query, values);
-      
+
       // Update user status if KYC is approved
       if (data.status === 'approved') {
         await client.query(
           'UPDATE users SET kyc_verified = true, kyc_verified_at = NOW() WHERE id = $1',
           [userId]
         );
+
+        // Also update all pending/under_review documents to approved
+        await client.query(
+          `UPDATE kyc_documents
+           SET status = 'approved',
+               reason = $2,
+               admin_notes = $3,
+               verification_date = NOW(),
+               updated_at = NOW()
+           WHERE user_id = $1 AND status IN ('pending', 'under_review')`,
+          [userId, data.reason || 'Document verified successfully', data.admin_notes || '']
+        );
       }
-      
+
       await client.query('COMMIT');
       return result.rows[0];
     } catch (error) {
@@ -208,10 +220,10 @@ export class AdminKYCService {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       const query = `
-        UPDATE kyc_verifications 
-        SET 
+        UPDATE kyc_verifications
+        SET
           status = $1,
           reason = $2,
           admin_notes = $3,
@@ -220,7 +232,7 @@ export class AdminKYCService {
         WHERE user_id = $5
         RETURNING *
       `;
-      
+
       const values = [
         data.status,
         data.reason,
@@ -228,17 +240,29 @@ export class AdminKYCService {
         data.verification_date,
         userId
       ];
-      
+
       const result = await client.query(query, values);
-      
+
       // Update user status if KYC is rejected
       if (data.status === 'rejected') {
         await client.query(
           'UPDATE users SET kyc_verified = false, kyc_verified_at = NULL WHERE id = $1',
           [userId]
         );
+
+        // Also update all pending/under_review documents to rejected
+        await client.query(
+          `UPDATE kyc_documents
+           SET status = 'rejected',
+               reason = $2,
+               admin_notes = $3,
+               verification_date = NOW(),
+               updated_at = NOW()
+           WHERE user_id = $1 AND status IN ('pending', 'under_review')`,
+          [userId, data.reason || 'Document rejected', data.admin_notes || '']
+        );
       }
-      
+
       await client.query('COMMIT');
       return result.rows[0];
     } catch (error) {
@@ -583,6 +607,18 @@ export class AdminKYCService {
         ['pending', userId]
       );
 
+      // Also reset all approved documents back to pending
+      await client.query(
+        `UPDATE kyc_documents
+         SET status = 'pending',
+             reason = $1,
+             admin_notes = $2,
+             verification_date = NULL,
+             updated_at = NOW()
+         WHERE user_id = $3 AND status = 'approved'`,
+        [reason, adminNotes, userId]
+      );
+
       // Log the action in audit logs
       await client.query(
         `INSERT INTO kyc_audit_logs (user_id, action, entity_type, entity_id, new_values)
@@ -623,6 +659,11 @@ export class AdminKYCService {
       // Map priority to is_important
       const isImportant = messageData.priority === 'high';
 
+      // Map type to valid notification type
+      // Valid types: info, success, warning, error, promotion
+      const validTypes = ['info', 'success', 'warning', 'error', 'promotion'];
+      const notificationType = validTypes.includes(messageData.type) ? messageData.type : 'info';
+
       // Insert notification/message
       const query = `
         INSERT INTO notifications (
@@ -642,15 +683,16 @@ export class AdminKYCService {
 
       const metadata = {
         priority: messageData.priority,
-        sent_via: 'admin_kyc_panel'
+        sent_via: 'admin_kyc_panel',
+        original_type: messageData.type // Store original type for reference
       };
 
       const result = await client.query(query, [
         userId,
         messageData.subject,
         messageData.message,
-        messageData.type,
-        'kyc', // category
+        notificationType, // Use validated type
+        'security', // category - KYC messages are security-related
         isImportant,
         JSON.stringify(metadata)
       ]);

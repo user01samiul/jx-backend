@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getKYCAuditLogs = exports.getKYCReports = exports.createRiskAssessment = exports.verifyKYCDocument = exports.getKYCDocuments = exports.rejectKYC = exports.approveKYC = exports.getKYCByUserId = exports.getPendingKYC = void 0;
+exports.getUserKYCDocuments = exports.sendKYCMessage = exports.unapproveKYC = exports.getKYCAuditLogs = exports.getKYCReports = exports.createRiskAssessment = exports.verifyKYCDocument = exports.getKYCDocuments = exports.rejectKYC = exports.approveKYC = exports.getKYCByUserId = exports.getPendingKYC = void 0;
 const kyc_service_1 = require("../../services/admin/kyc.service");
 const activity_logger_service_1 = require("../../services/activity/activity-logger.service");
 // Get pending KYC requests
@@ -318,3 +318,114 @@ const getKYCAuditLogs = async (req, res) => {
     }
 };
 exports.getKYCAuditLogs = getKYCAuditLogs;
+// Unapprove KYC - revert approved status back to pending/under_review
+const unapproveKYC = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.user_id);
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID"
+            });
+        }
+        const { reason, admin_notes } = req.body;
+        if (!reason || !admin_notes) {
+            return res.status(400).json({
+                success: false,
+                message: "Reason and admin_notes are required"
+            });
+        }
+        const kyc = await kyc_service_1.AdminKYCService.unapproveKYC(userId, reason, admin_notes);
+        // Log activity
+        await activity_logger_service_1.ActivityLoggerService.logGenericAction(req, 'kyc_unapproved', {
+            user_id: userId,
+            reason,
+            admin_notes
+        }, 'KYC');
+        res.status(200).json({
+            success: true,
+            data: {
+                user_id: userId,
+                status: kyc.status,
+                verification_date: kyc.updated_at
+            }
+        });
+    }
+    catch (error) {
+        console.error("Error unapproving KYC:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to unapprove KYC"
+        });
+    }
+};
+exports.unapproveKYC = unapproveKYC;
+// Send message to user regarding KYC
+const sendKYCMessage = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.user_id);
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID"
+            });
+        }
+        const { subject, message, priority = 'medium', type = 'kyc_notification' } = req.body;
+        if (!subject || !message) {
+            return res.status(400).json({
+                success: false,
+                message: "Subject and message are required"
+            });
+        }
+        const result = await kyc_service_1.AdminKYCService.sendKYCMessage(userId, {
+            subject,
+            message,
+            priority,
+            type
+        });
+        // Log activity
+        await activity_logger_service_1.ActivityLoggerService.logGenericAction(req, 'kyc_message_sent', {
+            user_id: userId,
+            subject,
+            priority,
+            type
+        }, 'KYC');
+        res.status(200).json({
+            success: true,
+            data: result
+        });
+    }
+    catch (error) {
+        console.error("Error sending KYC message:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to send KYC message"
+        });
+    }
+};
+exports.sendKYCMessage = sendKYCMessage;
+// Get user's KYC documents (admin view)
+const getUserKYCDocuments = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.user_id);
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID"
+            });
+        }
+        const documents = await kyc_service_1.AdminKYCService.getUserKYCDocuments(userId);
+        res.status(200).json({
+            success: true,
+            data: documents
+        });
+    }
+    catch (error) {
+        console.error("Error fetching user KYC documents:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch user KYC documents"
+        });
+    }
+};
+exports.getUserKYCDocuments = getUserKYCDocuments;

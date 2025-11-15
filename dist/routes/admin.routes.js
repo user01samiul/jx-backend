@@ -6637,6 +6637,118 @@ router.put("/kyc/:user_id/approve", authenticate_1.authenticate, (0, authorize_1
 router.put("/kyc/:user_id/reject", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), (0, validate_1.validate)(admin_kyc_schema_1.KYCVerificationSchema), admin_kyc_controller_1.rejectKYC);
 /**
  * @swagger
+ * /api/admin/kyc/{user_id}/unapprove:
+ *   put:
+ *     summary: Unapprove KYC verification for a user
+ *     tags: [Admin KYC Management]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *               - admin_notes
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Reason for unapproving
+ *               admin_notes:
+ *                 type: string
+ *                 description: Admin notes
+ *     responses:
+ *       200:
+ *         description: KYC unapproved successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: KYC verification not found
+ */
+router.put("/kyc/:user_id/unapprove", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), admin_kyc_controller_1.unapproveKYC);
+/**
+ * @swagger
+ * /api/admin/kyc/{user_id}/message:
+ *   post:
+ *     summary: Send message to user regarding KYC
+ *     tags: [Admin KYC Management]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - subject
+ *               - message
+ *             properties:
+ *               subject:
+ *                 type: string
+ *                 description: Message subject
+ *               message:
+ *                 type: string
+ *                 description: Message body
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high]
+ *                 default: medium
+ *               type:
+ *                 type: string
+ *                 enum: [kyc_notification, document_request, general]
+ *                 default: kyc_notification
+ *     responses:
+ *       200:
+ *         description: Message sent successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: User not found
+ */
+router.post("/kyc/:user_id/message", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), admin_kyc_controller_1.sendKYCMessage);
+/**
+ * @swagger
+ * /api/admin/kyc/{user_id}/documents:
+ *   get:
+ *     summary: Get all KYC documents for a specific user
+ *     tags: [Admin KYC Management]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User's KYC documents retrieved successfully
+ *       400:
+ *         description: Invalid user ID
+ *       404:
+ *         description: User not found
+ */
+router.get("/kyc/:user_id/documents", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), admin_kyc_controller_1.getUserKYCDocuments);
+/**
+ * @swagger
  * /api/admin/kyc/documents:
  *   get:
  *     summary: Get KYC documents with filters

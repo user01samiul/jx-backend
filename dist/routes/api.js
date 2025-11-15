@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const user_controller_1 = require("../api/user/user.controller");
 const kyc_controller_1 = require("../api/user/kyc.controller");
+const messages_controller_1 = require("../api/user/messages.controller");
 const game_proxy_service_1 = require("../services/game/game-proxy.service");
 const home_controller_1 = require("../api/home/home.controller");
 const game_controller_1 = require("../api/game/game.controller");
@@ -2943,6 +2944,86 @@ router.get("/user/kyc/status", authenticate_1.authenticate, kyc_controller_1.get
 router.get("/user/kyc/documents", authenticate_1.authenticate, kyc_controller_1.getKYCDocuments);
 /**
  * @openapi
+ * /api/user/messages:
+ *   get:
+ *     summary: Get user messages with filtering and pagination
+ *     tags:
+ *       - User Messages
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by message type (kyc_notification, document_request, general)
+ *       - in: query
+ *         name: read
+ *         schema:
+ *           type: boolean
+ *         description: Filter by read status (true/false)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Messages retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/user/messages", authenticate_1.authenticate, messages_controller_1.getUserMessages);
+/**
+ * @openapi
+ * /api/user/messages/{message_id}/read:
+ *   put:
+ *     summary: Mark a message as read
+ *     tags:
+ *       - User Messages
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: message_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     responses:
+ *       200:
+ *         description: Message marked as read
+ *       404:
+ *         description: Message not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.put("/user/messages/:message_id/read", authenticate_1.authenticate, messages_controller_1.markMessageAsRead);
+/**
+ * @openapi
+ * /api/user/messages/unread-count:
+ *   get:
+ *     summary: Get unread message count
+ *     tags:
+ *       - User Messages
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Unread count retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/user/messages/unread-count", authenticate_1.authenticate, messages_controller_1.getUnreadCount);
+/**
+ * @openapi
  * /api/user/kyc/upload:
  *   post:
  *     summary: Upload a new KYC document
@@ -2994,6 +3075,8 @@ router.get("/user/kyc/documents", authenticate_1.authenticate, kyc_controller_1.
  *         description: Unauthorized
  */
 router.post("/user/kyc/upload", authenticate_1.authenticate, kycUpload.single('document'), (0, validate_1.validate)(kyc_schema_1.UploadKYCDocumentSchema), kyc_controller_1.uploadKYCDocument);
+// Alias route for POST /user/kyc/documents (same as /upload)
+router.post("/user/kyc/documents", authenticate_1.authenticate, kycUpload.single('document'), (0, validate_1.validate)(kyc_schema_1.UploadKYCDocumentSchema), kyc_controller_1.uploadKYCDocument);
 /**
  * @openapi
  * /api/user/kyc/documents/{id}:
@@ -3108,6 +3191,15 @@ router.delete("/user/kyc/documents/:id", authenticate_1.authenticate, (0, valida
  *       400:
  *         description: Invalid level
  */
+// Support query parameter version: /user/kyc/requirements?level=0
+router.get("/user/kyc/requirements", (req, res, next) => {
+    // Convert query parameter to path parameter format
+    if (req.query.level !== undefined) {
+        req.params.level = req.query.level;
+    }
+    next();
+}, (0, validate_1.validate)(kyc_schema_1.GetKYCRequirementsSchema), kyc_controller_1.getKYCRequirements);
+// Support path parameter version: /user/kyc/requirements/0
 router.get("/user/kyc/requirements/:level", (0, validate_1.validate)(kyc_schema_1.GetKYCRequirementsSchema), kyc_controller_1.getKYCRequirements);
 router.use(settings_routes_1.default);
 router.use("/admin", admin_routes_1.default);

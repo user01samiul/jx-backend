@@ -127,6 +127,15 @@ const getKYCStatusService = async (userId) => {
         else if (documentCounts.rejected > 0 && documentCounts.approved === 0) {
             overallStatus = 'rejected';
         }
+        // Determine if user can submit documents
+        // User can submit if:
+        // 1. No approved documents AND
+        // 2. No pending/under_review documents AND
+        // 3. KYC status is not approved
+        const hasApprovedDocs = (documentCounts.approved || 0) > 0;
+        const hasPendingDocs = (documentCounts.pending || 0) > 0 || (documentCounts.under_review || 0) > 0;
+        const isKYCApproved = overallStatus === 'approved';
+        const canSubmitDocuments = !hasApprovedDocs && !hasPendingDocs && !isKYCApproved;
         return {
             status: overallStatus,
             verification: verificationResult.rows[0] || null,
@@ -142,7 +151,8 @@ const getKYCStatusService = async (userId) => {
                 approved: documentCounts.approved || 0,
                 rejected: documentCounts.rejected || 0,
                 under_review: documentCounts.under_review || 0
-            }
+            },
+            can_submit_documents: canSubmitDocuments
         };
     }
     finally {
@@ -181,11 +191,39 @@ const getKYCDocumentsService = async (userId) => {
 exports.getKYCDocumentsService = getKYCDocumentsService;
 /**
  * Upload a new KYC document
+ * Enforces single document submission: user can only have ONE active document at a time
+ * Can only submit if: no documents exist OR status is rejected/not_submitted
  */
 const uploadKYCDocumentService = async (userId, documentData) => {
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
+        // Check if user can submit a document
+        // User cannot submit if they have an approved document or a pending document
+        const checkSubmissionQuery = `
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'approved') as approved_count,
+        COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
+        COUNT(*) FILTER (WHERE status = 'under_review') as under_review_count
+      FROM kyc_documents
+      WHERE user_id = $1
+    `;
+        const checkResult = await client.query(checkSubmissionQuery, [userId]);
+        const { approved_count, pending_count, under_review_count } = checkResult.rows[0];
+        if (parseInt(approved_count) > 0) {
+            throw new Error('Your KYC is already approved. You cannot submit additional documents.');
+        }
+        if (parseInt(pending_count) > 0 || parseInt(under_review_count) > 0) {
+            throw new Error('You already have a document pending review. Please wait for admin to review your current submission.');
+        }
+        // Check KYC verification status - if approved, don't allow new submissions
+        const kycStatusQuery = `
+      SELECT status FROM kyc_verifications WHERE user_id = $1
+    `;
+        const kycStatusResult = await client.query(kycStatusQuery, [userId]);
+        if (kycStatusResult.rows.length > 0 && kycStatusResult.rows[0].status === 'approved') {
+            throw new Error('Your KYC verification is already approved.');
+        }
         // Insert document record
         const insertQuery = `
       INSERT INTO kyc_documents (
@@ -216,21 +254,16 @@ const uploadKYCDocumentService = async (userId, documentData) => {
       VALUES ($1, 'pending', 0, 'low')
       ON CONFLICT (user_id)
       DO UPDATE SET
-        status = CASE
-          WHEN kyc_verifications.status = 'approved' THEN kyc_verifications.status
-          ELSE 'pending'
-        END,
+        status = 'pending',
+        reason = NULL,
         updated_at = CURRENT_TIMESTAMP
       RETURNING *
     `;
         await client.query(upsertVerificationQuery, [userId]);
-        // Update user's KYC status if it's not_submitted
+        // Update user's KYC status to pending
         const updateUserQuery = `
       UPDATE users
-      SET kyc_status = CASE
-        WHEN kyc_status = 'not_submitted' THEN 'pending'
-        ELSE kyc_status
-      END
+      SET kyc_status = 'pending'
       WHERE id = $1
     `;
         await client.query(updateUserQuery, [userId]);

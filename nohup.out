@@ -1,0 +1,223 @@
+[CRITICAL] Provider callback service loaded - VERSION 2.0
+[HEALTH_MONITOR] Starting health monitoring...
+✅ Enterprise Features Loaded: Metadata, Multilanguage, Responsible Gaming
+Loaded Swagger paths: [
+  '/api/admin-modules/my-modules',
+  '/api/admin-modules/roles',
+  '/api/admin-modules/by-role/{roleId}',
+  '/api/admin-modules/all',
+  '/api/admin-modules',
+  '/api/admin-modules/{id}',
+  '/api/admin/provider/validate-transaction',
+  '/api/admin/provider/list-cancellable-transactions',
+  '/api/admin/provider/transaction-details',
+  '/api/admin/dashboard/stats',
+  '/api/admin/dashboard/stats/realtime',
+  '/api/admin/games',
+  '/api/admin/games/status',
+  '/api/admin/games/status/id',
+  '/api/admin/games/status/category',
+  '/api/admin/games/status/provider',
+  '/api/admin/games/status/bulk',
+  '/api/admin/games/status/stats',
+  '/api/admin/games/status/changes',
+  '/api/admin/games/{id}',
+  '/api/admin/categories',
+  '/api/admin/categories/{id}',
+  '/api/admin/categories/bulk',
+  '/api/admin/categories/stats',
+  '/api/admin/categories/hierarchy',
+  '/api/admin/categories/migrate',
+  '/api/admin/categories/{id}/games',
+  '/api/admin/users/search',
+  '/api/admin/users/{id}/roles',
+  '/api/admin/users/{id}/roles/{roleId}',
+  '/api/admin/users/{id}/password',
+  '/api/admin/users',
+  '/api/admin/users/{id}/status',
+  '/api/admin/users/{id}/balance',
+  '/api/admin/users/{id}/disable',
+  '/api/admin/users/{id}/enable',
+  '/api/admin/users/{id}/activate',
+  '/api/admin/users/{id}/deactivate',
+  '/api/admin/users/{id}/suspend',
+  '/api/admin/users/{id}/ban',
+  '/api/admin/affiliates',
+  '/api/admin/users/{id}/topup',
+  '/api/admin/providers',
+  '/api/admin/providers/{id}',
+  '/api/admin/providers/{id}/activate',
+  '/api/admin/transactions',
+  '/api/admin/transactions/{id}/approve',
+  '/api/admin/settings',
+  '/api/admin/analytics/revenue',
+  '/api/admin/analytics/users',
+  '/api/admin/game-provider',
+  '/api/admin/import-games',
+  '/api/admin/import-game',
+  '/api/admin/game-import/status',
+  '/api/admin/import-all-games',
+  '/api/admin/payment-gateways',
+  '/api/admin/payment-gateways/{id}',
+  '/api/admin/payment-gateways/active',
+  '/api/admin/payment-gateways/{id}/test',
+  '/api/admin/payment-gateways/{id}/stats',
+  '/api/admin/ggr-filter',
+  '/api/admin/ggr-audit-logs',
+  '/api/admin/ggr-report-summary',
+  '/api/admin/modules',
+  '/api/admin/modules/hierarchy',
+  '/api/admin/modules/{id}',
+  '/api/admin/activities',
+  '/api/admin/activities/{id}',
+  '/api/admin/rtp/settings',
+  '/api/admin/rtp/analytics',
+  '/api/admin/rtp/bulk-update',
+  '/api/admin/rtp/report',
+  '/api/admin/bets',
+  '/api/admin/bets/{id}/cancel',
+  '/api/admin/analytics/profit',
+  '/api/admin/rtp/target-profit',
+  '/api/admin/rtp/auto-adjustment',
+  '/api/admin/profit/analytics',
+  '/api/admin/profit/auto-adjustment',
+  '/api/admin/profit/performance',
+  '/api/admin/cron/status',
+  '/api/admin/cron/start',
+  '/api/admin/cron/stop',
+  '/api/admin/cron/trigger-auto-adjustment',
+  '/api/admin/cron/trigger-daily-summary',
+  '/api/admin/promotions',
+  '/api/admin/promotions/{id}',
+  '/api/admin/promotions/{id}/toggle',
+  '/api/admin/promotions/stats',
+  '/api/admin/promotions/stats/overview',
+  '/api/admin/promotions/{id}/claims',
+  '/api/admin/kyc/pending',
+  '/api/admin/kyc/{user_id}',
+  '/api/admin/kyc/{user_id}/approve',
+  '/api/admin/kyc/{user_id}/reject',
+  '/api/admin/kyc/{user_id}/unapprove',
+  '/api/admin/kyc/{user_id}/message',
+  '/api/admin/kyc/{user_id}/documents',
+  '/api/admin/kyc/documents',
+  '/api/admin/kyc/documents/{document_id}/verify',
+  ... 159 more items
+]
+✅ WebSocket Chat Service initialized
+Server running on http://localhost:3004
+WebSocket server running on ws://localhost:3004
+[APP] Starting background cron jobs...
+[CRON_MANAGER] Starting background cron jobs (PID: 30536)...
+[CRON_MANAGER] Stopping all background cron jobs (PID: 30536)...
+[CRON_MANAGER] Clearing 0 intervals...
+[CRON_MANAGER] All background cron jobs stopped (PID: 30536)
+[CRON_MANAGER] Monthly cleanup interval set to daily check (runs on 1st of month)
+[CRON_MANAGER] Background cron jobs started successfully
+[CRON_MANAGER] - Auto-adjustment: Every 30 minutes
+[CRON_MANAGER] - Daily summary: Every 24 hours
+[CRON_MANAGER] - Weekly analytics: Every 7 days
+[CRON_MANAGER] - Monthly cleanup: Every 30 days
+[APP] Background cron jobs initialized
+[APP] Starting enterprise cron jobs...
+🕐 Starting Enterprise Cron Jobs...
+✅ Cron: Deposit Limits Reset (Every hour)
+✅ Cron: Self-Exclusion Expiry (Daily at midnight)
+✅ Cron: Clear Translation Cache (Every 6 hours)
+✅ Cron: Auto-Publish CMS Pages (Every 15 minutes)
+✅ Cron: Auto-Archive CMS Pages (Daily at 1 AM)
+✅ Cron: Delete Expired Banners (Daily at 2 AM)
+✅ Cron: Restore Expired Player Statuses (Every hour)
+✅ Cron: Update Exchange Rates (Daily at 3 AM)
+🎉 All Enterprise Cron Jobs Started!
+[APP] Enterprise cron jobs initialized
+MongoDB connected: localhost
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[AUTH] Authenticating request to: /user/balance
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[AUTH] Authenticating request to: /user/category-balances
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/notifications/unread-count body: undefined
+[AUTH] Authenticating request to: /unread-count
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[MONGO] Connected to MongoDB
+[APP DEBUG] Incoming request: GET /api/user/messages?type=kyc_notification&page=1&limit=10 body: undefined
+[AUTH] Authenticating request to: /user/messages
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[AUTH] Authenticating request to: /user/balance
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[AUTH] Authenticating request to: /user/category-balances
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[CRON_MANAGER] Running initial auto-adjustment check...
+[PROFIT_CRON] Starting auto-adjustment check...
+[PROFIT_CRON] No adjustment needed
+[PROFIT_CRON] Current performance: 0% (target: 20%, gap: -20%)
+[APP DEBUG] Incoming request: GET /api/user/messages?type=kyc_notification&page=1&limit=10 body: undefined
+[AUTH] Authenticating request to: /user/messages
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[AUTH] Authenticating request to: /user/balance
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[AUTH] Authenticating request to: /user/category-balances
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/notifications/unread-count body: undefined
+[AUTH] Authenticating request to: /unread-count
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/messages?type=kyc_notification&page=1&limit=10 body: undefined
+[AUTH] Authenticating request to: /user/messages
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/balance body: undefined
+[AUTH] Authenticating request to: /user/balance
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/category-balances body: undefined
+[AUTH] Authenticating request to: /user/category-balances
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
+[APP DEBUG] Incoming request: GET /api/user/messages?type=kyc_notification&page=1&limit=10 body: undefined
+[AUTH] Authenticating request to: /user/messages
+[AUTH] Auth header: present
+[AUTH] Token extracted, length: 204
+[AUTH] Using secret (first 10 chars): 0582ece5b4
+[AUTH] Token verified successfully for user: admin
