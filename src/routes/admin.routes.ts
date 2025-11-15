@@ -174,8 +174,9 @@ import {
   getGamesInCategory
 } from "../api/admin/admin.category.controller";
 import pool from "../db/postgres";
-import { 
-  getAllModules, 
+import bcrypt from "bcrypt";
+import {
+  getAllModules,
   getModuleById, 
   createModule, 
   updateModule, 
@@ -1724,6 +1725,98 @@ router.delete("/users/:id/roles/:roleId", async (req, res) => {
       success: true, 
       message: "Role removed successfully",
       data: result.rows[0]
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/admin/users/{id}/password:
+ *   put:
+ *     summary: Change user password (Admin)
+ *     tags: [Admin User Management]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - new_password
+ *             properties:
+ *               new_password:
+ *                 type: string
+ *                 description: New password for the user
+ *               reason:
+ *                 type: string
+ *                 description: Reason for password change
+ *               force_password_change:
+ *                 type: boolean
+ *                 description: Force user to change password on next login
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ */
+router.put("/users/:id/password", authenticate, authorize(["Admin"]), async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id);
+    const { new_password, reason, force_password_change } = req.body;
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+
+    if (!new_password || new_password.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 4 characters"
+      });
+    }
+
+    // Check if user exists
+    const userCheck = await pool.query("SELECT id, username FROM users WHERE id = $1", [userId]);
+    if (userCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    // Update password
+    await pool.query(
+      "UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [hashedPassword, userId]
+    );
+
+    // Log the password change (optional - if you have an audit log table)
+    // You can add audit logging here if needed
+
+    res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+      data: {
+        user_id: userId,
+        username: userCheck.rows[0].username,
+        changed_by: (req as any).user?.id || 'admin',
+        reason: reason || 'Password changed by admin',
+        force_password_change: force_password_change || false
+      }
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
