@@ -338,16 +338,16 @@ export const getKYCAuditLogs = async (req: Request, res: Response) => {
     const userId = req.query.user_id ? parseInt(req.query.user_id as string) : undefined;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
-    
+
     if (userId && isNaN(userId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid user ID"
       });
     }
-    
+
     const result = await AdminKYCService.getKYCAuditLogs(userId, page, limit);
-    
+
     res.status(200).json({
       success: true,
       data: result.audit_logs,
@@ -358,6 +358,139 @@ export const getKYCAuditLogs = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to fetch KYC audit logs"
+    });
+  }
+};
+
+// Unapprove KYC - revert approved status back to pending/under_review
+export const unapproveKYC = async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.user_id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+
+    const { reason, admin_notes } = req.body;
+
+    if (!reason || !admin_notes) {
+      return res.status(400).json({
+        success: false,
+        message: "Reason and admin_notes are required"
+      });
+    }
+
+    const kyc = await AdminKYCService.unapproveKYC(userId, reason, admin_notes);
+
+    // Log activity
+    await ActivityLoggerService.logGenericAction(
+      req,
+      'kyc_unapproved',
+      {
+        user_id: userId,
+        reason,
+        admin_notes
+      },
+      'KYC'
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user_id: userId,
+        status: kyc.status,
+        verification_date: kyc.updated_at
+      }
+    });
+  } catch (error: any) {
+    console.error("Error unapproving KYC:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to unapprove KYC"
+    });
+  }
+};
+
+// Send message to user regarding KYC
+export const sendKYCMessage = async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.user_id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+
+    const { subject, message, priority = 'medium', type = 'kyc_notification' } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject and message are required"
+      });
+    }
+
+    const result = await AdminKYCService.sendKYCMessage(userId, {
+      subject,
+      message,
+      priority,
+      type
+    });
+
+    // Log activity
+    await ActivityLoggerService.logGenericAction(
+      req,
+      'kyc_message_sent',
+      {
+        user_id: userId,
+        subject,
+        priority,
+        type
+      },
+      'KYC'
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error: any) {
+    console.error("Error sending KYC message:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to send KYC message"
+    });
+  }
+};
+
+// Get user's KYC documents (admin view)
+export const getUserKYCDocuments = async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.user_id);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID"
+      });
+    }
+
+    const documents = await AdminKYCService.getUserKYCDocuments(userId);
+
+    res.status(200).json({
+      success: true,
+      data: documents
+    });
+  } catch (error: any) {
+    console.error("Error fetching user KYC documents:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch user KYC documents"
     });
   }
 }; 

@@ -24,7 +24,10 @@
       "Bash(cat:*)",
       "Bash(python replace_section.py:*)",
       "Bash(node replace_section.js:*)",
-      "Bash(PGPASSWORD=\"${DB_PASS:-2025}\" psql:*)"
+      "Bash(PGPASSWORD=\"${DB_PASS:-2025}\" psql:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []

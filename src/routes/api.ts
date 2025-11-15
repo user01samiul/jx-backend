@@ -17,6 +17,18 @@ import {
   transferUserCategoryBalance,
   getUserGameBets
 } from "../api/user/user.controller";
+import {
+  getKYCStatus,
+  getKYCDocuments,
+  uploadKYCDocument,
+  deleteKYCDocument,
+  getKYCRequirements
+} from "../api/user/kyc.controller";
+import {
+  getUserMessages,
+  markMessageAsRead,
+  getUnreadCount
+} from "../api/user/messages.controller";
 import { proxyGameContent } from "../services/game/game-proxy.service";
 import { GetHome } from "../api/home/home.controller";
 import { 
@@ -53,11 +65,19 @@ import {
   GameCategoryFiltersSchema,
   CancelGameSchema
 } from "../api/game/game.schema";
-import { 
+import {
   UpdateProfileInput,
   Skip2FAInput,
   ChangePasswordInput
 } from "../api/user/user.schema";
+import {
+  UploadKYCDocumentSchema,
+  DeleteKYCDocumentSchema,
+  GetKYCRequirementsSchema
+} from "../api/user/kyc.schema";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 import adminRoutes from "./admin.routes";
 import templateRoutes from "./template.routes";
 import settingsRoutes from "./settings.routes";
@@ -73,6 +93,49 @@ const router = Router();
 const adminAuth = (req: any, res: any, next: any) => {
   authorize(['Admin'])(req, res, next);
 };
+
+// Configure multer for KYC document uploads
+const kycUploadDir = path.join(process.cwd(), 'uploads', 'kyc');
+// Ensure KYC upload directory exists
+if (!fs.existsSync(kycUploadDir)) {
+  fs.mkdirSync(kycUploadDir, { recursive: true });
+}
+
+const kycStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, kycUploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, `kyc-${uniqueSuffix}${ext}`);
+  }
+});
+
+const kycUpload = multer({
+  storage: kycStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPG, PNG, GIF, WEBP, PDF, DOC, and DOCX files are allowed.'));
+    }
+  }
+});
 
 // Define all routes here (like PHP api.php)
 
@@ -2958,6 +3021,418 @@ router.get("/user/category-balances", authenticate, getUserCategoryBalances);
  *         description: Unauthorized
  */
 router.post("/user/category-balance/transfer", authenticate, transferUserCategoryBalance);
+
+// =====================================================
+// USER KYC ROUTES
+// =====================================================
+
+/**
+ * @openapi
+ * /api/user/kyc/status:
+ *   get:
+ *     summary: Get current user's KYC verification status
+ *     tags:
+ *       - User KYC
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: KYC status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     verification:
+ *                       type: object
+ *                       description: Current KYC verification record
+ *                       nullable: true
+ *                     verification_level:
+ *                       type: number
+ *                       example: 1
+ *                       description: Current verification level (0=unverified, 1=basic, 2=full)
+ *                     is_verified:
+ *                       type: boolean
+ *                       example: true
+ *                     documents_required:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                       example: ["national_id", "selfie"]
+ *                     documents_pending:
+ *                       type: number
+ *                       example: 2
+ *                     documents_approved:
+ *                       type: number
+ *                       example: 1
+ *                     documents_rejected:
+ *                       type: number
+ *                       example: 0
+ *                     documents_under_review:
+ *                       type: number
+ *                       example: 0
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/user/kyc/status", authenticate, getKYCStatus);
+
+/**
+ * @openapi
+ * /api/user/kyc/documents:
+ *   get:
+ *     summary: Get all KYC documents uploaded by current user
+ *     tags:
+ *       - User KYC
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Documents retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: number
+ *                         example: 1
+ *                       document_type:
+ *                         type: string
+ *                         example: "national_id"
+ *                       file_name:
+ *                         type: string
+ *                         example: "kyc-1234567890.jpg"
+ *                       file_url:
+ *                         type: string
+ *                         example: "/uploads/kyc/kyc-1234567890.jpg"
+ *                       file_size:
+ *                         type: number
+ *                         example: 1024000
+ *                       mime_type:
+ *                         type: string
+ *                         example: "image/jpeg"
+ *                       status:
+ *                         type: string
+ *                         enum: [pending, approved, rejected, under_review, expired, cancelled]
+ *                         example: "pending"
+ *                       reason:
+ *                         type: string
+ *                         nullable: true
+ *                         example: null
+ *                       uploaded_at:
+ *                         type: string
+ *                         format: date-time
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/user/kyc/documents", authenticate, getKYCDocuments);
+
+/**
+ * @openapi
+ * /api/user/messages:
+ *   get:
+ *     summary: Get user messages with filtering and pagination
+ *     tags:
+ *       - User Messages
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *         description: Filter by message type (kyc_notification, document_request, general)
+ *       - in: query
+ *         name: read
+ *         schema:
+ *           type: boolean
+ *         description: Filter by read status (true/false)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Messages retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/user/messages", authenticate, getUserMessages);
+
+/**
+ * @openapi
+ * /api/user/messages/{message_id}/read:
+ *   put:
+ *     summary: Mark a message as read
+ *     tags:
+ *       - User Messages
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: message_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Message ID
+ *     responses:
+ *       200:
+ *         description: Message marked as read
+ *       404:
+ *         description: Message not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.put("/user/messages/:message_id/read", authenticate, markMessageAsRead);
+
+/**
+ * @openapi
+ * /api/user/messages/unread-count:
+ *   get:
+ *     summary: Get unread message count
+ *     tags:
+ *       - User Messages
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Unread count retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/user/messages/unread-count", authenticate, getUnreadCount);
+
+/**
+ * @openapi
+ * /api/user/kyc/upload:
+ *   post:
+ *     summary: Upload a new KYC document
+ *     tags:
+ *       - User KYC
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - document
+ *               - document_type
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *                 description: The document file (JPG, PNG, GIF, WEBP, PDF, DOC, DOCX - max 10MB)
+ *               document_type:
+ *                 type: string
+ *                 enum: [passport, national_id, drivers_license, utility_bill, bank_statement, selfie, proof_of_address, proof_of_income, tax_document, other]
+ *                 example: "national_id"
+ *               description:
+ *                 type: string
+ *                 example: "Front side of national ID"
+ *     responses:
+ *       201:
+ *         description: Document uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Document uploaded successfully"
+ *                 data:
+ *                   type: object
+ *                   description: The created document record
+ *       400:
+ *         description: Invalid input or file type
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  "/user/kyc/upload",
+  authenticate,
+  kycUpload.single('document'),
+  validateRequest(UploadKYCDocumentSchema),
+  uploadKYCDocument
+);
+
+// Alias route for POST /user/kyc/documents (same as /upload)
+router.post(
+  "/user/kyc/documents",
+  authenticate,
+  kycUpload.single('document'),
+  validateRequest(UploadKYCDocumentSchema),
+  uploadKYCDocument
+);
+
+/**
+ * @openapi
+ * /api/user/kyc/documents/{id}:
+ *   delete:
+ *     summary: Delete a KYC document (only if not approved)
+ *     tags:
+ *       - User KYC
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Document ID
+ *     responses:
+ *       200:
+ *         description: Document deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Document deleted successfully"
+ *       400:
+ *         description: Invalid document ID
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Cannot delete approved documents
+ *       404:
+ *         description: Document not found
+ */
+router.delete(
+  "/user/kyc/documents/:id",
+  authenticate,
+  validateRequest(DeleteKYCDocumentSchema),
+  deleteKYCDocument
+);
+
+/**
+ * @openapi
+ * /api/user/kyc/requirements/{level}:
+ *   get:
+ *     summary: Get KYC requirements for a verification level
+ *     tags:
+ *       - User KYC
+ *     parameters:
+ *       - in: path
+ *         name: level
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           enum: [0, 1, 2]
+ *         description: Verification level (0=unverified, 1=basic, 2=full)
+ *     responses:
+ *       200:
+ *         description: Requirements retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     level:
+ *                       type: number
+ *                       example: 1
+ *                     name:
+ *                       type: string
+ *                       example: "Basic Verification"
+ *                     description:
+ *                       type: string
+ *                       example: "Basic identity verification with government-issued ID"
+ *                     required_documents:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                           label:
+ *                             type: string
+ *                           description:
+ *                             type: string
+ *                     withdrawal_limits:
+ *                       type: object
+ *                       properties:
+ *                         daily:
+ *                           type: number
+ *                         weekly:
+ *                           type: number
+ *                         monthly:
+ *                           type: number
+ *                     deposit_limits:
+ *                       type: object
+ *                       properties:
+ *                         daily:
+ *                           type: number
+ *                         weekly:
+ *                           type: number
+ *                         monthly:
+ *                           type: number
+ *                     features:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       400:
+ *         description: Invalid level
+ */
+// Support query parameter version: /user/kyc/requirements?level=0
+router.get(
+  "/user/kyc/requirements",
+  (req: any, res: any, next: any) => {
+    // Convert query parameter to path parameter format
+    if (req.query.level !== undefined) {
+      req.params.level = req.query.level;
+    }
+    next();
+  },
+  validateRequest(GetKYCRequirementsSchema),
+  getKYCRequirements
+);
+
+// Support path parameter version: /user/kyc/requirements/0
+router.get(
+  "/user/kyc/requirements/:level",
+  validateRequest(GetKYCRequirementsSchema),
+  getKYCRequirements
+);
 
 router.use(settingsRoutes);
 router.use("/admin", adminRoutes);

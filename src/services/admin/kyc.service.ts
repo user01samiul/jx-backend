@@ -501,32 +501,32 @@ export class AdminKYCService {
   // Get KYC audit logs
   static async getKYCAuditLogs(userId?: number, page: number = 1, limit: number = 20) {
     const offset = (page - 1) * limit;
-    
+
     let whereConditions = ['1=1'];
     let values = [];
     let valueIndex = 1;
-    
+
     if (userId) {
       whereConditions.push(`kal.user_id = $${valueIndex}`);
       values.push(userId);
       valueIndex++;
     }
-    
+
     const whereClause = whereConditions.join(' AND ');
-    
+
     // Count query
     const countQuery = `
       SELECT COUNT(*) as total
       FROM kyc_audit_logs kal
       WHERE ${whereClause}
     `;
-    
+
     const countResult = await pool.query(countQuery, values);
     const total = parseInt(countResult.rows[0].total);
-    
+
     // Data query
     const dataQuery = `
-      SELECT 
+      SELECT
         kal.*,
         u.username,
         u.email,
@@ -538,10 +538,10 @@ export class AdminKYCService {
       ORDER BY kal.created_at DESC
       LIMIT $${valueIndex} OFFSET $${valueIndex + 1}
     `;
-    
+
     values.push(limit, offset);
     const dataResult = await pool.query(dataQuery, values);
-    
+
     return {
       audit_logs: dataResult.rows,
       pagination: {
@@ -551,5 +551,162 @@ export class AdminKYCService {
         totalPages: Math.ceil(total / limit)
       }
     };
+  }
+
+  // Unapprove KYC - revert approved status to pending
+  static async unapproveKYC(userId: number, reason: string, adminNotes: string) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const query = `
+        UPDATE kyc_verifications
+        SET
+          status = 'pending',
+          reason = $1,
+          admin_notes = $2,
+          verification_date = NULL,
+          updated_at = NOW()
+        WHERE user_id = $3
+        RETURNING *
+      `;
+
+      const result = await client.query(query, [reason, adminNotes, userId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('KYC verification not found for this user');
+      }
+
+      // Update user status - remove verified flag
+      await client.query(
+        'UPDATE users SET kyc_verified = false, kyc_verified_at = NULL, kyc_status = $1 WHERE id = $2',
+        ['pending', userId]
+      );
+
+      // Log the action in audit logs
+      await client.query(
+        `INSERT INTO kyc_audit_logs (user_id, action, entity_type, entity_id, new_values)
+         VALUES ($1, 'kyc_unapproved', 'verification', $2, $3)`,
+        [userId, result.rows[0].id, JSON.stringify({ reason, admin_notes: adminNotes })]
+      );
+
+      await client.query('COMMIT');
+      return result.rows[0];
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Send KYC message to user
+  static async sendKYCMessage(
+    userId: number,
+    messageData: {
+      subject: string;
+      message: string;
+      priority: string;
+      type: string;
+    }
+  ) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Check if user exists
+      const userCheck = await client.query('SELECT id FROM users WHERE id = $1', [userId]);
+      if (userCheck.rows.length === 0) {
+        throw new Error('User not found');
+      }
+
+      // Map priority to is_important
+      const isImportant = messageData.priority === 'high';
+
+      // Insert notification/message
+      const query = `
+        INSERT INTO notifications (
+          user_id,
+          title,
+          message,
+          type,
+          category,
+          is_read,
+          is_important,
+          metadata,
+          created_at,
+          updated_at
+        ) VALUES ($1, $2, $3, $4, $5, false, $6, $7, NOW(), NOW())
+        RETURNING id, created_at
+      `;
+
+      const metadata = {
+        priority: messageData.priority,
+        sent_via: 'admin_kyc_panel'
+      };
+
+      const result = await client.query(query, [
+        userId,
+        messageData.subject,
+        messageData.message,
+        messageData.type,
+        'kyc', // category
+        isImportant,
+        JSON.stringify(metadata)
+      ]);
+
+      // Log in KYC audit
+      await client.query(
+        `INSERT INTO kyc_audit_logs (user_id, action, entity_type, entity_id, new_values)
+         VALUES ($1, 'kyc_message_sent', 'notification', $2, $3)`,
+        [userId, result.rows[0].id, JSON.stringify(messageData)]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        message_id: result.rows[0].id,
+        user_id: userId,
+        sent_at: result.rows[0].created_at,
+        delivered: true
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Get user's KYC documents (admin view with all details)
+  static async getUserKYCDocuments(userId: number) {
+    const query = `
+      SELECT
+        id,
+        user_id,
+        document_type,
+        COALESCE(document_url, file_url) as document_url,
+        front_image_url,
+        back_image_url,
+        selfie_image_url,
+        status,
+        COALESCE(rejection_reason, reason) as rejection_reason,
+        created_at,
+        file_name,
+        file_size,
+        file_url,
+        mime_type,
+        description,
+        admin_notes,
+        verification_method,
+        verified_by,
+        verification_date
+      FROM kyc_documents
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `;
+
+    const result = await pool.query(query, [userId]);
+    return result.rows;
   }
 } 

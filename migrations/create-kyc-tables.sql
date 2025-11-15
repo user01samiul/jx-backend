@@ -142,24 +142,38 @@ COMMENT ON COLUMN kyc_audit_logs.old_values IS 'Previous values before the actio
 COMMENT ON COLUMN kyc_audit_logs.new_values IS 'New values after the action';
 
 -- Add KYC-related columns to users table if they don't exist
-DO $$ 
+DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'kyc_verified') THEN
         ALTER TABLE users ADD COLUMN kyc_verified BOOLEAN DEFAULT false;
     END IF;
-    
+
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'kyc_verified_at') THEN
         ALTER TABLE users ADD COLUMN kyc_verified_at TIMESTAMP;
     END IF;
-    
+
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'kyc_status') THEN
         ALTER TABLE users ADD COLUMN kyc_status VARCHAR(20) DEFAULT 'not_submitted' CHECK (kyc_status IN ('not_submitted', 'pending', 'approved', 'rejected', 'expired'));
+    END IF;
+END $$;
+
+-- Add KYC-related columns to user_profiles table if they don't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_profiles' AND column_name = 'verification_level') THEN
+        ALTER TABLE user_profiles ADD COLUMN verification_level INTEGER DEFAULT 0 CHECK (verification_level >= 0 AND verification_level <= 2);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'user_profiles' AND column_name = 'is_verified') THEN
+        ALTER TABLE user_profiles ADD COLUMN is_verified BOOLEAN DEFAULT false;
     END IF;
 END $$;
 
 -- Create indexes for new user columns
 CREATE INDEX IF NOT EXISTS idx_users_kyc_verified ON users(kyc_verified);
 CREATE INDEX IF NOT EXISTS idx_users_kyc_status ON users(kyc_status);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_verification_level ON user_profiles(verification_level);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_is_verified ON user_profiles(is_verified);
 
 -- Insert sample KYC verification for testing
 INSERT INTO kyc_verifications (
