@@ -4783,6 +4783,67 @@ router.get("/activities", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/activities/{id}:
+ *   delete:
+ *     summary: Delete an activity log entry
+ *     tags: [Admin Activities]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Activity ID
+ *     responses:
+ *       200:
+ *         description: Activity deleted successfully
+ *       404:
+ *         description: Activity not found
+ */
+router.delete("/activities/:id", authenticate, authorize(["Admin"]), async (req, res) => {
+  try {
+    const activityId = parseInt(req.params.id);
+
+    if (isNaN(activityId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid activity ID"
+      });
+    }
+
+    // Check if activity exists
+    const activityCheck = await pool.query(
+      "SELECT id FROM admin_activities WHERE id = $1",
+      [activityId]
+    );
+
+    if (activityCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Activity not found"
+      });
+    }
+
+    // Delete the activity
+    await pool.query(
+      "DELETE FROM admin_activities WHERE id = $1",
+      [activityId]
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Activity deleted successfully",
+      data: { id: activityId }
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // =====================================================
 // RTP MANAGEMENT ROUTES
 // =====================================================
