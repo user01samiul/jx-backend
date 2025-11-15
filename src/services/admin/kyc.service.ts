@@ -21,7 +21,7 @@ export class AdminKYCService {
     let valueIndex = 1;
     
     if (search) {
-      whereConditions.push(`(u.username ILIKE $${valueIndex} OR u.email ILIKE $${valueIndex} OR u.first_name ILIKE $${valueIndex} OR u.last_name ILIKE $${valueIndex})`);
+      whereConditions.push(`(u.username ILIKE $${valueIndex} OR u.email ILIKE $${valueIndex} OR up.first_name ILIKE $${valueIndex} OR up.last_name ILIKE $${valueIndex})`);
       values.push(`%${search}%`);
       valueIndex++;
     }
@@ -90,24 +90,25 @@ export class AdminKYCService {
     
     // Data query
     const dataQuery = `
-      SELECT 
+      SELECT
         k.*,
         u.username,
         u.email,
-        u.first_name,
-        u.last_name,
-        u.phone,
-        u.country,
-        u.date_of_birth,
+        up.first_name,
+        up.last_name,
+        up.phone_number,
+        up.country,
+        up.date_of_birth,
         COUNT(kd.id) as document_count,
         COUNT(CASE WHEN kd.status = 'approved' THEN 1 END) as approved_documents,
         COUNT(CASE WHEN kd.status = 'pending' THEN 1 END) as pending_documents,
         COUNT(CASE WHEN kd.status = 'rejected' THEN 1 END) as rejected_documents
       FROM kyc_verifications k
       JOIN users u ON k.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
       LEFT JOIN kyc_documents kd ON k.user_id = kd.user_id
       WHERE ${whereClause}
-      GROUP BY k.id, u.id
+      GROUP BY k.id, u.id, up.first_name, up.last_name, up.phone_number, up.country, up.date_of_birth
       ORDER BY k.created_at DESC
       LIMIT $${valueIndex} OFFSET $${valueIndex + 1}
     `;
@@ -129,23 +130,23 @@ export class AdminKYCService {
   // Get KYC by user ID
   static async getKYCByUserId(userId: number) {
     const query = `
-      SELECT 
+      SELECT
         k.*,
         u.username,
         u.email,
-        u.first_name,
-        u.last_name,
-        u.phone,
-        u.country,
-        u.date_of_birth,
+        up.first_name,
+        up.last_name,
+        up.phone_number,
+        up.country,
+        up.date_of_birth,
         u.created_at as user_created_at,
-        u.last_login,
         u.status_id as user_status
       FROM kyc_verifications k
       JOIN users u ON k.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
       WHERE k.user_id = $1
     `;
-    
+
     const result = await pool.query(query, [userId]);
     return result.rows[0] || null;
   }
@@ -291,14 +292,15 @@ export class AdminKYCService {
     const whereClause = whereConditions.join(' AND ');
     
     const query = `
-      SELECT 
+      SELECT
         kd.*,
         u.username,
         u.email,
-        u.first_name,
-        u.last_name
+        up.first_name,
+        up.last_name
       FROM kyc_documents kd
       JOIN users u ON kd.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
       WHERE ${whereClause}
       ORDER BY kd.created_at DESC
     `;
@@ -469,16 +471,17 @@ export class AdminKYCService {
     if (include_details) {
       // Get detailed breakdown
       const detailsQuery = `
-        SELECT 
+        SELECT
           k.status,
           k.compliance_level,
           k.risk_score,
-          u.country,
+          up.country,
           COUNT(*) as count
         FROM kyc_verifications k
         JOIN users u ON k.user_id = u.id
+        LEFT JOIN user_profiles up ON u.id = up.user_id
         WHERE k.created_at >= $1 AND k.created_at <= $2
-        GROUP BY k.status, k.compliance_level, k.risk_score, u.country
+        GROUP BY k.status, k.compliance_level, k.risk_score, up.country
         ORDER BY count DESC
       `;
       
