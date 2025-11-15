@@ -20,7 +20,11 @@
       "Bash(pm2 logs:*)",
       "Bash(pm2 save:*)",
       "Bash(PGPASSWORD=2025 psql:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(python replace_section.py:*)",
+      "Bash(node replace_section.js:*)",
+      "Bash(PGPASSWORD=\"${DB_PASS:-2025}\" psql:*)"
     ],
     "deny": [],
     "ask": []
