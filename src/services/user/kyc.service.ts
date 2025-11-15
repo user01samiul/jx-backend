@@ -2,6 +2,7 @@
 import pool from "../../db/postgres";
 import * as fs from "fs";
 import * as path from "path";
+import { isCDNUrl } from "../../utils/cdn-storage.util";
 
 /**
  * Get KYC status for a user
@@ -317,10 +318,17 @@ export const deleteKYCDocumentService = async (userId: number, documentId: numbe
       throw new Error('Cannot delete approved documents');
     }
 
-    // Delete file from filesystem
-    const filePath = path.join(process.cwd(), document.file_url);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Delete file from filesystem (only if it's a local file, not CDN)
+    if (!isCDNUrl(document.file_url)) {
+      const filePath = path.join(process.cwd(), document.file_url);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted local file: ${filePath}`);
+      }
+    } else {
+      console.log(`File is on CDN, skipping local deletion: ${document.file_url}`);
+      // Note: CDN files are not deleted to maintain audit trail
+      // Admin can manage CDN storage separately if needed
     }
 
     // Delete database record

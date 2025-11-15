@@ -1,0 +1,261 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   KYC DOCUMENT UPLOAD FLOW WITH CDN                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────┐
+│   FRONTEND  │  User submits KYC document via React form
+│  (React)    │  - Selects file (passport, ID, etc.)
+└──────┬──────┘  - Fills document_type and description
+       │         - Calls uploadKycDocument() API
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│  POST /api/user/kyc/upload                                              │
+│  ─────────────────────────────────────────────────────────────────────  │
+│  Headers: Authorization: Bearer <JWT_TOKEN>                             │
+│  Body: multipart/form-data                                              │
+│    - document: <file>                                                   │
+│    - document_type: "passport"                                          │
+│    - description: "My passport"                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  MULTER MIDDLEWARE  (api.ts:104-138)                                     │
+│  ────────────────────────────────────────────────────────────────────   │
+│  1. Validates file type (JPG, PNG, GIF, WEBP, PDF, DOC, DOCX)           │
+│  2. Validates file size (max 10MB)                                      │
+│  3. Saves to: uploads/kyc/kyc-{timestamp}-{random}.{ext}                │
+│  4. Generates unique filename                                           │
+└──────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  KYC CONTROLLER  (kyc.controller.ts:60-145)                              │
+│  ────────────────────────────────────────────────────────────────────   │
+│  1. Authenticate user (JWT)                                             │
+│  2. Validate document_type                                              │
+│  3. Check if file was uploaded                                          │
+│                                                                          │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  TRY: Upload to CDN                                                 │ │
+│  │  ───────────────────────────────────────────────────────────────   │ │
+│  │  • Call uploadAndCleanup(localPath, filename)                      │ │
+│  │  • Upload via POST to cdn.jackpotx.net/storage.php                 │ │
+│  │  • Authorization: Bearer 2ZqQk9                                    │ │
+│  │  • Delete local file after success                                 │ │
+│  │  • Return CDN URL: https://cdn.jackpotx.net/cdnstorage/kyc-*.jpg  │ │
+│  │  • Log: ✓ KYC document uploaded to CDN                            │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+│         │                                                                │
+│         │ FAIL?                                                          │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  CATCH: Fallback to Local Storage                                  │ │
+│  │  ───────────────────────────────────────────────────────────────   │ │
+│  │  • Log error: ✗ CDN upload failed                                  │ │
+│  │  • Use local URL: /uploads/kyc/kyc-*.jpg                           │ │
+│  │  • Keep file in uploads/kyc/                                       │ │
+│  │  • Log: → Using local storage as fallback                          │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+│                                                                          │
+│  4. Call uploadKYCDocumentService() with URL                            │
+└──────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  KYC SERVICE  (kyc.service.ts:168-291)                                   │
+│  ────────────────────────────────────────────────────────────────────   │
+│  1. Check if user can submit (no approved/pending docs)                 │
+│  2. Insert into kyc_documents table:                                    │
+│     - file_url: CDN URL or local URL                                    │
+│     - file_name: kyc-{timestamp}-{random}.{ext}                         │
+│     - status: 'pending'                                                 │
+│  3. Update/create kyc_verifications record (status='pending')           │
+│  4. Update users table (kyc_status='pending')                           │
+│  5. Log to kyc_audit_logs                                               │
+│  6. Return document record                                              │
+└──────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────┐
+│  DATABASE   │  kyc_documents table:
+│ (PostgreSQL)│  ┌──────────────────────────────────────────────────┐
+└─────────────┘  │ id: 123                                          │
+                 │ user_id: 456                                     │
+                 │ document_type: 'passport'                        │
+                 │ file_name: 'kyc-1763235547903-536566885.jpg'     │
+                 │ file_url: 'https://cdn.jackpotx.net/cdnstorage/  │
+                 │            kyc-1763235547903-536566885.jpg'      │
+                 │ file_size: 2048000                               │
+                 │ mime_type: 'image/jpeg'                          │
+                 │ status: 'pending'                                │
+                 │ created_at: 2025-11-16 10:30:00                  │
+                 └──────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────┐
+│   RESPONSE  │  JSON Response to Frontend:
+│  (Success)  │  {
+└─────────────┘    "success": true,
+                   "message": "Document uploaded successfully",
+                   "data": {
+                     "id": 123,
+                     "file_url": "https://cdn.jackpotx.net/cdnstorage/kyc-*.jpg",
+                     "file_name": "kyc-1763235547903-536566885.jpg",
+                     "status": "pending",
+                     "document_type": "passport"
+                   }
+                 }
+       │
+       ▼
+┌─────────────┐
+│   FRONTEND  │  - Displays document in KYC list
+│  (React)    │  - Shows status badge: "Pending"
+└─────────────┘  - Allows admin to view/verify document
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      DOCUMENT DELETION FLOW                                ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────┐
+│   FRONTEND  │  User clicks "Delete" on pending document
+└──────┬──────┘
+       │
+       ▼
+DELETE /api/user/kyc/documents/:id
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  KYC SERVICE  (kyc.service.ts:296-362)                                   │
+│  ────────────────────────────────────────────────────────────────────   │
+│  1. Get document from database                                          │
+│  2. Check if document belongs to user                                   │
+│  3. Check if status != 'approved' (can't delete approved docs)          │
+│                                                                          │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  IF file_url starts with 'https://cdn.jackpotx.net'               │ │
+│  │  ────────────────────────────────────────────────────────────────  │ │
+│  │  • Log: File is on CDN, skipping local deletion                   │ │
+│  │  • CDN files NOT deleted (audit trail)                            │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+│         │                                                                │
+│         │ ELSE                                                           │
+│         ▼                                                                │
+│  ┌────────────────────────────────────────────────────────────────────┐ │
+│  │  IF file_url starts with '/uploads/kyc/'                          │ │
+│  │  ────────────────────────────────────────────────────────────────  │ │
+│  │  • Delete file from uploads/kyc/ directory                        │ │
+│  │  • Log: Deleted local file                                        │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+│                                                                          │
+│  4. Delete database record from kyc_documents                           │
+│  5. Log to kyc_audit_logs (action: 'document_deleted')                 │
+└──────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────┐
+│  RESPONSE   │  { "success": true, "message": "Document deleted" }
+└─────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      ADMIN VERIFICATION FLOW                               ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────┐
+│   ADMIN     │  Admin reviews pending KYC document
+│   PANEL     │  - Views document via CDN URL
+└──────┬──────┘  - Verifies document is valid
+       │         - Approves or Rejects
+       │
+       ▼
+POST /api/admin/kyc/:user_id/approve  (or /reject)
+       │
+       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│  ADMIN KYC SERVICE                                                       │
+│  ────────────────────────────────────────────────────────────────────   │
+│  1. Update kyc_documents.status = 'approved' (or 'rejected')            │
+│  2. Update kyc_verifications.status = 'approved'                        │
+│  3. Update users.kyc_verified = true                                    │
+│  4. Grant free spins campaign (if approved)                             │
+│  5. Send notification to user                                           │
+│  6. Log to kyc_audit_logs                                               │
+└──────────────────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────┐
+│    USER     │  Receives notification: "KYC Approved!"
+│  FRONTEND   │  - Status badge changes to "Verified"
+└─────────────┘  - Can now access withdrawal features
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      FILE STORAGE LOCATIONS                                ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+CDN STORAGE (Primary):
+  Location: https://cdn.jackpotx.net/cdnstorage/
+  Files:    kyc-1763235547903-536566885.jpg
+            kyc-1763235547903-536566886.pdf
+  Access:   Public (via URL)
+  Cleanup:  Files NOT deleted on document deletion (audit trail)
+
+LOCAL STORAGE (Fallback):
+  Location: C:\Users\Sami\Desktop\JX\jx_backend\uploads\kyc\
+  Files:    kyc-1763235547903-536566885.jpg
+            kyc-1763235547903-536566886.pdf
+  Access:   Via Express static middleware (/uploads/kyc/*)
+  Cleanup:  Files deleted on document deletion
+
+DATABASE STORAGE:
+  Table:    kyc_documents
+  Field:    file_url (VARCHAR(500))
+  Values:   'https://cdn.jackpotx.net/cdnstorage/kyc-*.jpg'  (CDN)
+            '/uploads/kyc/kyc-*.jpg'                         (Local)
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      CDN UTILITY FUNCTIONS                                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+cdn-storage.util.ts provides:
+
+  uploadToCDN(filePath, fileName)
+    └─> Uploads file to CDN, returns CDN URL
+
+  uploadAndCleanup(filePath, fileName)
+    └─> Uploads to CDN + deletes local file
+
+  deleteLocalFile(filePath)
+    └─> Safely deletes local file
+
+  getCDNUrl(fileName)
+    └─> Constructs: https://cdn.jackpotx.net/cdnstorage/{fileName}
+
+  isCDNUrl(url)
+    └─> Returns: true if URL starts with CDN base URL
+
+  getFileNameFromCDNUrl(url)
+    └─> Extracts: 'kyc-*.jpg' from full URL
+
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                      CONFIGURATION                                         ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+.env file:
+  CDN_AUTH_TOKEN=2ZqQk9
+
+src/utils/cdn-storage.util.ts:
+  uploadUrl:    'https://cdn.jackpotx.net/storage.php'
+  cdnBaseUrl:   'https://cdn.jackpotx.net/cdnstorage'
+  authToken:    process.env.CDN_AUTH_TOKEN || '2ZqQk9'
+
+Multer configuration (api.ts):
+  destination:  uploads/kyc/
+  filename:     kyc-{timestamp}-{random}.{ext}
+  fileSize:     10MB max
+  fileFilter:   JPG, PNG, GIF, WEBP, PDF, DOC, DOCX

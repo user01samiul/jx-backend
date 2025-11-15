@@ -31,7 +31,13 @@
       "Bash(npx ts-node:*)",
       "Bash(npx pm2:*)",
       "Bash(netstat:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(.env)",
+      "Bash(export PGPASSWORD=2025)",
+      "Bash(psql:*)",
+      "Bash(node test-cdn-upload.js:*)",
+      "Bash(curl -H \"Authorization: Bearer 2ZqQk9\" -F \"action=upload\" -F \"file=@package.json\" https://cdn.jackpotx.net/storage.php)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

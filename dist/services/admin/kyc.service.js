@@ -543,6 +543,10 @@ class AdminKYCService {
             }
             // Map priority to is_important
             const isImportant = messageData.priority === 'high';
+            // Map type to valid notification type
+            // Valid types: info, success, warning, error, promotion
+            const validTypes = ['info', 'success', 'warning', 'error', 'promotion'];
+            const notificationType = validTypes.includes(messageData.type) ? messageData.type : 'info';
             // Insert notification/message
             const query = `
         INSERT INTO notifications (
@@ -561,13 +565,14 @@ class AdminKYCService {
       `;
             const metadata = {
                 priority: messageData.priority,
-                sent_via: 'admin_kyc_panel'
+                sent_via: 'admin_kyc_panel',
+                original_type: messageData.type // Store original type for reference
             };
             const result = await client.query(query, [
                 userId,
                 messageData.subject,
                 messageData.message,
-                messageData.type,
+                notificationType, // Use validated type
                 'security', // category - KYC messages are security-related
                 isImportant,
                 JSON.stringify(metadata)

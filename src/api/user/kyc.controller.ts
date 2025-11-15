@@ -7,6 +7,8 @@ import {
   deleteKYCDocumentService,
   getKYCRequirementsService
 } from "../../services/user/kyc.service";
+import { uploadAndCleanup } from "../../utils/cdn-storage.util";
+import * as path from "path";
 
 /**
  * Get current user's KYC verification status
@@ -100,11 +102,26 @@ export const uploadKYCDocument = async (
       return;
     }
 
+    // Upload to CDN storage
+    let cdnUrl: string;
+    const localFilePath = path.join(process.cwd(), 'uploads', 'kyc', req.file.filename);
+
+    try {
+      cdnUrl = await uploadAndCleanup(localFilePath, req.file.filename);
+      console.log(`✓ KYC document uploaded to CDN: ${cdnUrl}`);
+    } catch (cdnError: any) {
+      console.error('✗ CDN upload failed:', cdnError.message);
+      // Fallback to local storage if CDN upload fails
+      // This ensures the user's upload is not blocked by CDN issues
+      cdnUrl = `/uploads/kyc/${req.file.filename}`;
+      console.log(`→ Using local storage as fallback: ${cdnUrl}`);
+    }
+
     // Prepare document data
     const documentData = {
       document_type,
       file_name: req.file.filename,
-      file_url: `/uploads/kyc/${req.file.filename}`,
+      file_url: cdnUrl,
       file_size: req.file.size,
       mime_type: req.file.mimetype,
       description
@@ -120,7 +137,6 @@ export const uploadKYCDocument = async (
     // If there's an error and a file was uploaded, delete it
     if (req.file) {
       const fs = require('fs');
-      const path = require('path');
       const filePath = path.join(process.cwd(), 'uploads', 'kyc', req.file.filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

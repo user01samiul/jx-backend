@@ -41,6 +41,7 @@ exports.getKYCRequirementsService = exports.deleteKYCDocumentService = exports.u
 const postgres_1 = __importDefault(require("../../db/postgres"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const cdn_storage_util_1 = require("../../utils/cdn-storage.util");
 /**
  * Get KYC status for a user
  */
@@ -319,10 +320,18 @@ const deleteKYCDocumentService = async (userId, documentId) => {
         if (document.status === 'approved') {
             throw new Error('Cannot delete approved documents');
         }
-        // Delete file from filesystem
-        const filePath = path.join(process.cwd(), document.file_url);
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+        // Delete file from filesystem (only if it's a local file, not CDN)
+        if (!(0, cdn_storage_util_1.isCDNUrl)(document.file_url)) {
+            const filePath = path.join(process.cwd(), document.file_url);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`Deleted local file: ${filePath}`);
+            }
+        }
+        else {
+            console.log(`File is on CDN, skipping local deletion: ${document.file_url}`);
+            // Note: CDN files are not deleted to maintain audit trail
+            // Admin can manage CDN storage separately if needed
         }
         // Delete database record
         const deleteQuery = `
