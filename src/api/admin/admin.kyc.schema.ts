@@ -55,17 +55,17 @@ export const KYCVerificationSchema = z.object({
 
 // KYC Filters Schema
 export const KYCFiltersSchema = z.object({
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   search: z.string().optional(),
   status: z.enum(KYC_STATUS_TYPES).optional(),
   document_type: z.enum(KYC_DOCUMENT_TYPES).optional(),
-  user_id: z.number().int().positive().optional(),
+  user_id: z.coerce.number().int().positive().optional(),
   start_date: z.string().datetime().optional(),
   end_date: z.string().datetime().optional(),
   compliance_level: z.enum(["low", "medium", "high"]).optional(),
-  risk_score_min: z.number().min(0).max(100).optional(),
-  risk_score_max: z.number().min(0).max(100).optional()
+  risk_score_min: z.coerce.number().min(0).max(100).optional(),
+  risk_score_max: z.coerce.number().min(0).max(100).optional()
 });
 
 // KYC Document Verification Schema
