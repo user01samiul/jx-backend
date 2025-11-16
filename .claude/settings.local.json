@@ -3,7 +3,11 @@
     "allow": [
       "Bash(psql:*)",
       "Bash(ping:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql:*)",
+      "Bash(curl -X POST http://localhost:3004/api/admin/categories/migrate -H 'Content-Type: application/json' -H 'Authorization: Bearer $(curl -s -X POST http://localhost:3004/api/auth/login -H Content-Type:' \"application/json -d ''''{username:admin,password:admin123}'''' | grep -o ''''accessToken:[^]* | cut -d'''' -f4)\")",
+      "Bash(python:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

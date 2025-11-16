@@ -1146,6 +1146,117 @@ router.get("/categories", authenticate, authorize(["Admin"]), validate({ query: 
 
 /**
  * @openapi
+ * /api/admin/categories/stats:
+ *   get:
+ *     summary: Get category statistics
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for statistics
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for statistics
+ *       - in: query
+ *         name: include_inactive
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Include inactive categories
+ *     responses:
+ *       200:
+ *         description: Category statistics retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/categories/stats", authenticate, authorize(["Admin"]), validate({ query: CategoryStatsFiltersSchema }), getCategoryStats);
+
+/**
+ * @openapi
+ * /api/admin/categories/bulk:
+ *   post:
+ *     summary: Bulk operations on categories
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - category_ids
+ *               - action
+ *             properties:
+ *               category_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 minItems: 1
+ *                 description: Array of category IDs
+ *                 example: [1, 2, 3]
+ *               action:
+ *                 type: string
+ *                 enum: [activate, deactivate, delete]
+ *                 description: Operation to perform
+ *                 example: "activate"
+ *               reason:
+ *                 type: string
+ *                 description: Reason for the operation
+ *                 example: "Bulk activation"
+ *     responses:
+ *       200:
+ *         description: Bulk operation completed
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/categories/bulk", authenticate, authorize(["Admin"]), validate({ body: BulkCategoryOperationSchema }), bulkCategoryOperation);
+
+/**
+ * @openapi
+ * /api/admin/categories/hierarchy:
+ *   get:
+ *     summary: Get category hierarchy
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Category hierarchy retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/categories/hierarchy", authenticate, authorize(["Admin"]), getCategoryHierarchy);
+
+/**
+ * @openapi
+ * /api/admin/categories/migrate:
+ *   post:
+ *     summary: Migrate existing game categories to new structure
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Migration completed successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/categories/migrate", authenticate, authorize(["Admin"]), migrateExistingCategories);
+
+/**
+ * @openapi
  * /api/admin/categories/{id}:
  *   get:
  *     summary: Get category by ID
@@ -1228,117 +1339,6 @@ router.put("/categories/:id", authenticate, authorize(["Admin"]), validate({ bod
  *         description: Unauthorized
  */
 router.delete("/categories/:id", authenticate, authorize(["Admin"]), deleteCategory);
-
-/**
- * @openapi
- * /api/admin/categories/bulk:
- *   post:
- *     summary: Bulk operations on categories
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - category_ids
- *               - operation
- *             properties:
- *               category_ids:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 minItems: 1
- *                 description: Array of category IDs
- *                 example: [1, 2, 3]
- *               operation:
- *                 type: string
- *                 enum: [activate, deactivate, delete]
- *                 description: Operation to perform
- *                 example: "activate"
- *               reason:
- *                 type: string
- *                 description: Reason for the operation
- *                 example: "Bulk activation"
- *     responses:
- *       200:
- *         description: Bulk operation completed
- *       400:
- *         description: Invalid input data
- *       401:
- *         description: Unauthorized
- */
-router.post("/categories/bulk", authenticate, authorize(["Admin"]), validate({ body: BulkCategoryOperationSchema }), bulkCategoryOperation);
-
-/**
- * @openapi
- * /api/admin/categories/stats:
- *   get:
- *     summary: Get category statistics
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: start_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Start date for statistics
- *       - in: query
- *         name: end_date
- *         schema:
- *           type: string
- *           format: date
- *         description: End date for statistics
- *       - in: query
- *         name: include_inactive
- *         schema:
- *           type: boolean
- *           default: false
- *         description: Include inactive categories
- *     responses:
- *       200:
- *         description: Category statistics retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get("/categories/stats", authenticate, authorize(["Admin"]), validate({ query: CategoryStatsFiltersSchema }), getCategoryStats);
-
-/**
- * @openapi
- * /api/admin/categories/hierarchy:
- *   get:
- *     summary: Get category hierarchy
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Category hierarchy retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get("/categories/hierarchy", authenticate, authorize(["Admin"]), getCategoryHierarchy);
-
-/**
- * @openapi
- * /api/admin/categories/migrate:
- *   post:
- *     summary: Migrate existing game categories to new structure
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Migration completed successfully
- *       401:
- *         description: Unauthorized
- */
-router.post("/categories/migrate", authenticate, authorize(["Admin"]), migrateExistingCategories);
 
 /**
  * @openapi

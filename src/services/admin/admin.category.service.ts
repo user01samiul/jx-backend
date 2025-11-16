@@ -35,8 +35,9 @@ interface CategoryStats {
   categories_without_games: number;
   total_games_in_categories: number;
   top_categories_by_games: Array<{
-    category_id: number;
-    category_name: string;
+    id: number;
+    name: string;
+    display_name: string;
     game_count: number;
   }>;
 }
@@ -180,11 +181,17 @@ export class AdminCategoryService {
     
     const offset = (filters.page - 1) * filters.limit;
     values.push(filters.limit, offset);
-    
+
     const result = await pool.query(query, values);
-    
+
+    // Transform game_count to number
+    const categories = result.rows.map(row => ({
+      ...row,
+      game_count: parseInt(row.game_count) || 0
+    }));
+
     return {
-      categories: result.rows,
+      categories,
       pagination: {
         total,
         page: filters.page,
@@ -549,20 +556,29 @@ export class AdminCategoryService {
     
     // Get top categories by game count
     const topCategoriesQuery = `
-      SELECT 
-        c.id as category_id,
-        c.display_name as category_name,
+      SELECT
+        c.id,
+        c.name,
+        c.display_name,
         COUNT(g.id) as game_count
       FROM game_categories c
       LEFT JOIN games g ON c.name = g.category
       ${whereClause}
-      GROUP BY c.id, c.display_name
+      GROUP BY c.id, c.name, c.display_name
       ORDER BY game_count DESC
       LIMIT 10
     `;
-    
+
     const topCategoriesResult = await pool.query(topCategoriesQuery, values);
-    
+
+    // Transform to expected format
+    const topCategories = topCategoriesResult.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      display_name: row.display_name,
+      game_count: parseInt(row.game_count)
+    }));
+
     return {
       total_categories: parseInt(stats.total_categories),
       active_categories: parseInt(stats.active_categories),
@@ -570,7 +586,7 @@ export class AdminCategoryService {
       categories_with_games: categoriesWithGames,
       categories_without_games: parseInt(stats.total_categories) - categoriesWithGames,
       total_games_in_categories: totalGames,
-      top_categories_by_games: topCategoriesResult.rows
+      top_categories_by_games: topCategories
     };
   }
   
