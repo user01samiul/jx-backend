@@ -53,6 +53,25 @@ export const KYCVerificationSchema = z.object({
   compliance_level: z.enum(["low", "medium", "high"]).optional()
 });
 
+// KYC Approve Schema (user_id comes from URL params)
+export const KYCApproveSchema = z.object({
+  admin_notes: z.string().optional(),
+  expiry_date: z.string().datetime().optional(),
+  risk_score: z.number().min(0).max(100).optional(),
+  compliance_level: z.enum(["low", "medium", "high"]).optional()
+});
+
+// KYC Reject Schema (user_id comes from URL params)
+export const KYCRejectSchema = z.object({
+  reason: z.string().min(1, "Rejection reason is required"),
+  admin_notes: z.string().optional()
+});
+
+// KYC User ID Param Schema
+export const KYCUserIdParamSchema = z.object({
+  user_id: z.coerce.number().int().positive()
+});
+
 // KYC Filters Schema
 export const KYCFiltersSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -79,9 +98,19 @@ export const KYCDocumentVerificationSchema = z.object({
   verification_date: z.string().datetime().optional()
 });
 
-// KYC Risk Assessment Schema
+// KYC Risk Assessment Schema (when user_id is in body)
 export const KYCRiskAssessmentSchema = z.object({
   user_id: z.number().int().positive(),
+  risk_factors: z.array(z.string()).optional(),
+  risk_score: z.number().min(0).max(100),
+  risk_level: z.enum(["low", "medium", "high", "critical"]),
+  assessment_notes: z.string().optional(),
+  recommended_actions: z.array(z.string()).optional(),
+  assessment_date: z.string().datetime().optional()
+});
+
+// KYC Risk Assessment Body Schema (when user_id is in URL params)
+export const KYCRiskAssessmentBodySchema = z.object({
   risk_factors: z.array(z.string()).optional(),
   risk_score: z.number().min(0).max(100),
   risk_level: z.enum(["low", "medium", "high", "critical"]),
@@ -103,6 +132,9 @@ export const KYCComplianceReportSchema = z.object({
 export type CreateKYCDocumentInput = z.infer<typeof CreateKYCDocumentSchema>;
 export type UpdateKYCDocumentInput = z.infer<typeof UpdateKYCDocumentSchema>;
 export type KYCVerificationInput = z.infer<typeof KYCVerificationSchema>;
+export type KYCApproveInput = z.infer<typeof KYCApproveSchema>;
+export type KYCRejectInput = z.infer<typeof KYCRejectSchema>;
+export type KYCUserIdParamInput = z.infer<typeof KYCUserIdParamSchema>;
 export type KYCFiltersInput = z.infer<typeof KYCFiltersSchema>;
 export type KYCDocumentVerificationInput = z.infer<typeof KYCDocumentVerificationSchema>;
 export type KYCRiskAssessmentInput = z.infer<typeof KYCRiskAssessmentSchema>;

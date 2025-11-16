@@ -35,7 +35,11 @@ import {
   KYCFiltersSchema,
   KYCDocumentVerificationSchema,
   KYCRiskAssessmentSchema,
-  KYCComplianceReportSchema
+  KYCRiskAssessmentBodySchema,
+  KYCComplianceReportSchema,
+  KYCApproveSchema,
+  KYCRejectSchema,
+  KYCUserIdParamSchema
 } from "../api/admin/admin.kyc.schema";
 import {
   // Game Management
@@ -7015,7 +7019,7 @@ router.get("/kyc/:user_id", authenticate, authorize(["Admin"]), getKYCByUserId);
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/:user_id/approve", authenticate, authorize(["Admin"]), validate({ body: KYCVerificationSchema }), approveKYC);
+router.put("/kyc/:user_id/approve", authenticate, authorize(["Admin"]), validate({ params: KYCUserIdParamSchema, body: KYCApproveSchema }), approveKYC);
 
 /**
  * @swagger
@@ -7079,7 +7083,7 @@ router.put("/kyc/:user_id/approve", authenticate, authorize(["Admin"]), validate
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/:user_id/reject", authenticate, authorize(["Admin"]), validate({ body: KYCVerificationSchema }), rejectKYC);
+router.put("/kyc/:user_id/reject", authenticate, authorize(["Admin"]), validate({ params: KYCUserIdParamSchema, body: KYCRejectSchema }), rejectKYC);
 
 /**
  * @swagger
@@ -7424,7 +7428,7 @@ router.put("/kyc/documents/:document_id/verify", authenticate, authorize(["Admin
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.post("/kyc/:user_id/risk-assessment", authenticate, authorize(["Admin"]), validate({ body: KYCRiskAssessmentSchema }), createRiskAssessment);
+router.post("/kyc/:user_id/risk-assessment", authenticate, authorize(["Admin"]), validate({ params: KYCUserIdParamSchema, body: KYCRiskAssessmentBodySchema }), createRiskAssessment);
 
 /**
  * @swagger
