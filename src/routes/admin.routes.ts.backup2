@@ -103,11 +103,11 @@ import {
   getKYCAuditLogs,
   unapproveKYC,
   sendKYCMessage,
-  getUserKYCDocuments,
+  getUserKYCDocuments
   getAllKYCSubmissions,
   getApprovedKYC,
   getRejectedKYC,
-  getKYCUserInfo
+  getKYCUserInfo,
 } from "../api/admin/admin.kyc.controller";
 import {
   getPlayerBehavior,
@@ -6861,19 +6861,6 @@ router.get("/promotions/:id/claims", authenticate, authorize(["admin"]), getProm
  *         description: Forbidden - Admin access required
  */
 router.get("/kyc/pending", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getPendingKYC);
-
-// Get all KYC submissions (no status filter)
-router.get("/kyc/submissions", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getAllKYCSubmissions);
-
-// Get approved KYC submissions
-router.get("/kyc/approved", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getApprovedKYC);
-
-// Get rejected KYC submissions
-router.get("/kyc/rejected", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getRejectedKYC);
-
-// Get user info by ID (for frontend)
-router.get("/kyc/users/:user_id", authenticate, authorize(["admin"]), getKYCUserInfo);
-
 
 /**
  * @swagger
