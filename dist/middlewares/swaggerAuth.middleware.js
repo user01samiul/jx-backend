@@ -5,14 +5,15 @@ const env_1 = require("../configs/env");
 const swaggerAuthMiddleware = (req, res, next) => {
     // Skip authentication in development mode if no password is set
     if (env_1.env.NODE_ENV === 'development' && env_1.env.SWAGGER_PASSWORD === 'admin123') {
-        return next();
+        next();
+        return;
     }
     // Get authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Basic ')) {
         // Return 401 with WWW-Authenticate header to trigger browser auth dialog
         res.setHeader('WWW-Authenticate', 'Basic realm="Swagger Documentation"');
-        return res.status(401).json({
+        res.status(401).json({
             success: false,
             message: 'Authentication required for Swagger documentation'
         });
@@ -23,11 +24,12 @@ const swaggerAuthMiddleware = (req, res, next) => {
         const [username, password] = credentials.split(':');
         // Check if password matches (username can be anything)
         if (password === env_1.env.SWAGGER_PASSWORD) {
-            return next();
+            next();
+            return;
         }
         else {
             res.setHeader('WWW-Authenticate', 'Basic realm="Swagger Documentation"');
-            return res.status(401).json({
+            res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
             });
@@ -35,7 +37,7 @@ const swaggerAuthMiddleware = (req, res, next) => {
     }
     catch (error) {
         res.setHeader('WWW-Authenticate', 'Basic realm="Swagger Documentation"');
-        return res.status(401).json({
+        res.status(401).json({
             success: false,
             message: 'Invalid authorization header'
         });

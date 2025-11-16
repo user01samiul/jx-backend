@@ -226,7 +226,7 @@ const skip2FA = async (req, res, next) => {
             return;
         }
         const authData = req.validated?.body;
-        const result = await skip2FAService(userId, authData);
+        const result = await (0, user_service_1.skip2FAService)(userId, authData);
         res.status(200).json({ success: true, data: result });
     }
     catch (err) {

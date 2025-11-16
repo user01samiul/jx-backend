@@ -68,10 +68,11 @@ export const claimPromotion = async (req: Request, res: Response): Promise<void>
     const { promotion_id } = req.body;
 
     if (!promotion_id) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: "Promotion ID is required" 
       });
+      return;
     }
 
     // Check if promotion exists and is active
@@ -83,10 +84,11 @@ export const claimPromotion = async (req: Request, res: Response): Promise<void>
     );
 
     if (promotionResult.rows.length === 0) {
-      return res.status(404).json({ 
+      res.status(404).json({ 
         success: false, 
         message: "Promotion not found or not available" 
       });
+      return;
     }
 
     const promotion = promotionResult.rows[0];
@@ -98,19 +100,21 @@ export const claimPromotion = async (req: Request, res: Response): Promise<void>
     );
 
     if (existingClaimResult.rows.length > 0) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: "You have already claimed this promotion" 
       });
+      return;
     }
 
     // Check eligibility based on promotion type
     const eligibilityCheck = await checkPromotionEligibilityHelper(client, userId, promotion);
     if (!eligibilityCheck.eligible) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: eligibilityCheck.reason 
       });
+      return;
     }
 
     // Calculate bonus amount
@@ -124,10 +128,11 @@ export const claimPromotion = async (req: Request, res: Response): Promise<void>
       const totalDeposits = Number(depositResult.rows[0].total_deposits);
       
       if (totalDeposits < (promotion.min_deposit_amount || 0)) {
-        return res.status(400).json({ 
+        res.status(400).json({ 
           success: false, 
           message: `Minimum deposit of $${promotion.min_deposit_amount} required` 
         });
+      return;
       }
 
       bonusAmount = Math.min(
@@ -235,7 +240,7 @@ export const getDailySpin = async (req: Request, res: Response): Promise<void> =
     );
 
     if (existingSpinResult.rows.length > 0) {
-      return res.json({
+      res.json({
         success: false,
         message: "You have already used your daily spin today",
         can_spin: false,
@@ -270,10 +275,11 @@ export const performDailySpin = async (req: Request, res: Response): Promise<voi
     );
 
     if (existingSpinResult.rows.length > 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "You have already used your daily spin today"
       });
+      return;
     }
 
     // Generate spin result
@@ -375,19 +381,21 @@ export const transferBonusToMain = async (req: Request, res: Response): Promise<
     const { amount } = req.body;
 
     if (!amount || amount <= 0) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: "Valid amount is required" 
       });
+      return;
     }
 
     const success = await PromotionService.transferBonusToMain(userId, amount);
     
     if (!success) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: "Insufficient bonus balance" 
       });
+      return;
     }
 
     res.json({
@@ -408,10 +416,11 @@ export const checkPromotionEligibility = async (req: Request, res: Response): Pr
     const { promotion_id } = req.params;
 
     if (!promotion_id) {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         success: false, 
         message: "Promotion ID is required" 
       });
+      return;
     }
 
     const eligibility = await PromotionService.checkEligibility(userId, parseInt(promotion_id));
@@ -501,10 +510,11 @@ export const validatePromoCode = async (req: Request, res: Response): Promise<vo
     const userId = (req as any).user?.id;
 
     if (!promo_code) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Promo code is required"
       });
+      return;
     }
 
     // Find promotion by promo code
@@ -522,10 +532,11 @@ export const validatePromoCode = async (req: Request, res: Response): Promise<vo
     );
 
     if (promotionResult.rows.length === 0) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: "Invalid or expired promo code"
       });
+      return;
     }
 
     const promotion = promotionResult.rows[0];
@@ -538,10 +549,11 @@ export const validatePromoCode = async (req: Request, res: Response): Promise<vo
       );
 
       if (claimResult.rows.length > 0) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: "You have already claimed this promotion"
         });
+      return;
       }
 
       // Check max claims per user
@@ -552,10 +564,11 @@ export const validatePromoCode = async (req: Request, res: Response): Promise<vo
         );
 
         if (parseInt(userClaimsResult.rows[0].claim_count) >= promotion.max_claims_per_user) {
-          return res.status(400).json({
+          res.status(400).json({
             success: false,
             message: "You have reached the maximum number of claims for this promotion"
           });
+      return;
         }
       }
     }
@@ -591,17 +604,19 @@ export const applyPromoCode = async (req: Request, res: Response): Promise<void>
     const userId = (req as any).user?.id;
 
     if (!promo_code) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Promo code is required"
       });
+      return;
     }
 
     if (!userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: "Authentication required"
       });
+      return;
     }
 
     // Find promotion by promo code
@@ -616,10 +631,11 @@ export const applyPromoCode = async (req: Request, res: Response): Promise<void>
 
     if (promotionResult.rows.length === 0) {
       await client.query('ROLLBACK');
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         message: "Invalid or expired promo code"
       });
+      return;
     }
 
     const promotion = promotionResult.rows[0];
@@ -632,10 +648,11 @@ export const applyPromoCode = async (req: Request, res: Response): Promise<void>
 
     if (existingClaimResult.rows.length > 0) {
       await client.query('ROLLBACK');
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "You have already claimed this promotion"
       });
+      return;
     }
 
     // Calculate bonus amount
@@ -644,10 +661,11 @@ export const applyPromoCode = async (req: Request, res: Response): Promise<void>
     if (promotion.type === 'deposit_bonus' || promotion.type === 'welcome_bonus') {
       if (!deposit_amount || deposit_amount < (promotion.min_deposit_amount || 0)) {
         await client.query('ROLLBACK');
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           message: `Minimum deposit of $${promotion.min_deposit_amount || 0} required`
         });
+      return;
       }
 
       bonusAmount = (deposit_amount * parseFloat(promotion.bonus_percentage || 0)) / 100;
@@ -724,17 +742,19 @@ export const autoApplyBestPromotion = async (req: Request, res: Response): Promi
     const userId = (req as any).user?.id;
 
     if (!userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         message: "Authentication required"
       });
+      return;
     }
 
     if (!deposit_amount || deposit_amount <= 0) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Valid deposit amount is required"
       });
+      return;
     }
 
     // Determine promotion type based on first deposit
@@ -761,7 +781,7 @@ export const autoApplyBestPromotion = async (req: Request, res: Response): Promi
     // If no eligible promotion found, return success with no promotion
     if (promotionResult.rows.length === 0) {
       await client.query('COMMIT');
-      return res.json({
+      res.json({
         success: true,
         message: "Deposit processed successfully",
         promotion_applied: false,

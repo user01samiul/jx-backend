@@ -64,37 +64,41 @@ const claimPromotion = async (req, res) => {
         const userId = req.user?.id;
         const { promotion_id } = req.body;
         if (!promotion_id) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Promotion ID is required"
             });
+            return;
         }
         // Check if promotion exists and is active
         const promotionResult = await client.query(`SELECT * FROM promotions WHERE id = $1 AND is_active = true 
        AND (end_date IS NULL OR end_date > CURRENT_TIMESTAMP)
        AND (start_date IS NULL OR start_date <= CURRENT_TIMESTAMP)`, [promotion_id]);
         if (promotionResult.rows.length === 0) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 message: "Promotion not found or not available"
             });
+            return;
         }
         const promotion = promotionResult.rows[0];
         // Check if user already claimed this promotion
         const existingClaimResult = await client.query("SELECT * FROM user_promotions WHERE user_id = $1 AND promotion_id = $2", [userId, promotion_id]);
         if (existingClaimResult.rows.length > 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "You have already claimed this promotion"
             });
+            return;
         }
         // Check eligibility based on promotion type
         const eligibilityCheck = await checkPromotionEligibilityHelper(client, userId, promotion);
         if (!eligibilityCheck.eligible) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: eligibilityCheck.reason
             });
+            return;
         }
         // Calculate bonus amount
         let bonusAmount = 0;
@@ -103,10 +107,11 @@ const claimPromotion = async (req, res) => {
             const depositResult = await client.query("SELECT COALESCE(SUM(amount), 0) as total_deposits FROM transactions WHERE user_id = $1 AND type = 'deposit' AND status = 'completed'", [userId]);
             const totalDeposits = Number(depositResult.rows[0].total_deposits);
             if (totalDeposits < (promotion.min_deposit_amount || 0)) {
-                return res.status(400).json({
+                res.status(400).json({
                     success: false,
                     message: `Minimum deposit of $${promotion.min_deposit_amount} required`
                 });
+                return;
             }
             bonusAmount = Math.min(totalDeposits * (promotion.bonus_percentage / 100), promotion.max_bonus_amount || Infinity);
         }
@@ -184,7 +189,7 @@ const getDailySpin = async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         const existingSpinResult = await postgres_1.default.query("SELECT * FROM user_activity_logs WHERE user_id = $1 AND action = 'daily_spin' AND DATE(created_at) = $2", [userId, today]);
         if (existingSpinResult.rows.length > 0) {
-            return res.json({
+            res.json({
                 success: false,
                 message: "You have already used your daily spin today",
                 can_spin: false,
@@ -213,10 +218,11 @@ const performDailySpin = async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         const existingSpinResult = await client.query("SELECT * FROM user_activity_logs WHERE user_id = $1 AND action = 'daily_spin' AND DATE(created_at) = $2", [userId, today]);
         if (existingSpinResult.rows.length > 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "You have already used your daily spin today"
             });
+            return;
         }
         // Generate spin result
         const spinResult = generateSpinResult();
@@ -296,17 +302,19 @@ const transferBonusToMain = async (req, res) => {
         const userId = req.user?.id;
         const { amount } = req.body;
         if (!amount || amount <= 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Valid amount is required"
             });
+            return;
         }
         const success = await promotion_service_1.PromotionService.transferBonusToMain(userId, amount);
         if (!success) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Insufficient bonus balance"
             });
+            return;
         }
         res.json({
             success: true,
@@ -326,10 +334,11 @@ const checkPromotionEligibility = async (req, res) => {
         const userId = req.user?.id;
         const { promotion_id } = req.params;
         if (!promotion_id) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Promotion ID is required"
             });
+            return;
         }
         const eligibility = await promotion_service_1.PromotionService.checkEligibility(userId, parseInt(promotion_id));
         res.json({
@@ -401,10 +410,11 @@ const validatePromoCode = async (req, res) => {
         const { promo_code } = req.body;
         const userId = req.user?.id;
         if (!promo_code) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Promo code is required"
             });
+            return;
         }
         // Find promotion by promo code
         const promotionResult = await postgres_1.default.query(`SELECT
@@ -417,29 +427,32 @@ const validatePromoCode = async (req, res) => {
         AND (p.end_date IS NULL OR p.end_date > CURRENT_TIMESTAMP)
       LIMIT 1`, [promo_code.toUpperCase()]);
         if (promotionResult.rows.length === 0) {
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 message: "Invalid or expired promo code"
             });
+            return;
         }
         const promotion = promotionResult.rows[0];
         // Check if user already claimed this promotion
         if (userId) {
             const claimResult = await postgres_1.default.query(`SELECT id FROM user_promotions WHERE user_id = $1 AND promotion_id = $2`, [userId, promotion.id]);
             if (claimResult.rows.length > 0) {
-                return res.status(400).json({
+                res.status(400).json({
                     success: false,
                     message: "You have already claimed this promotion"
                 });
+                return;
             }
             // Check max claims per user
             if (promotion.max_claims_per_user) {
                 const userClaimsResult = await postgres_1.default.query(`SELECT COUNT(*) as claim_count FROM user_promotions WHERE user_id = $1 AND promotion_id = $2`, [userId, promotion.id]);
                 if (parseInt(userClaimsResult.rows[0].claim_count) >= promotion.max_claims_per_user) {
-                    return res.status(400).json({
+                    res.status(400).json({
                         success: false,
                         message: "You have reached the maximum number of claims for this promotion"
                     });
+                    return;
                 }
             }
         }
@@ -473,16 +486,18 @@ const applyPromoCode = async (req, res) => {
         const { promo_code, deposit_amount } = req.body;
         const userId = req.user?.id;
         if (!promo_code) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Promo code is required"
             });
+            return;
         }
         if (!userId) {
-            return res.status(401).json({
+            res.status(401).json({
                 success: false,
                 message: "Authentication required"
             });
+            return;
         }
         // Find promotion by promo code
         const promotionResult = await client.query(`SELECT * FROM promotions
@@ -492,30 +507,33 @@ const applyPromoCode = async (req, res) => {
        LIMIT 1`, [promo_code.toUpperCase()]);
         if (promotionResult.rows.length === 0) {
             await client.query('ROLLBACK');
-            return res.status(404).json({
+            res.status(404).json({
                 success: false,
                 message: "Invalid or expired promo code"
             });
+            return;
         }
         const promotion = promotionResult.rows[0];
         // Check if user already claimed
         const existingClaimResult = await client.query(`SELECT id FROM user_promotions WHERE user_id = $1 AND promotion_id = $2`, [userId, promotion.id]);
         if (existingClaimResult.rows.length > 0) {
             await client.query('ROLLBACK');
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "You have already claimed this promotion"
             });
+            return;
         }
         // Calculate bonus amount
         let bonusAmount = 0;
         if (promotion.type === 'deposit_bonus' || promotion.type === 'welcome_bonus') {
             if (!deposit_amount || deposit_amount < (promotion.min_deposit_amount || 0)) {
                 await client.query('ROLLBACK');
-                return res.status(400).json({
+                res.status(400).json({
                     success: false,
                     message: `Minimum deposit of $${promotion.min_deposit_amount || 0} required`
                 });
+                return;
             }
             bonusAmount = (deposit_amount * parseFloat(promotion.bonus_percentage || 0)) / 100;
             if (promotion.max_bonus_amount && bonusAmount > parseFloat(promotion.max_bonus_amount)) {
@@ -575,16 +593,18 @@ const autoApplyBestPromotion = async (req, res) => {
         const { deposit_amount, is_first_deposit } = req.body;
         const userId = req.user?.id;
         if (!userId) {
-            return res.status(401).json({
+            res.status(401).json({
                 success: false,
                 message: "Authentication required"
             });
+            return;
         }
         if (!deposit_amount || deposit_amount <= 0) {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Valid deposit amount is required"
             });
+            return;
         }
         // Determine promotion type based on first deposit
         const promotionType = is_first_deposit ? 'welcome_bonus' : 'deposit_bonus';
@@ -605,7 +625,7 @@ const autoApplyBestPromotion = async (req, res) => {
         // If no eligible promotion found, return success with no promotion
         if (promotionResult.rows.length === 0) {
             await client.query('COMMIT');
-            return res.json({
+            res.json({
                 success: true,
                 message: "Deposit processed successfully",
                 promotion_applied: false,

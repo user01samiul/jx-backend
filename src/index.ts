@@ -6,7 +6,7 @@ import { CronManagerService } from "./services/cron/cron-manager.service";
 import { ChatSocketService } from "./services/chat/chat-socket.service";
 import EnterpriseCronService from "./services/cron/enterprise-cron.service";
 
-const PORT = Config.port || 3000;
+const PORT = Number(Config.port) || 3000;
 
 // Setup Swagger with the configured app
 setupSwagger(app);

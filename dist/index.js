@@ -10,7 +10,7 @@ const swagger_1 = require("./swagger");
 const cron_manager_service_1 = require("./services/cron/cron-manager.service");
 const chat_socket_service_1 = require("./services/chat/chat-socket.service");
 const enterprise_cron_service_1 = __importDefault(require("./services/cron/enterprise-cron.service"));
-const PORT = config_1.Config.port || 3000;
+const PORT = Number(config_1.Config.port) || 3000;
 // Setup Swagger with the configured app
 (0, swagger_1.setupSwagger)(app_1.default);
 // Create HTTP server (needed for WebSocket)

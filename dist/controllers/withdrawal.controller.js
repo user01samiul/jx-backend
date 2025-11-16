@@ -43,13 +43,12 @@ class WithdrawalController {
             // Get user IP
             const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
             const withdrawalRequest = {
-                userId,
+                user_id: userId,
                 amount,
-                paymentMethod: payment_method,
-                cryptoAddress: crypto_address,
-                cryptoNetwork: crypto_network,
-                bankDetails: bank_details,
-                ipAddress
+                crypto_currency: payment_method,
+                crypto_address: crypto_address,
+                crypto_network: crypto_network,
+                ip_address: ipAddress
             };
             const result = await withdrawal_service_1.WithdrawalService.createWithdrawalRequest(withdrawalRequest);
             return res.status(201).json({
@@ -113,7 +112,7 @@ class WithdrawalController {
             if (status) {
                 filters.status = status;
             }
-            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals(filters, parseInt(limit), parseInt(offset));
+            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit), offset: parseInt(offset) });
             return res.status(200).json({
                 success: true,
                 data: withdrawals
@@ -142,7 +141,7 @@ class WithdrawalController {
                     message: 'Invalid withdrawal ID'
                 });
             }
-            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ id: withdrawalId, userId }, 1, 0);
+            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ id: withdrawalId, userId, limit: 1, offset: 0 });
             if (withdrawals.length === 0) {
                 return res.status(404).json({
                     success: false,
@@ -260,7 +259,7 @@ class WithdrawalController {
                 filters.fromDate = new Date(from_date);
             if (to_date)
                 filters.toDate = new Date(to_date);
-            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals(filters, parseInt(limit), parseInt(offset));
+            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit), offset: parseInt(offset) });
             return res.status(200).json({
                 success: true,
                 data: withdrawals,
@@ -296,9 +295,9 @@ class WithdrawalController {
                 });
             }
             const approval = {
-                withdrawalId,
-                adminId,
-                adminNotes: admin_notes
+                withdrawal_id: withdrawalId,
+                approved_by: adminId,
+                notes: admin_notes
             };
             await withdrawal_service_1.WithdrawalService.approveWithdrawal(approval);
             return res.status(200).json({
@@ -349,10 +348,9 @@ class WithdrawalController {
                 });
             }
             const rejection = {
-                withdrawalId,
-                adminId,
-                reason,
-                adminNotes: admin_notes
+                withdrawal_id: withdrawalId,
+                rejected_by: adminId,
+                rejection_reason: reason
             };
             await withdrawal_service_1.WithdrawalService.rejectWithdrawal(rejection);
             return res.status(200).json({

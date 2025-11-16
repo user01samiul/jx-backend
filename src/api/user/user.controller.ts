@@ -15,11 +15,13 @@ import {
   getUserByEmailService,
   getUserCategoryBalancesService,
   transferUserCategoryBalanceService,
-  getUserGameBetsService
+  getUserGameBetsService,
+  skip2FAService
 } from "../../services/user/user.service";
 import { 
   UpdateProfileInputType,
-  ChangePasswordInputType
+  ChangePasswordInputType,
+  Skip2FAInputType
 } from "./user.schema";
 
 export const getUserProfile = async (

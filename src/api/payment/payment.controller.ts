@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { PaymentIntegrationService } from "../../services/payment/payment-integration.service";
-import { getPaymentGatewayConfigService } from "../../services/admin/payment-gateway.service";
+import { getPaymentGatewayByCodeService } from "../../services/admin/payment-gateway.service";
 import pool from "../../db/postgres";
 import { logUserActivity } from "../../services/user/user-activity.service";
 
@@ -29,7 +29,7 @@ export const createDeposit = async (
     }
 
     // Get gateway configuration from database
-    const gatewayConfig = await getPaymentGatewayConfigService(gateway_code);
+    const gatewayConfig = await getPaymentGatewayByCodeService(gateway_code);
     if (!gatewayConfig || !gatewayConfig.is_active) {
       res.status(400).json({ 
         success: false, 
@@ -239,7 +239,7 @@ export const checkPaymentStatus = async (
             `Deposit of ${transaction.currency} ${transaction.amount} completed via ${gatewayCode} status check`,
             statusResponse.transaction_id,
             {
-              gateway_code,
+              gateway_code: gatewayCode,
               status_check: true,
               original_transaction_id: transaction_id
             }
@@ -253,7 +253,7 @@ export const checkPaymentStatus = async (
             description: `Deposit of ${transaction.currency} ${transaction.amount} completed`,
             metadata: { 
               transaction_id, 
-              gateway_code,
+              gateway_code: gatewayCode,
               balance_transaction_id: balanceResult.transaction_id,
               balance_before: balanceResult.balance_before,
               balance_after: balanceResult.balance_after
@@ -299,7 +299,7 @@ export const handleWebhook = async (
     console.log(`[WEBHOOK] Body:`, JSON.stringify(webhookData, null, 2));
 
     // Get gateway configuration
-    const gatewayConfig = await getPaymentGatewayConfigService(gateway_code);
+    const gatewayConfig = await getPaymentGatewayByCodeService(gateway_code);
     if (!gatewayConfig) {
       res.status(400).json({ success: false, message: "Invalid gateway" });
       return;

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChangePasswordInputType = exports.ChangePasswordInput = exports.Skip2FAInput = exports.UpdateProfileInputType = exports.UpdateProfileInput = void 0;
+exports.ChangePasswordInput = exports.Skip2FAInput = exports.UpdateProfileInput = void 0;
 const zod_1 = require("zod");
 // =====================================================
 // USER PROFILE UPDATE SCHEMAS
@@ -23,12 +23,11 @@ exports.UpdateProfileInput = zod_1.z.object({
     city: zod_1.z.string().max(100).optional().transform(val => val === "" ? undefined : val),
     address: zod_1.z.string().max(500).optional().transform(val => val === "" ? undefined : val),
     postal_code: zod_1.z.string().max(20).optional().transform(val => val === "" ? undefined : val),
-    gender: zod_1.z.enum(["male", "female", "other"]).optional().transform(val => val === "" ? undefined : val),
+    gender: zod_1.z.enum(["male", "female", "other"]).optional(),
     timezone: zod_1.z.string().max(50).optional().transform(val => val === "" ? undefined : val),
     language: zod_1.z.string().max(10).optional().transform(val => val === "" ? undefined : val),
     currency: zod_1.z.string().max(3).optional().transform(val => val === "" ? undefined : val)
 });
-exports.UpdateProfileInputType = (zod_1.z.infer);
 // =====================================================
 // 2FA MANAGEMENT SCHEMAS
 // =====================================================
@@ -48,4 +47,3 @@ exports.ChangePasswordInput = zod_1.z.object({
     message: "Passwords don't match",
     path: ["confirm_password"]
 });
-exports.ChangePasswordInputType = (zod_1.z.infer);

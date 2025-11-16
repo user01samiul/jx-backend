@@ -46,7 +46,7 @@ const setupSwagger = (app) => {
     app.get("/api-search", swaggerAuth_middleware_1.swaggerAuthMiddleware, (req, res) => {
         const { query, type } = req.query;
         if (!query || typeof query !== 'string') {
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Query parameter is required and must be a string"
             });

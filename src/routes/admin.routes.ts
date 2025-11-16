@@ -419,7 +419,7 @@ router.get("/games", authenticate, authorize(["Admin"]), getGamesForAdmin);
  *       500:
  *         description: Internal server error
  */
-router.get("/games/status", validate(GameStatusFiltersSchema), getGamesWithStatus);
+router.get("/games/status", validate({ query: GameStatusFiltersSchema }), getGamesWithStatus);
 
 /**
  * @openapi
@@ -499,7 +499,7 @@ router.get("/games/status", validate(GameStatusFiltersSchema), getGamesWithStatu
  *       500:
  *         description: Internal server error
  */
-router.put("/games/status/id", validate(UpdateGameStatusByIdSchema), updateGameStatusById);
+router.put("/games/status/id", validate({ body: UpdateGameStatusByIdSchema }), updateGameStatusById);
 
 /**
  * @openapi
@@ -579,7 +579,7 @@ router.put("/games/status/id", validate(UpdateGameStatusByIdSchema), updateGameS
  *       500:
  *         description: Internal server error
  */
-router.put("/games/status/category", validate(UpdateGameStatusByCategorySchema), updateGameStatusByCategory);
+router.put("/games/status/category", validate({ body: UpdateGameStatusByCategorySchema }), updateGameStatusByCategory);
 
 /**
  * @openapi
@@ -659,7 +659,7 @@ router.put("/games/status/category", validate(UpdateGameStatusByCategorySchema),
  *       500:
  *         description: Internal server error
  */
-router.put("/games/status/provider", validate(UpdateGameStatusByProviderSchema), updateGameStatusByProvider);
+router.put("/games/status/provider", validate({ body: UpdateGameStatusByProviderSchema }), updateGameStatusByProvider);
 
 /**
  * @openapi
@@ -742,7 +742,7 @@ router.put("/games/status/provider", validate(UpdateGameStatusByProviderSchema),
  *       500:
  *         description: Internal server error
  */
-router.put("/games/status/bulk", validate(BulkUpdateGameStatusSchema), bulkUpdateGameStatus);
+router.put("/games/status/bulk", validate({ body: BulkUpdateGameStatusSchema }), bulkUpdateGameStatus);
 
 /**
  * @openapi
@@ -6362,7 +6362,7 @@ router.post("/cron/trigger-daily-summary", triggerManualDailySummary);
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/promotions", authenticate, authorize(["admin"]), validate(PromotionFiltersSchema), getPromotions);
+router.get("/promotions", authenticate, authorize(["Admin"]), validate({ query: PromotionFiltersSchema }), getPromotions);
 
 /**
  * @swagger
@@ -6401,7 +6401,7 @@ router.get("/promotions", authenticate, authorize(["admin"]), validate(Promotion
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.post("/promotions", authenticate, authorize(["admin"]), validate(CreatePromotionSchema), createPromotion);
+router.post("/promotions", authenticate, authorize(["Admin"]), validate({ body: CreatePromotionSchema }), createPromotion);
 
 /**
  * @swagger
@@ -6438,7 +6438,7 @@ router.post("/promotions", authenticate, authorize(["admin"]), validate(CreatePr
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/promotions/:id", authenticate, authorize(["admin"]), getPromotionById);
+router.get("/promotions/:id", authenticate, authorize(["Admin"]), getPromotionById);
 
 /**
  * @swagger
@@ -6484,7 +6484,7 @@ router.get("/promotions/:id", authenticate, authorize(["admin"]), getPromotionBy
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/promotions/:id", authenticate, authorize(["admin"]), validate(UpdatePromotionSchema), updatePromotion);
+router.put("/promotions/:id", authenticate, authorize(["Admin"]), validate({ body: UpdatePromotionSchema }), updatePromotion);
 
 /**
  * @swagger
@@ -6526,7 +6526,7 @@ router.put("/promotions/:id", authenticate, authorize(["admin"]), validate(Updat
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.delete("/promotions/:id", authenticate, authorize(["admin"]), deletePromotion);
+router.delete("/promotions/:id", authenticate, authorize(["Admin"]), deletePromotion);
 
 /**
  * @swagger
@@ -6566,7 +6566,7 @@ router.delete("/promotions/:id", authenticate, authorize(["admin"]), deletePromo
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.patch("/promotions/:id/toggle", authenticate, authorize(["admin"]), validate(TogglePromotionSchema), togglePromotion);
+router.patch("/promotions/:id/toggle", authenticate, authorize(["Admin"]), validate({ body: TogglePromotionSchema }), togglePromotion);
 
 /**
  * @swagger
@@ -6640,7 +6640,7 @@ router.patch("/promotions/:id/toggle", authenticate, authorize(["admin"]), valid
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/promotions/stats", authenticate, authorize(["admin"]), validate(PromotionStatsFiltersSchema), getPromotionStats);
+router.get("/promotions/stats", authenticate, authorize(["Admin"]), validate({ query: PromotionStatsFiltersSchema }), getPromotionStats);
 
 /**
  * @swagger
@@ -6681,7 +6681,7 @@ router.get("/promotions/stats", authenticate, authorize(["admin"]), validate(Pro
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/promotions/stats/overview", authenticate, authorize(["admin"]), getPromotionOverviewStats);
+router.get("/promotions/stats/overview", authenticate, authorize(["Admin"]), getPromotionOverviewStats);
 
 /**
  * @swagger
@@ -6763,7 +6763,7 @@ router.get("/promotions/stats/overview", authenticate, authorize(["admin"]), get
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/promotions/:id/claims", authenticate, authorize(["admin"]), getPromotionClaims);
+router.get("/promotions/:id/claims", authenticate, authorize(["Admin"]), getPromotionClaims);
 
 // ========================================
 // KYC & COMPLIANCE MANAGEMENT ROUTES
@@ -6860,19 +6860,19 @@ router.get("/promotions/:id/claims", authenticate, authorize(["admin"]), getProm
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/kyc/pending", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getPendingKYC);
+router.get("/kyc/pending", authenticate, authorize(["Admin"]), validate({ query: KYCFiltersSchema }), getPendingKYC);
 
 // Get all KYC submissions (no status filter)
-router.get("/kyc/submissions", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getAllKYCSubmissions);
+router.get("/kyc/submissions", authenticate, authorize(["Admin"]), validate({ query: KYCFiltersSchema }), getAllKYCSubmissions);
 
 // Get approved KYC submissions
-router.get("/kyc/approved", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getApprovedKYC);
+router.get("/kyc/approved", authenticate, authorize(["Admin"]), validate({ query: KYCFiltersSchema }), getApprovedKYC);
 
 // Get rejected KYC submissions
-router.get("/kyc/rejected", authenticate, authorize(["admin"]), validate(KYCFiltersSchema), getRejectedKYC);
+router.get("/kyc/rejected", authenticate, authorize(["Admin"]), validate({ query: KYCFiltersSchema }), getRejectedKYC);
 
 // Get user info by ID (for frontend)
-router.get("/kyc/users/:user_id", authenticate, authorize(["admin"]), getKYCUserInfo);
+router.get("/kyc/users/:user_id", authenticate, authorize(["Admin"]), getKYCUserInfo);
 
 
 /**
@@ -6938,7 +6938,7 @@ router.get("/kyc/users/:user_id", authenticate, authorize(["admin"]), getKYCUser
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/kyc/:user_id", authenticate, authorize(["admin"]), getKYCByUserId);
+router.get("/kyc/:user_id", authenticate, authorize(["Admin"]), getKYCByUserId);
 
 /**
  * @swagger
@@ -7015,7 +7015,7 @@ router.get("/kyc/:user_id", authenticate, authorize(["admin"]), getKYCByUserId);
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/:user_id/approve", authenticate, authorize(["admin"]), validate(KYCVerificationSchema), approveKYC);
+router.put("/kyc/:user_id/approve", authenticate, authorize(["Admin"]), validate({ body: KYCVerificationSchema }), approveKYC);
 
 /**
  * @swagger
@@ -7079,7 +7079,7 @@ router.put("/kyc/:user_id/approve", authenticate, authorize(["admin"]), validate
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/:user_id/reject", authenticate, authorize(["admin"]), validate(KYCVerificationSchema), rejectKYC);
+router.put("/kyc/:user_id/reject", authenticate, authorize(["Admin"]), validate({ body: KYCVerificationSchema }), rejectKYC);
 
 /**
  * @swagger
@@ -7120,7 +7120,7 @@ router.put("/kyc/:user_id/reject", authenticate, authorize(["admin"]), validate(
  *       404:
  *         description: KYC verification not found
  */
-router.put("/kyc/:user_id/unapprove", authenticate, authorize(["admin"]), unapproveKYC);
+router.put("/kyc/:user_id/unapprove", authenticate, authorize(["Admin"]), unapproveKYC);
 
 /**
  * @swagger
@@ -7169,7 +7169,7 @@ router.put("/kyc/:user_id/unapprove", authenticate, authorize(["admin"]), unappr
  *       404:
  *         description: User not found
  */
-router.post("/kyc/:user_id/message", authenticate, authorize(["admin"]), sendKYCMessage);
+router.post("/kyc/:user_id/message", authenticate, authorize(["Admin"]), sendKYCMessage);
 
 /**
  * @swagger
@@ -7194,7 +7194,7 @@ router.post("/kyc/:user_id/message", authenticate, authorize(["admin"]), sendKYC
  *       404:
  *         description: User not found
  */
-router.get("/kyc/:user_id/documents", authenticate, authorize(["admin"]), getUserKYCDocuments);
+router.get("/kyc/:user_id/documents", authenticate, authorize(["Admin"]), getUserKYCDocuments);
 
 /**
  * @swagger
@@ -7264,7 +7264,7 @@ router.get("/kyc/:user_id/documents", authenticate, authorize(["admin"]), getUse
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/kyc/documents", authenticate, authorize(["admin"]), getKYCDocuments);
+router.get("/kyc/documents", authenticate, authorize(["Admin"]), getKYCDocuments);
 
 /**
  * @swagger
@@ -7341,7 +7341,7 @@ router.get("/kyc/documents", authenticate, authorize(["admin"]), getKYCDocuments
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/documents/:document_id/verify", authenticate, authorize(["admin"]), validate(KYCDocumentVerificationSchema), verifyKYCDocument);
+router.put("/kyc/documents/:document_id/verify", authenticate, authorize(["Admin"]), validate({ body: KYCDocumentVerificationSchema }), verifyKYCDocument);
 
 /**
  * @swagger
@@ -7424,7 +7424,7 @@ router.put("/kyc/documents/:document_id/verify", authenticate, authorize(["admin
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.post("/kyc/:user_id/risk-assessment", authenticate, authorize(["admin"]), validate(KYCRiskAssessmentSchema), createRiskAssessment);
+router.post("/kyc/:user_id/risk-assessment", authenticate, authorize(["Admin"]), validate({ body: KYCRiskAssessmentSchema }), createRiskAssessment);
 
 /**
  * @swagger
@@ -7509,7 +7509,7 @@ router.post("/kyc/:user_id/risk-assessment", authenticate, authorize(["admin"]),
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/kyc/reports", authenticate, authorize(["admin"]), validate(KYCComplianceReportSchema), getKYCReports);
+router.get("/kyc/reports", authenticate, authorize(["Admin"]), validate({ query: KYCComplianceReportSchema }), getKYCReports);
 
 /**
  * @swagger
@@ -7585,7 +7585,7 @@ router.get("/kyc/reports", authenticate, authorize(["admin"]), validate(KYCCompl
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get("/kyc/audit-logs", authenticate, authorize(["admin"]), getKYCAuditLogs);
+router.get("/kyc/audit-logs", authenticate, authorize(["Admin"]), getKYCAuditLogs);
 
 // =====================================================
 // SYSTEM RESET ROUTES

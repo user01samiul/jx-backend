@@ -1,6 +1,6 @@
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import { Express } from "express";
+import { Application } from "express";
 import { swaggerAuthMiddleware } from "./middlewares/swaggerAuth.middleware";
 
 const swaggerDefinition = {
@@ -33,7 +33,7 @@ export const options: any = {
 
 const swaggerSpec = swaggerJSDoc(options);
 
-export const setupSwagger = (app: Express) => {
+export const setupSwagger = (app: Application) => {
   console.log("Loaded Swagger paths:", Object.keys(swaggerSpec.paths));
 
   // Protected API docs JSON endpoint
@@ -47,13 +47,13 @@ export const setupSwagger = (app: Express) => {
     const { query, type } = req.query;
     
     if (!query || typeof query !== 'string') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: "Query parameter is required and must be a string"
       });
     }
 
-    const searchQuery = query.toLowerCase();
+    const searchQuery = (query as string).toLowerCase();
     const searchResults: any = {
       tags: [],
       endpoints: [],

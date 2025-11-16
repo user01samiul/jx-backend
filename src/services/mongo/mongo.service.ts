@@ -128,7 +128,7 @@ export class MongoService {
       created_by: transactionData.created_by || 1
     };
 
-    await this.getTransactionsCollection().insertOne(transaction);
+    await MongoService.getTransactionsCollection().insertOne(transaction);
     return { id };
   }
 
@@ -225,14 +225,14 @@ export class MongoService {
    * Get transaction by ID
    */
   static async getTransactionById(transactionId: number): Promise<any> {
-    return await this.getTransactionsCollection().findOne({ id: transactionId });
+    return await MongoService.getTransactionsCollection().findOne({ id: transactionId });
   }
 
   /**
    * Update transaction
    */
   static async updateTransaction(transactionId: number, updateData: any): Promise<any> {
-    const collection = this.getTransactionsCollection();
+    const collection = MongoService.getTransactionsCollection();
     const result = await collection.updateOne(
       { id: transactionId },
       { $set: updateData }
@@ -244,70 +244,14 @@ export class MongoService {
    * Get transactions by user ID
    */
   static async getTransactionsByUserId(userId: number, limit: number = 50): Promise<any[]> {
-    return await this.getTransactionsCollection()
+    return await MongoService.getTransactionsCollection()
       .find({ user_id: userId })
       .sort({ created_at: -1 })
       .limit(limit)
       .toArray();
   }
 
-  /**
-   * Get bets by user ID
-   */
-  static async getBetsByUserId(userId: number, limit: number = 50): Promise<any[]> {
-    return await this.getBetsCollection()
-      .find({ user_id: userId })
-      .sort({ placed_at: -1 })
-      .limit(limit)
-      .toArray();
-  }
-
-  /**
-   * Check if transaction exists by external reference
-   */
-  static async transactionExistsByExternalReference(
-    user_id: number,
-    external_reference: string
-  ): Promise<boolean> {
-    const result = await this.getTransactionsCollection().findOne({
-      user_id,
-      external_reference
-    });
-    return !!result;
-  }
-
-  /**
-   * Close MongoDB connection
-   */
-  static async close(): Promise<void> {
-    if (this.client) {
-      await this.client.close();
-      console.log('[MONGO] Disconnected from MongoDB');
-    }
-  }
-
-  /**
-   * Get user category balance
-   */
-  static async getCategoryBalance(userId: number, category: string): Promise<number> {
-    const collection = this.getUserCategoryBalancesCollection();
-    const result = await collection.findOne({ user_id: userId, category: category.toLowerCase().trim() });
-    const balance = result?.balance || 0;
-    return Math.round(balance * 100) / 100;
-  }
-
-  /**
-   * Update user category balance atomically
-   */
-  static async updateCategoryBalance(userId: number, category: string, amount: number): Promise<any> {
-    const collection = this.getUserCategoryBalancesCollection();
-    const result = await collection.updateOne(
-      { user_id: userId, category: category.toLowerCase().trim() },
-      { $set: { balance: amount, updated_at: new Date() } },
-      { upsert: true }
-    );
-    return result;
-  }
+  
 
   /**
    * Atomic increment/decrement of category balance
@@ -397,14 +341,14 @@ export class MongoService {
    * Upsert user category balance (for compatibility)
    */
   async upsertUserCategoryBalance(userId: number, category: string, balance: number): Promise<void> {
-    await this.updateCategoryBalance(userId, category, balance);
+    await MongoService.updateCategoryBalance(userId, category, balance);
   }
 
   /**
    * Get user category balance (for compatibility)
    */
   async getUserCategoryBalance(userId: number, category: string): Promise<number> {
-    return await this.getCategoryBalance(userId, category);
+    return await MongoService.getCategoryBalance(userId, category);
   }
 
   /**
@@ -421,39 +365,7 @@ export class MongoService {
     }
   }
 
-  /**
-   * Insert bet record
-   */
-  static async insertBet(betData: {
-    user_id: number;
-    game_id: number;
-    bet_amount: number;
-    session_id?: string;
-    transaction_id: number;
-    outcome: string;
-    created_by: number;
-  }): Promise<number> {
-    try {
-      const collection = this.getBetsCollection();
-      
-      const result = await collection.insertOne({
-        user_id: betData.user_id,
-        game_id: betData.game_id,
-        bet_amount: betData.bet_amount,
-        session_id: betData.session_id,
-        transaction_id: betData.transaction_id,
-        outcome: betData.outcome,
-        created_by: betData.created_by,
-        created_at: new Date(),
-        updated_at: new Date()
-      });
-      
-      return result.insertedId.toString();
-    } catch (error) {
-      console.error(`[MONGO_SERVICE] Error inserting bet:`, error);
-      throw error;
-    }
-  }
+  
 
 
 
@@ -461,7 +373,7 @@ export class MongoService {
    * Check if transaction exists by external reference
    */
   async transactionExistsByExternalReference(userId: number, externalReference: string): Promise<boolean> {
-    const collection = this.getTransactionsCollection();
+    const collection = MongoService.getTransactionsCollection();
     const result = await collection.findOne({ 
       user_id: userId, 
       external_reference: externalReference 
@@ -473,7 +385,7 @@ export class MongoService {
    * Get transactions by user ID
    */
   async getTransactionsByUserId(userId: number, limit: number = 50): Promise<any[]> {
-    const collection = this.getTransactionsCollection();
+    const collection = MongoService.getTransactionsCollection();
     const result = await collection.find({ user_id: userId })
       .sort({ created_at: -1 })
       .limit(limit)
@@ -510,7 +422,7 @@ export class MongoService {
    * Get transactions with optional user filter
    */
   static async getTransactions(userId?: number, limit: number = 50): Promise<any[]> {
-    const collection = this.getTransactionsCollection();
+    const collection = MongoService.getTransactionsCollection();
     const filter = userId ? { user_id: userId } : {};
     const result = await collection.find(filter)
       .sort({ created_at: -1 })

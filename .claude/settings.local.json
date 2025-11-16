@@ -42,7 +42,9 @@
       "Bash(PGPASSWORD='2025' pg_dump:*)",
       "Bash(mongodump:*)",
       "Bash(where:*)",
-      "Bash(node \"backup sami/mongo-backup.js\")"
+      "Bash(node \"backup sami/mongo-backup.js\")",
+      "Bash(sort:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

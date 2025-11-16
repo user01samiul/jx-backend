@@ -45,13 +45,12 @@ export class WithdrawalController {
       const ipAddress = req.ip || req.headers['x-forwarded-for'] as string || 'unknown';
 
       const withdrawalRequest = {
-        userId,
+        user_id: userId,
         amount,
-        paymentMethod: payment_method,
-        cryptoAddress: crypto_address,
-        cryptoNetwork: crypto_network,
-        bankDetails: bank_details,
-        ipAddress
+        crypto_currency: payment_method,
+        crypto_address: crypto_address,
+        crypto_network: crypto_network,
+        ip_address: ipAddress
       };
 
       const result = await WithdrawalService.createWithdrawalRequest(withdrawalRequest);
@@ -125,11 +124,7 @@ export class WithdrawalController {
         filters.status = status as string;
       }
 
-      const withdrawals = await WithdrawalService.getWithdrawals(
-        filters,
-        parseInt(limit as string),
-        parseInt(offset as string)
-      );
+      const withdrawals = await WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit as string), offset: parseInt(offset as string) });
 
       return res.status(200).json({
         success: true,
@@ -162,11 +157,7 @@ export class WithdrawalController {
         });
       }
 
-      const withdrawals = await WithdrawalService.getWithdrawals(
-        { id: withdrawalId, userId },
-        1,
-        0
-      );
+      const withdrawals = await WithdrawalService.getWithdrawals({ id: withdrawalId, userId, limit: 1, offset: 0 });
 
       if (withdrawals.length === 0) {
         return res.status(404).json({
@@ -309,11 +300,7 @@ export class WithdrawalController {
       if (from_date) filters.fromDate = new Date(from_date as string);
       if (to_date) filters.toDate = new Date(to_date as string);
 
-      const withdrawals = await WithdrawalService.getWithdrawals(
-        filters,
-        parseInt(limit as string),
-        parseInt(offset as string)
-      );
+      const withdrawals = await WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit as string), offset: parseInt(offset as string) });
 
       return res.status(200).json({
         success: true,
@@ -353,9 +340,9 @@ export class WithdrawalController {
       }
 
       const approval = {
-        withdrawalId,
-        adminId,
-        adminNotes: admin_notes
+        withdrawal_id: withdrawalId,
+        approved_by: adminId,
+        notes: admin_notes
       };
 
       await WithdrawalService.approveWithdrawal(approval);
@@ -415,10 +402,9 @@ export class WithdrawalController {
       }
 
       const rejection = {
-        withdrawalId,
-        adminId,
-        reason,
-        adminNotes: admin_notes
+        withdrawal_id: withdrawalId,
+        rejected_by: adminId,
+        rejection_reason: reason
       };
 
       await WithdrawalService.rejectWithdrawal(rejection);

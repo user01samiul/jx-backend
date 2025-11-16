@@ -25,7 +25,7 @@ const createDeposit = async (req, res, next) => {
             return;
         }
         // Get gateway configuration from database
-        const gatewayConfig = await (0, payment_gateway_service_1.getPaymentGatewayConfigService)(gateway_code);
+        const gatewayConfig = await (0, payment_gateway_service_1.getPaymentGatewayByCodeService)(gateway_code);
         if (!gatewayConfig || !gatewayConfig.is_active) {
             res.status(400).json({
                 success: false,
@@ -186,7 +186,7 @@ const checkPaymentStatus = async (req, res, next) => {
                     const { BalanceService } = require('../../services/user/balance.service');
                     // Process the deposit using BalanceService
                     const balanceResult = await BalanceService.processDeposit(userId, transaction.amount, `Deposit of ${transaction.currency} ${transaction.amount} completed via ${gatewayCode} status check`, statusResponse.transaction_id, {
-                        gateway_code,
+                        gateway_code: gatewayCode,
                         status_check: true,
                         original_transaction_id: transaction_id
                     });
@@ -198,7 +198,7 @@ const checkPaymentStatus = async (req, res, next) => {
                         description: `Deposit of ${transaction.currency} ${transaction.amount} completed`,
                         metadata: {
                             transaction_id,
-                            gateway_code,
+                            gateway_code: gatewayCode,
                             balance_transaction_id: balanceResult.transaction_id,
                             balance_before: balanceResult.balance_before,
                             balance_after: balanceResult.balance_after
@@ -237,7 +237,7 @@ const handleWebhook = async (req, res, next) => {
         console.log(`[WEBHOOK] Headers:`, req.headers);
         console.log(`[WEBHOOK] Body:`, JSON.stringify(webhookData, null, 2));
         // Get gateway configuration
-        const gatewayConfig = await (0, payment_gateway_service_1.getPaymentGatewayConfigService)(gateway_code);
+        const gatewayConfig = await (0, payment_gateway_service_1.getPaymentGatewayByCodeService)(gateway_code);
         if (!gatewayConfig) {
             res.status(400).json({ success: false, message: "Invalid gateway" });
             return;

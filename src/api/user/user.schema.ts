@@ -21,13 +21,13 @@ export const UpdateProfileInput = z.object({
   city: z.string().max(100).optional().transform(val => val === "" ? undefined : val),
   address: z.string().max(500).optional().transform(val => val === "" ? undefined : val),
   postal_code: z.string().max(20).optional().transform(val => val === "" ? undefined : val),
-  gender: z.enum(["male", "female", "other"]).optional().transform(val => val === "" ? undefined : val),
+  gender: z.enum(["male", "female", "other"]).optional(),
   timezone: z.string().max(50).optional().transform(val => val === "" ? undefined : val),
   language: z.string().max(10).optional().transform(val => val === "" ? undefined : val),
   currency: z.string().max(3).optional().transform(val => val === "" ? undefined : val)
 });
 
-export const UpdateProfileInputType = z.infer<typeof UpdateProfileInput>;
+export type UpdateProfileInputType = z.infer<typeof UpdateProfileInput>;
 
 // =====================================================
 // 2FA MANAGEMENT SCHEMAS
@@ -55,4 +55,4 @@ export const ChangePasswordInput = z.object({
   path: ["confirm_password"]
 });
 
-export const ChangePasswordInputType = z.infer<typeof ChangePasswordInput>; 
+export type ChangePasswordInputType = z.infer<typeof ChangePasswordInput>; 
