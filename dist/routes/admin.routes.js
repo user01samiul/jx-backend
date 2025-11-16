@@ -6432,6 +6432,14 @@ router.get("/promotions/:id/claims", authenticate_1.authenticate, (0, authorize_
  *         description: Forbidden - Admin access required
  */
 router.get("/kyc/pending", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), (0, validate_1.validate)(admin_kyc_schema_1.KYCFiltersSchema), admin_kyc_controller_1.getPendingKYC);
+// Get all KYC submissions (no status filter)
+router.get("/kyc/submissions", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), (0, validate_1.validate)(admin_kyc_schema_1.KYCFiltersSchema), admin_kyc_controller_1.getAllKYCSubmissions);
+// Get approved KYC submissions
+router.get("/kyc/approved", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), (0, validate_1.validate)(admin_kyc_schema_1.KYCFiltersSchema), admin_kyc_controller_1.getApprovedKYC);
+// Get rejected KYC submissions
+router.get("/kyc/rejected", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), (0, validate_1.validate)(admin_kyc_schema_1.KYCFiltersSchema), admin_kyc_controller_1.getRejectedKYC);
+// Get user info by ID (for frontend)
+router.get("/kyc/users/:user_id", authenticate_1.authenticate, (0, authorize_1.authorize)(["admin"]), admin_kyc_controller_1.getKYCUserInfo);
 /**
  * @swagger
  * /api/admin/kyc/{user_id}:

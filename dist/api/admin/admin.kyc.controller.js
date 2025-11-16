@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserKYCDocuments = exports.sendKYCMessage = exports.unapproveKYC = exports.getKYCAuditLogs = exports.getKYCReports = exports.createRiskAssessment = exports.verifyKYCDocument = exports.getKYCDocuments = exports.rejectKYC = exports.approveKYC = exports.getKYCByUserId = exports.getPendingKYC = void 0;
+exports.getKYCUserInfo = exports.getRejectedKYC = exports.getApprovedKYC = exports.getAllKYCSubmissions = exports.getUserKYCDocuments = exports.sendKYCMessage = exports.unapproveKYC = exports.getKYCAuditLogs = exports.getKYCReports = exports.createRiskAssessment = exports.verifyKYCDocument = exports.getKYCDocuments = exports.rejectKYC = exports.approveKYC = exports.getKYCByUserId = exports.getPendingKYC = void 0;
 const kyc_service_1 = require("../../services/admin/kyc.service");
 const activity_logger_service_1 = require("../../services/activity/activity-logger.service");
 // Get pending KYC requests
@@ -429,3 +429,120 @@ const getUserKYCDocuments = async (req, res) => {
     }
 };
 exports.getUserKYCDocuments = getUserKYCDocuments;
+// Get all KYC submissions (no status filter)
+const getAllKYCSubmissions = async (req, res) => {
+    try {
+        const filters = {
+            page: parseInt(req.query.page) || 1,
+            limit: parseInt(req.query.limit) || 20,
+            search: req.query.search,
+            document_type: req.query.document_type,
+            user_id: req.query.user_id ? parseInt(req.query.user_id) : undefined,
+            start_date: req.query.start_date,
+            end_date: req.query.end_date
+        };
+        const result = await kyc_service_1.AdminKYCService.getAllKYCSubmissions(filters);
+        res.status(200).json({
+            success: true,
+            data: result.submissions,
+            pagination: result.pagination
+        });
+    }
+    catch (error) {
+        console.error("Error fetching all KYC submissions:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch KYC submissions"
+        });
+    }
+};
+exports.getAllKYCSubmissions = getAllKYCSubmissions;
+// Get approved KYC submissions
+const getApprovedKYC = async (req, res) => {
+    try {
+        const filters = {
+            page: parseInt(req.query.page) || 1,
+            limit: parseInt(req.query.limit) || 20,
+            search: req.query.search,
+            status: 'approved',
+            document_type: req.query.document_type,
+            user_id: req.query.user_id ? parseInt(req.query.user_id) : undefined,
+            start_date: req.query.start_date,
+            end_date: req.query.end_date
+        };
+        const result = await kyc_service_1.AdminKYCService.getKYCByStatus('approved', filters);
+        res.status(200).json({
+            success: true,
+            data: result.submissions,
+            pagination: result.pagination
+        });
+    }
+    catch (error) {
+        console.error("Error fetching approved KYC:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch approved KYC submissions"
+        });
+    }
+};
+exports.getApprovedKYC = getApprovedKYC;
+// Get rejected KYC submissions
+const getRejectedKYC = async (req, res) => {
+    try {
+        const filters = {
+            page: parseInt(req.query.page) || 1,
+            limit: parseInt(req.query.limit) || 20,
+            search: req.query.search,
+            status: 'rejected',
+            document_type: req.query.document_type,
+            user_id: req.query.user_id ? parseInt(req.query.user_id) : undefined,
+            start_date: req.query.start_date,
+            end_date: req.query.end_date
+        };
+        const result = await kyc_service_1.AdminKYCService.getKYCByStatus('rejected', filters);
+        res.status(200).json({
+            success: true,
+            data: result.submissions,
+            pagination: result.pagination
+        });
+    }
+    catch (error) {
+        console.error("Error fetching rejected KYC:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch rejected KYC submissions"
+        });
+    }
+};
+exports.getRejectedKYC = getRejectedKYC;
+// Get user data by user_id (for frontend to fetch user info)
+const getKYCUserInfo = async (req, res) => {
+    try {
+        const userId = parseInt(req.params.user_id);
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid user ID"
+            });
+        }
+        const user = await kyc_service_1.AdminKYCService.getUserInfo(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+    }
+    catch (error) {
+        console.error("Error fetching KYC user info:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch user information"
+        });
+    }
+};
+exports.getKYCUserInfo = getKYCUserInfo;
