@@ -5,9 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const postgres_1 = __importDefault(require("../db/postgres"));
 class JackpotService {
-    constructor() {
-        this.wsConnections = new Map();
-    }
+    wsConnections = new Map();
     /**
      * Create a new jackpot schedule
      */
@@ -33,19 +31,19 @@ class JackpotService {
         let query = 'SELECT * FROM jackpot_schedules WHERE 1=1';
         const params = [];
         let paramIndex = 1;
-        if (filters === null || filters === void 0 ? void 0 : filters.status) {
+        if (filters?.status) {
             query += ` AND status = $${paramIndex++}`;
             params.push(filters.status);
         }
-        if (filters === null || filters === void 0 ? void 0 : filters.type) {
+        if (filters?.type) {
             query += ` AND type = $${paramIndex++}`;
             params.push(filters.type);
         }
-        if (filters === null || filters === void 0 ? void 0 : filters.vendor) {
+        if (filters?.vendor) {
             query += ` AND vendor = $${paramIndex++}`;
             params.push(filters.vendor);
         }
-        if (filters === null || filters === void 0 ? void 0 : filters.wallet_group) {
+        if (filters?.wallet_group) {
             query += ` AND wallet_group = $${paramIndex++}`;
             params.push(filters.wallet_group);
         }
@@ -227,12 +225,12 @@ class JackpotService {
     `;
         const params = [];
         let paramIndex = 1;
-        if (filters === null || filters === void 0 ? void 0 : filters.schedule_id) {
+        if (filters?.schedule_id) {
             query += ` AND ji.schedule_id = $${paramIndex++}`;
             params.push(filters.schedule_id);
         }
         query += ' ORDER BY ji.won_at DESC';
-        if (filters === null || filters === void 0 ? void 0 : filters.limit) {
+        if (filters?.limit) {
             query += ` LIMIT $${paramIndex}`;
             params.push(filters.limit);
         }

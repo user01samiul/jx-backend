@@ -8,9 +8,8 @@ const messages_1 = require("../../constants/messages");
  * Get user notifications with filters and pagination
  */
 const getUserNotifications = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const filters = req.query;
         const result = await notification_service_1.NotificationService.getUserNotifications(userId, filters);
         res.json({
@@ -46,9 +45,8 @@ exports.getUserNotifications = getUserNotifications;
  * Get unread notifications count
  */
 const getUnreadCount = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const count = await notification_service_1.NotificationService.getUnreadCount(userId);
         res.json({
             success: true,
@@ -77,9 +75,8 @@ exports.getUnreadCount = getUnreadCount;
  * Get notification by ID
  */
 const getNotificationById = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const { id } = req.params;
         const notification = await notification_service_1.NotificationService.getNotificationById(id, userId);
         if (!notification) {
@@ -110,11 +107,13 @@ exports.getNotificationById = getNotificationById;
  * Create a new notification (for admin use)
  */
 const createNotification = async (req, res) => {
-    var _a;
     try {
         const input = req.body;
-        const createdBy = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
-        const notification = await notification_service_1.NotificationService.createNotification(Object.assign(Object.assign({}, input), { created_by: createdBy }));
+        const createdBy = req.user?.userId;
+        const notification = await notification_service_1.NotificationService.createNotification({
+            ...input,
+            created_by: createdBy
+        });
         res.status(201).json({
             success: true,
             data: notification
@@ -140,9 +139,8 @@ exports.createNotification = createNotification;
  * Mark notification as read
  */
 const markAsRead = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const { id } = req.params;
         const success = await notification_service_1.NotificationService.markAsRead(id, userId);
         if (!success) {
@@ -173,9 +171,8 @@ exports.markAsRead = markAsRead;
  * Mark all notifications as read
  */
 const markAllAsRead = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const input = req.body;
         let count = 0;
         if (input.mark_all || !input.notification_ids) {
@@ -218,9 +215,8 @@ exports.markAllAsRead = markAllAsRead;
  * Delete a notification
  */
 const deleteNotification = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const { id } = req.params;
         const success = await notification_service_1.NotificationService.deleteNotification(id, userId);
         if (!success) {
@@ -251,9 +247,8 @@ exports.deleteNotification = deleteNotification;
  * Delete all read notifications
  */
 const deleteReadNotifications = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const count = await notification_service_1.NotificationService.deleteReadNotifications(userId);
         res.json({
             success: true,
@@ -283,9 +278,8 @@ exports.deleteReadNotifications = deleteReadNotifications;
  * Update a notification
  */
 const updateNotification = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const { id } = req.params;
         const input = req.body;
         const notification = await notification_service_1.NotificationService.updateNotification(id, userId, input);
@@ -317,9 +311,8 @@ exports.updateNotification = updateNotification;
  * Get notification statistics
  */
 const getNotificationStats = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const stats = await notification_service_1.NotificationService.getNotificationStats(userId);
         res.json({
             success: true,
@@ -346,11 +339,13 @@ exports.getNotificationStats = getNotificationStats;
  * Bulk create notifications (for admin use)
  */
 const bulkCreateNotifications = async (req, res) => {
-    var _a;
     try {
         const input = req.body;
-        const createdBy = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
-        const notifications = await notification_service_1.NotificationService.bulkCreateNotifications(Object.assign(Object.assign({}, input), { created_by: createdBy }));
+        const createdBy = req.user?.userId;
+        const notifications = await notification_service_1.NotificationService.bulkCreateNotifications({
+            ...input,
+            created_by: createdBy
+        });
         res.status(201).json({
             success: true,
             data: {

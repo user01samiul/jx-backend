@@ -19,7 +19,12 @@ const logActivity = async (req, action, details = {}) => {
         const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         const userAgent = req.headers['user-agent'];
         // Add request metadata to details
-        const enrichedDetails = Object.assign(Object.assign({}, details), { endpoint: req.path, method: req.method, timestamp: new Date().toISOString() });
+        const enrichedDetails = {
+            ...details,
+            endpoint: req.path,
+            method: req.method,
+            timestamp: new Date().toISOString(),
+        };
         await postgres_1.default.query(`INSERT INTO admin_activities (admin_id, action, details, ip_address, user_agent, created_at)
        VALUES ($1, $2, $3, $4, $5, NOW())`, [adminId, action, JSON.stringify(enrichedDetails), ipAddress, userAgent]);
         console.log(`[ActivityLogger] Logged: ${action} by user ${adminId}`);

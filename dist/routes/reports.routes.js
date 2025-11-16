@@ -54,7 +54,7 @@ router.get('/admin/:id', auth_middleware_1.authenticateToken, admin_middleware_1
 router.post('/admin/create', auth_middleware_1.authenticateToken, admin_middleware_1.adminMiddleware, async (req, res) => {
     try {
         const createdBy = req.user.id;
-        const report = await ReportsService_1.default.createReport(Object.assign(Object.assign({}, req.body), { created_by: createdBy }));
+        const report = await ReportsService_1.default.createReport({ ...req.body, created_by: createdBy });
         res.json({ success: true, report });
     }
     catch (error) {
@@ -108,7 +108,7 @@ router.post('/admin/execute/:id', auth_middleware_1.authenticateToken, admin_mid
         const executedBy = req.user.id;
         const { parameters } = req.body;
         const result = await ReportsService_1.default.executeReport(parseInt(id), executedBy, parameters);
-        res.json(Object.assign({ success: true }, result));
+        res.json({ success: true, ...result });
     }
     catch (error) {
         console.error('[REPORTS] Error executing report:', error);

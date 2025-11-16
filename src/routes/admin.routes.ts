@@ -1095,7 +1095,7 @@ router.delete("/games/:id", deleteGame);
  *       401:
  *         description: Unauthorized
  */
-router.post("/categories", validate({ body: CreateGameCategorySchema }), createCategory);
+router.post("/categories", authenticate, authorize(["Admin"]), validate({ body: CreateGameCategorySchema }), createCategory);
 
 /**
  * @openapi
@@ -1142,7 +1142,7 @@ router.post("/categories", validate({ body: CreateGameCategorySchema }), createC
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories", validate({ query: CategoryFiltersSchema }), getCategories);
+router.get("/categories", authenticate, authorize(["Admin"]), validate({ query: CategoryFiltersSchema }), getCategories);
 
 /**
  * @openapi
@@ -1167,7 +1167,7 @@ router.get("/categories", validate({ query: CategoryFiltersSchema }), getCategor
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/:id", getCategoryById);
+router.get("/categories/:id", authenticate, authorize(["Admin"]), getCategoryById);
 
 /**
  * @openapi
@@ -1200,7 +1200,7 @@ router.get("/categories/:id", getCategoryById);
  *       401:
  *         description: Unauthorized
  */
-router.put("/categories/:id", validate({ body: UpdateGameCategorySchema }), updateCategory);
+router.put("/categories/:id", authenticate, authorize(["Admin"]), validate({ body: UpdateGameCategorySchema }), updateCategory);
 
 /**
  * @openapi
@@ -1227,7 +1227,7 @@ router.put("/categories/:id", validate({ body: UpdateGameCategorySchema }), upda
  *       401:
  *         description: Unauthorized
  */
-router.delete("/categories/:id", deleteCategory);
+router.delete("/categories/:id", authenticate, authorize(["Admin"]), deleteCategory);
 
 /**
  * @openapi
@@ -1271,7 +1271,7 @@ router.delete("/categories/:id", deleteCategory);
  *       401:
  *         description: Unauthorized
  */
-router.post("/categories/bulk", validate({ body: BulkCategoryOperationSchema }), bulkCategoryOperation);
+router.post("/categories/bulk", authenticate, authorize(["Admin"]), validate({ body: BulkCategoryOperationSchema }), bulkCategoryOperation);
 
 /**
  * @openapi
@@ -1306,7 +1306,7 @@ router.post("/categories/bulk", validate({ body: BulkCategoryOperationSchema }),
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/stats", validate({ query: CategoryStatsFiltersSchema }), getCategoryStats);
+router.get("/categories/stats", authenticate, authorize(["Admin"]), validate({ query: CategoryStatsFiltersSchema }), getCategoryStats);
 
 /**
  * @openapi
@@ -1322,7 +1322,7 @@ router.get("/categories/stats", validate({ query: CategoryStatsFiltersSchema }),
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/hierarchy", getCategoryHierarchy);
+router.get("/categories/hierarchy", authenticate, authorize(["Admin"]), getCategoryHierarchy);
 
 /**
  * @openapi
@@ -1338,7 +1338,7 @@ router.get("/categories/hierarchy", getCategoryHierarchy);
  *       401:
  *         description: Unauthorized
  */
-router.post("/categories/migrate", migrateExistingCategories);
+router.post("/categories/migrate", authenticate, authorize(["Admin"]), migrateExistingCategories);
 
 /**
  * @openapi
@@ -1378,7 +1378,7 @@ router.post("/categories/migrate", migrateExistingCategories);
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/:id/games", getGamesInCategory);
+router.get("/categories/:id/games", authenticate, authorize(["Admin"]), getGamesInCategory);
 
 // =====================================================
 // USER ROLE MANAGEMENT ROUTES

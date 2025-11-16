@@ -174,13 +174,18 @@ export const bulkCategoryOperation = async (
   try {
     const operationData = req.validated?.body as BulkCategoryOperationInput;
     const adminId = (req as any).user?.userId;
-    
+
     const result = await categoryService.bulkCategoryOperation(operationData, adminId);
-    
+
+    const successCount = result.results.filter(r => r.success).length;
+
     res.status(200).json({
       success: result.success,
-      message: result.message,
-      data: result.results
+      message: "Bulk operation completed successfully",
+      data: {
+        affected_count: successCount,
+        details: result.results
+      }
     });
   } catch (error: any) {
     res.status(400).json({

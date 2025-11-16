@@ -9,10 +9,9 @@ const postgres_1 = __importDefault(require("../../db/postgres"));
 const categoryService = new admin_category_service_1.AdminCategoryService();
 // Create a new game category
 const createCategory = async (req, res, next) => {
-    var _a, _b;
     try {
-        const categoryData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
-        const adminId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.userId;
+        const categoryData = req.validated?.body;
+        const adminId = req.user?.userId;
         const category = await categoryService.createCategory(categoryData, adminId);
         res.status(201).json({
             success: true,
@@ -30,9 +29,8 @@ const createCategory = async (req, res, next) => {
 exports.createCategory = createCategory;
 // Get all categories with filtering and pagination
 const getCategories = async (req, res, next) => {
-    var _a;
     try {
-        const filters = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.query;
+        const filters = req.validated?.query;
         const result = await categoryService.getCategories(filters);
         res.status(200).json({
             success: true,
@@ -82,11 +80,10 @@ const getCategoryById = async (req, res, next) => {
 exports.getCategoryById = getCategoryById;
 // Update category
 const updateCategory = async (req, res, next) => {
-    var _a, _b;
     try {
         const categoryId = parseInt(req.params.id);
-        const categoryData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
-        const adminId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.userId;
+        const categoryData = req.validated?.body;
+        const adminId = req.user?.userId;
         if (isNaN(categoryId)) {
             res.status(400).json({
                 success: false,
@@ -111,10 +108,9 @@ const updateCategory = async (req, res, next) => {
 exports.updateCategory = updateCategory;
 // Delete category
 const deleteCategory = async (req, res, next) => {
-    var _a;
     try {
         const categoryId = parseInt(req.params.id);
-        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const adminId = req.user?.userId;
         if (isNaN(categoryId)) {
             res.status(400).json({
                 success: false,
@@ -138,15 +134,18 @@ const deleteCategory = async (req, res, next) => {
 exports.deleteCategory = deleteCategory;
 // Bulk operations on categories
 const bulkCategoryOperation = async (req, res, next) => {
-    var _a, _b;
     try {
-        const operationData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
-        const adminId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.userId;
+        const operationData = req.validated?.body;
+        const adminId = req.user?.userId;
         const result = await categoryService.bulkCategoryOperation(operationData, adminId);
+        const successCount = result.results.filter(r => r.success).length;
         res.status(200).json({
             success: result.success,
-            message: result.message,
-            data: result.results
+            message: "Bulk operation completed successfully",
+            data: {
+                affected_count: successCount,
+                details: result.results
+            }
         });
     }
     catch (error) {
@@ -159,9 +158,8 @@ const bulkCategoryOperation = async (req, res, next) => {
 exports.bulkCategoryOperation = bulkCategoryOperation;
 // Get category statistics
 const getCategoryStats = async (req, res, next) => {
-    var _a;
     try {
-        const filters = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.query;
+        const filters = req.validated?.query;
         const stats = await categoryService.getCategoryStats(filters);
         res.status(200).json({
             success: true,
@@ -195,9 +193,8 @@ const getCategoryHierarchy = async (req, res, next) => {
 exports.getCategoryHierarchy = getCategoryHierarchy;
 // Migrate existing categories
 const migrateExistingCategories = async (req, res, next) => {
-    var _a;
     try {
-        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const adminId = req.user?.userId;
         const result = await categoryService.migrateExistingCategories(adminId);
         res.status(200).json({
             success: result.success,

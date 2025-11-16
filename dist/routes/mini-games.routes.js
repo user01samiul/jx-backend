@@ -56,7 +56,7 @@ router.post('/:id/play', auth_middleware_1.authenticateToken, async (req, res) =
         const userId = req.user.id;
         const { id } = req.params;
         const result = await MiniGamesService_1.default.playGame(userId, parseInt(id));
-        res.json(Object.assign({ success: true }, result));
+        res.json({ success: true, ...result });
     }
     catch (error) {
         console.error('[MINI-GAMES] Error playing game:', error);
@@ -73,7 +73,7 @@ router.get('/:id/can-play', auth_middleware_1.authenticateToken, async (req, res
         const userId = req.user.id;
         const { id } = req.params;
         const result = await MiniGamesService_1.default.canPlayerPlay(userId, parseInt(id));
-        res.json(Object.assign({ success: true }, result));
+        res.json({ success: true, ...result });
     }
     catch (error) {
         console.error('[MINI-GAMES] Error checking play eligibility:', error);

@@ -3,9 +3,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserGameBets = exports.transferUserCategoryBalance = exports.getUserCategoryBalances = exports.skip2FA = exports.disable2FA = exports.enable2FA = exports.get2FAStatus = exports.changeUserPassword = exports.updateUserProfile = exports.getUserBalance = exports.getUserActivitySummary = exports.getUserBettingHistory = exports.getUserTransactionHistory = exports.getUserRecentActivity = exports.getUserFavoriteGames = exports.getUserProfile = void 0;
 const user_service_1 = require("../../services/user/user.service");
 const getUserProfile = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -19,9 +18,8 @@ const getUserProfile = async (req, res, next) => {
 };
 exports.getUserProfile = getUserProfile;
 const getUserFavoriteGames = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -38,9 +36,8 @@ exports.getUserFavoriteGames = getUserFavoriteGames;
  * Returns recent user activity. Each activity record now includes username and email fields.
  */
 const getUserRecentActivity = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const limit = parseInt(req.query.limit) || 20;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
@@ -59,9 +56,8 @@ const getUserRecentActivity = async (req, res, next) => {
 };
 exports.getUserRecentActivity = getUserRecentActivity;
 const getUserTransactionHistory = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const limit = parseInt(req.query.limit) || 50;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
@@ -76,9 +72,8 @@ const getUserTransactionHistory = async (req, res, next) => {
 };
 exports.getUserTransactionHistory = getUserTransactionHistory;
 const getUserBettingHistory = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const limit = parseInt(req.query.limit) || 50;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
@@ -94,9 +89,8 @@ const getUserBettingHistory = async (req, res, next) => {
 exports.getUserBettingHistory = getUserBettingHistory;
 // Get comprehensive user activity summary
 const getUserActivitySummary = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -111,9 +105,8 @@ const getUserActivitySummary = async (req, res, next) => {
 exports.getUserActivitySummary = getUserActivitySummary;
 // Keep the old function for backward compatibility
 const getUserBalance = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -130,14 +123,13 @@ exports.getUserBalance = getUserBalance;
 // PROFILE MANAGEMENT CONTROLLERS
 // =====================================================
 const updateUserProfile = async (req, res, next) => {
-    var _a, _b;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const profileData = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
+        const profileData = req.validated?.body;
         const updatedProfile = await (0, user_service_1.updateUserProfileService)(userId, profileData);
         res.status(200).json({ success: true, data: updatedProfile });
     }
@@ -147,14 +139,13 @@ const updateUserProfile = async (req, res, next) => {
 };
 exports.updateUserProfile = updateUserProfile;
 const changeUserPassword = async (req, res, next) => {
-    var _a, _b;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const passwordData = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
+        const passwordData = req.validated?.body;
         await (0, user_service_1.changePasswordService)(userId, passwordData);
         res.status(200).json({ success: true, message: "Password changed successfully" });
     }
@@ -167,9 +158,8 @@ exports.changeUserPassword = changeUserPassword;
 // 2FA MANAGEMENT CONTROLLERS
 // =====================================================
 const get2FAStatus = async (req, res, next) => {
-    var _a;
     try {
-        let userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        let userId = req.user?.userId;
         // Allow unauthenticated access via username or email query param
         if (!userId) {
             const { username, email } = req.query;
@@ -199,9 +189,8 @@ const get2FAStatus = async (req, res, next) => {
 };
 exports.get2FAStatus = get2FAStatus;
 const enable2FA = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -215,9 +204,8 @@ const enable2FA = async (req, res, next) => {
 };
 exports.enable2FA = enable2FA;
 const disable2FA = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -231,14 +219,13 @@ const disable2FA = async (req, res, next) => {
 };
 exports.disable2FA = disable2FA;
 const skip2FA = async (req, res, next) => {
-    var _a, _b;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const authData = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
+        const authData = req.validated?.body;
         const result = await (0, user_service_1.skip2FAService)(userId, authData);
         res.status(200).json({ success: true, data: result });
     }
@@ -248,9 +235,8 @@ const skip2FA = async (req, res, next) => {
 };
 exports.skip2FA = skip2FA;
 const getUserCategoryBalances = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId)
             return res.status(401).json({ success: false, message: "Unauthorized" });
         const balances = await (0, user_service_1.getUserCategoryBalancesService)(userId);
@@ -262,9 +248,8 @@ const getUserCategoryBalances = async (req, res) => {
 };
 exports.getUserCategoryBalances = getUserCategoryBalances;
 const transferUserCategoryBalance = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId)
             return res.status(401).json({ success: false, message: "Unauthorized" });
         const { category, amount, direction } = req.body;
@@ -280,9 +265,8 @@ const transferUserCategoryBalance = async (req, res) => {
 };
 exports.transferUserCategoryBalance = transferUserCategoryBalance;
 const getUserGameBets = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId)
             return res.status(401).json({ success: false, message: "Unauthorized" });
         const data = await (0, user_service_1.getUserGameBetsService)(userId);

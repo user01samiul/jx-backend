@@ -55,7 +55,10 @@ const getTicketById = async (req, res) => {
        ORDER BY m.created_at ASC`, [ticketId]);
         res.json({
             success: true,
-            data: Object.assign(Object.assign({}, ticketResult.rows[0]), { messages: messagesResult.rows }),
+            data: {
+                ...ticketResult.rows[0],
+                messages: messagesResult.rows,
+            },
         });
     }
     catch (error) {

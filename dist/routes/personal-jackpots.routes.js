@@ -169,7 +169,7 @@ router.post('/admin/trigger-win', auth_middleware_1.authenticateToken, admin_mid
             return res.status(400).json({ success: false, error: 'userId and jackpotId are required' });
         }
         const result = await PersonalJackpotsService_1.default.triggerJackpotWin(userId, jackpotId);
-        res.json(Object.assign({ success: true }, result));
+        res.json({ success: true, ...result });
     }
     catch (error) {
         console.error('[PERSONAL-JACKPOTS] Error triggering win:', error);

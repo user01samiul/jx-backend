@@ -12,9 +12,8 @@ class AdminModulesController {
      * Get admin modules for the current user's role
      */
     static async getMyModules(req, res) {
-        var _a;
         try {
-            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+            const userId = req.user?.userId;
             if (!userId) {
                 throw new apiError_1.ApiError('User not authenticated', 401);
             }

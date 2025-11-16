@@ -118,7 +118,6 @@ class SegmentationController {
      * Body: { name, description?, filters, isActive? }
      */
     async saveSegment(req, res) {
-        var _a;
         try {
             const { name, description, filters, isActive = true } = req.body;
             if (!name || !filters || !Array.isArray(filters)) {
@@ -135,7 +134,7 @@ class SegmentationController {
                 name,
                 description,
                 filters,
-                created_by: (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId,
+                created_by: req.user?.userId,
                 is_active: isActive
             });
             // Update player count

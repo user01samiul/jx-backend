@@ -180,7 +180,7 @@ router.post('/claim/:challengeId', auth_middleware_1.authenticateToken, async (r
         const userId = req.user.userId || req.user.id;
         const { challengeId } = req.params;
         const result = await ChallengesService_1.default.claimChallengeReward(userId, parseInt(challengeId));
-        res.json(Object.assign({ success: true }, result));
+        res.json({ success: true, ...result });
     }
     catch (error) {
         console.error('[CHALLENGES] Error claiming challenge:', error);

@@ -48,14 +48,21 @@ const env_1 = require("../../configs/env");
 // Removed BalanceConsistencyService import - now using simple stored balances
 console.log('[CRITICAL] Provider callback service loaded - VERSION 2.0');
 class ProviderCallbackService {
+    static SECRET_KEY = env_1.env.SUPPLIER_SECRET_KEY;
+    static OPERATOR_ID = env_1.env.SUPPLIER_OPERATOR_ID;
+    // Add retry configuration for rate limiting
+    static RETRY_CONFIG = {
+        maxRetries: 3,
+        baseDelay: 1000, // 1 second
+        maxDelay: 10000, // 10 seconds
+    };
     // Exponential backoff retry function
     static async retryWithBackoff(operation, retryCount = 0) {
-        var _a;
         try {
             return await operation();
         }
         catch (error) {
-            if (((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) === 429 && retryCount < this.RETRY_CONFIG.maxRetries) {
+            if (error?.response?.status === 429 && retryCount < this.RETRY_CONFIG.maxRetries) {
                 const delay = Math.min(this.RETRY_CONFIG.baseDelay * Math.pow(2, retryCount), this.RETRY_CONFIG.maxDelay);
                 console.log(`[RETRY] HTTP 429 detected, retrying in ${delay}ms (attempt ${retryCount + 1}/${this.RETRY_CONFIG.maxRetries})`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -533,7 +540,6 @@ class ProviderCallbackService {
     }
     // --- CHANGEBALANCE (bet/win) ---
     static async handleChangeBalance(request) {
-        var _a, _b, _c, _d;
         console.log('CHANGEBALANCE request received:', JSON.stringify(request, null, 2));
         console.log('[CRITICAL DEBUG] handleChangeBalance method called - VERSION 2.0');
         try {
@@ -673,8 +679,8 @@ class ProviderCallbackService {
                         const { updateCampaignUsage } = require('../campaign/kyc-freespins.service');
                         try {
                             // Extract campaign details
-                            const remainingSpins = ((_a = context.campaign_details) === null || _a === void 0 ? void 0 : _a.remaining_spins) || 0;
-                            const totalSpins = ((_b = context.campaign_details) === null || _b === void 0 ? void 0 : _b.total_spins) || 100;
+                            const remainingSpins = context.campaign_details?.remaining_spins || 0;
+                            const totalSpins = context.campaign_details?.total_spins || 100;
                             const spinsUsed = totalSpins - remainingSpins;
                             // Calculate amounts based on transaction type
                             const betAmount = transactionType === 'BET' ? Math.abs(parsedAmount) : 0;
@@ -704,8 +710,8 @@ class ProviderCallbackService {
                     else if (context.campaign_code.startsWith('CHALLENGE_') || context.campaign_code.startsWith('LOYALTY_')) {
                         try {
                             // Extract campaign details
-                            const remainingSpins = ((_c = context.campaign_details) === null || _c === void 0 ? void 0 : _c.remaining_spins) || 0;
-                            const totalSpins = ((_d = context.campaign_details) === null || _d === void 0 ? void 0 : _d.total_spins) || 0;
+                            const remainingSpins = context.campaign_details?.remaining_spins || 0;
+                            const totalSpins = context.campaign_details?.total_spins || 0;
                             const spinsUsed = totalSpins - remainingSpins;
                             // Calculate amounts based on transaction type
                             const betAmount = transactionType === 'BET' ? Math.abs(parsedAmount) : 0;
@@ -1750,7 +1756,7 @@ class ProviderCallbackService {
         try {
             // Parse transaction metadata
             const metadata = this.parseTransactionMetadata(transaction.metadata);
-            const category = metadata === null || metadata === void 0 ? void 0 : metadata.category;
+            const category = metadata?.category;
             // Validate transaction amount
             const transactionAmount = this.validateTransactionAmount(transaction.amount);
             if (transactionAmount === null) {
@@ -1819,7 +1825,7 @@ class ProviderCallbackService {
         try {
             // Parse metadata to get round_id
             const metadata = this.parseTransactionMetadata(betTransaction.metadata);
-            const roundId = metadata === null || metadata === void 0 ? void 0 : metadata.round_id;
+            const roundId = metadata?.round_id;
             if (!roundId) {
                 console.log(`[DEBUG] CANCEL: No round_id found in bet transaction metadata, returning full bet amount`);
                 return Number(betTransaction.amount); // Fallback to full bet amount
@@ -1852,7 +1858,7 @@ class ProviderCallbackService {
         try {
             // Parse metadata to get round_id
             const metadata = this.parseTransactionMetadata(winTransaction.metadata);
-            const roundId = metadata === null || metadata === void 0 ? void 0 : metadata.round_id;
+            const roundId = metadata?.round_id;
             if (!roundId) {
                 console.log(`[DEBUG] CANCEL: No round_id found in win transaction metadata, returning negative win amount`);
                 return -Number(winTransaction.amount); // Fallback to just deducting the win
@@ -2316,11 +2322,3 @@ class ProviderCallbackService {
     }
 }
 exports.ProviderCallbackService = ProviderCallbackService;
-ProviderCallbackService.SECRET_KEY = env_1.env.SUPPLIER_SECRET_KEY;
-ProviderCallbackService.OPERATOR_ID = env_1.env.SUPPLIER_OPERATOR_ID;
-// Add retry configuration for rate limiting
-ProviderCallbackService.RETRY_CONFIG = {
-    maxRetries: 3,
-    baseDelay: 1000, // 1 second
-    maxDelay: 10000, // 10 seconds
-};

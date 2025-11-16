@@ -68,7 +68,6 @@ class EnhancedAffiliateService {
      * Calculate commission based on user betting activity and revenue
      */
     static async calculateBetRevenueCommission(affiliateId, referredUserId, periodStart, periodEnd) {
-        var _a;
         const client = await postgres_1.default.connect();
         try {
             // Get user's betting activity for the period
@@ -84,7 +83,7 @@ class EnhancedAffiliateService {
             const netRevenue = betData.total_bet_amount - betData.total_win_amount;
             // Get affiliate commission rate
             const affiliateResult = await client.query('SELECT commission_rate FROM affiliate_profiles WHERE user_id = $1', [affiliateId]);
-            const commissionRate = ((_a = affiliateResult.rows[0]) === null || _a === void 0 ? void 0 : _a.commission_rate) || 5.0;
+            const commissionRate = affiliateResult.rows[0]?.commission_rate || 5.0;
             const commissionAmount = (netRevenue * commissionRate) / 100;
             // Create commission record
             const commissionResult = await client.query(`INSERT INTO affiliate_commissions (
@@ -686,7 +685,12 @@ class EnhancedAffiliateService {
         AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date`, [userId]);
-            return Object.assign(Object.assign({}, stats), { recent_referrals: recentReferralsResult.rows, recent_commissions: recentCommissionsResult.rows, monthly_chart_data: monthlyDataResult.rows });
+            return {
+                ...stats,
+                recent_referrals: recentReferralsResult.rows,
+                recent_commissions: recentCommissionsResult.rows,
+                monthly_chart_data: monthlyDataResult.rows
+            };
         }
         finally {
             client.release();

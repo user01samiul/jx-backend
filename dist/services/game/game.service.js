@@ -378,7 +378,6 @@ const balance_service_1 = require("../user/balance.service");
 const promotion_service_1 = require("../promotion/promotion.service");
 // Place a bet on a game
 const placeBetService = async (userId, gameId, betAmount, betType, gameData) => {
-    var _a, _b, _c;
     console.log('[DEBUG] START placeBetService', { userId, gameId, betAmount, betType });
     const client = await postgres_1.default.connect();
     try {
@@ -391,7 +390,7 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
             throw new apiError_1.ApiError("Game not found or inactive", 404);
         }
         const gameData = gameResult.rows[0];
-        const category = ((_a = gameData.category) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) || 'slots';
+        const category = gameData.category?.toLowerCase().trim() || 'slots';
         console.log('[AUDIT] Placing bet:', { userId, gameId, gameName: gameData.name, category });
         // --- AUTO-GENERATE SESSION_ID FOR ROULETTE ---
         if (gameData.category === 'tablegame' &&
@@ -454,7 +453,7 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
         console.log('[DEBUG] Querying user currency');
         const currencyResult = await client.query("SELECT currency FROM user_profiles WHERE user_id = $1", [userId]);
         console.log('[DEBUG] User currency result', currencyResult.rows);
-        const currency = ((_b = currencyResult.rows[0]) === null || _b === void 0 ? void 0 : _b.currency) || 'USD';
+        const currency = currencyResult.rows[0]?.currency || 'USD';
         // Process bet transaction using BalanceService (pass client)
         console.log('[DEBUG] Calling BalanceService.processTransaction');
         const transactionResult = await balance_service_1.BalanceService.processTransaction({
@@ -562,7 +561,7 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
                         amount: -betAmount,
                         transaction_id: `bet_${userId}_${gameId}_${Date.now()}`,
                         game_id: gameId,
-                        session_id: (gameData === null || gameData === void 0 ? void 0 : gameData.session_id) || '',
+                        session_id: gameData?.session_id || '',
                         currency_code: currency
                     }
                 };
@@ -572,7 +571,7 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
                 console.log('[PROVIDER CALLBACK] Response:', JSON.stringify(providerResp.data, null, 2));
             }
             catch (err) {
-                console.error('[PROVIDER CALLBACK] Error:', ((_c = err === null || err === void 0 ? void 0 : err.response) === null || _c === void 0 ? void 0 : _c.data) || err.message || err);
+                console.error('[PROVIDER CALLBACK] Error:', err?.response?.data || err.message || err);
             }
         }
         // --- END PROVIDER CALLBACK TRIGGER ---
@@ -625,7 +624,6 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
 exports.placeBetService = placeBetService;
 // Process bet result (win/lose)
 const processBetResultService = async (betId, outcome, winAmount = 0, gameResult) => {
-    var _a;
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
@@ -637,7 +635,7 @@ const processBetResultService = async (betId, outcome, winAmount = 0, gameResult
         const bet = betResult.rows[0];
         // Get game category
         const gameResultRow = await client.query("SELECT category FROM games WHERE id = $1", [bet.game_id]);
-        const category = (((_a = gameResultRow.rows[0]) === null || _a === void 0 ? void 0 : _a.category) || '').toLowerCase().trim();
+        const category = (gameResultRow.rows[0]?.category || '').toLowerCase().trim();
         console.log('[AUDIT] Processing bet result:', { betId, userId: bet.user_id, gameId: bet.game_id, category });
         // Update bet with result
         await client.query(`
@@ -807,7 +805,6 @@ const generateGameSessionToken = (userId, gameId) => {
 };
 // Get play URL and related info from provider
 const getGamePlayInfoService = async (gameId, userId) => {
-    var _a, _b, _c, _d, _e;
     // 1. Fetch game info
     const game = await (0, exports.getGameByIdService)(gameId);
     // 1.5 Check if this is a JxOriginals game and route through GameRouterService
@@ -838,12 +835,12 @@ const getGamePlayInfoService = async (gameId, userId) => {
     }
     const user = userResult.rows[0];
     // 3. Get category-specific balance
-    const category = ((_a = game.category) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) || 'slots';
+    const category = game.category?.toLowerCase().trim() || 'slots';
     const balanceResult = await postgres_1.default.query(`SELECT balance FROM user_category_balances
      WHERE user_id = $1 AND LOWER(TRIM(category)) = $2`, [userId, category]);
     const userBalance = balanceResult.rows.length ? balanceResult.rows[0].balance : 0;
     // 3.5 Check if this is an IGPX game (provider: IGPixel or category: sportsbook)
-    if (((_b = game.provider) === null || _b === void 0 ? void 0 : _b.toLowerCase()) === 'igpixel' || ((_c = game.category) === null || _c === void 0 ? void 0 : _c.toLowerCase()) === 'sportsbook') {
+    if (game.provider?.toLowerCase() === 'igpixel' || game.category?.toLowerCase() === 'sportsbook') {
         // Use IGPX payment gateway to create session
         const { getPaymentGatewayByCodeService } = require("../admin/payment-gateway.service");
         const igpxGateway = await getPaymentGatewayByCodeService('igpx');
@@ -894,7 +891,9 @@ const getGamePlayInfoService = async (gameId, userId) => {
         ]);
         return {
             play_url: sessionResult.payment_url,
-            game: Object.assign({}, game),
+            game: {
+                ...game
+            },
             session_info: {
                 transaction_id: sessionResult.transaction_id,
                 user_id: userId,
@@ -907,7 +906,7 @@ const getGamePlayInfoService = async (gameId, userId) => {
     // 4. Generate play URL using environment variable
     // Use different launcher for Pragmatic Play games
     let supplierLaunchHost;
-    if (((_d = game.provider) === null || _d === void 0 ? void 0 : _d.toLowerCase().includes('pragmatic')) || ((_e = game.vendor) === null || _e === void 0 ? void 0 : _e.toLowerCase().includes('pragmatic'))) {
+    if (game.provider?.toLowerCase().includes('pragmatic') || game.vendor?.toLowerCase().includes('pragmatic')) {
         supplierLaunchHost = process.env.PRAGMATIC_LAUNCH_HOST || 'https://run.games378.com';
         console.log('[PRAGMATIC] Using Pragmatic Play launcher:', supplierLaunchHost);
     }
@@ -1008,7 +1007,9 @@ const getGamePlayInfoService = async (gameId, userId) => {
     // 11. Return all relevant info
     return {
         play_url: playUrl,
-        game: Object.assign({}, game),
+        game: {
+            ...game
+        },
         session_info: {
             token: token,
             user_id: userId,

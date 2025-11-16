@@ -41,9 +41,8 @@ const path = __importStar(require("path"));
  * Get current user's KYC verification status
  */
 const getKYCStatus = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -60,9 +59,8 @@ exports.getKYCStatus = getKYCStatus;
  * Get all documents uploaded by current user
  */
 const getKYCDocuments = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -80,9 +78,8 @@ exports.getKYCDocuments = getKYCDocuments;
  * IMPORTANT: CDN ONLY - No fallback to local storage
  */
 const uploadKYCDocument = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -151,9 +148,8 @@ exports.uploadKYCDocument = uploadKYCDocument;
  * Delete a document (only if not approved)
  */
 const deleteKYCDocument = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;

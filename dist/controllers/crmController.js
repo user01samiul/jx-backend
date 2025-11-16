@@ -280,7 +280,12 @@ async function getPlayer360View(req, res) {
                 (vip ? 30 : 0) // 30 points if VIP
             ));
             // Format timeline events
-            const timeline = timelineEvents.rows.map((event) => (Object.assign(Object.assign({}, event), { description: generateTimelineDescription(event), color: getTimelineColor(event.event_category), performed_by: event.performed_by ? "Agent" : undefined })));
+            const timeline = timelineEvents.rows.map((event) => ({
+                ...event,
+                description: generateTimelineDescription(event),
+                color: getTimelineColor(event.event_category),
+                performed_by: event.performed_by ? "Agent" : undefined,
+            }));
             // Build the response
             const player360Data = {
                 user: {
@@ -509,10 +514,9 @@ function getTimelineColor(category) {
  * POST /api/admin/crm/players/:userId/notes
  */
 async function addCustomerNote(req, res) {
-    var _a;
     const { userId } = req.params;
     const { note_type, category, subject, content, sentiment, is_important, is_flagged, tags } = req.body;
-    const agentId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+    const agentId = req.user?.userId;
     try {
         const result = await postgres_1.default.query(`INSERT INTO customer_notes
        (user_id, agent_id, note_type, category, subject, content, sentiment, is_important, is_flagged, tags, created_by)
@@ -534,10 +538,9 @@ async function addCustomerNote(req, res) {
  * POST /api/admin/crm/players/:userId/tags
  */
 async function addPlayerTag(req, res) {
-    var _a;
     const { userId } = req.params;
     const { tag_id } = req.body;
-    const agentId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+    const agentId = req.user?.userId;
     try {
         const result = await postgres_1.default.query(`INSERT INTO user_tags (user_id, tag_id, tagged_by, auto_tagged)
        VALUES ($1, $2, $3, false)
@@ -555,7 +558,6 @@ async function addPlayerTag(req, res) {
  * GET /api/admin/crm/players/:userId/game-history
  */
 async function getPlayerGameHistory(req, res) {
-    var _a;
     const { userId } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
@@ -593,7 +595,7 @@ async function getPlayerGameHistory(req, res) {
          LIMIT $2 OFFSET $3`, [userId, limit, offset]);
             // Get total count for pagination
             const countQuery = await client.query(`SELECT COUNT(*) as total FROM bets WHERE user_id = $1`, [userId]);
-            const totalBets = parseInt(((_a = countQuery.rows[0]) === null || _a === void 0 ? void 0 : _a.total) || 0);
+            const totalBets = parseInt(countQuery.rows[0]?.total || 0);
             const totalPages = Math.ceil(totalBets / limit);
             res.json({
                 success: true,
@@ -623,7 +625,6 @@ async function getPlayerGameHistory(req, res) {
  * GET /api/admin/crm/game-history/:betId/hand-history
  */
 async function getHandHistory(req, res) {
-    var _a;
     const { betId } = req.params;
     try {
         // Get bet details including transaction_id and session_id
@@ -658,7 +659,7 @@ async function getHandHistory(req, res) {
     catch (error) {
         console.error("Error fetching hand history:", error);
         // Return more specific error if available
-        if (((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) === 404) {
+        if (error?.response?.status === 404) {
             return res.status(404).json({
                 success: false,
                 error: "Hand history not available for this game"
@@ -666,7 +667,7 @@ async function getHandHistory(req, res) {
         }
         res.status(500).json({
             success: false,
-            error: (error === null || error === void 0 ? void 0 : error.message) || "Failed to fetch hand history"
+            error: error?.message || "Failed to fetch hand history"
         });
     }
 }

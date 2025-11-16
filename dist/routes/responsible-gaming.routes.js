@@ -61,9 +61,8 @@ const self_exclusion_service_1 = require("../services/responsible-gaming/self-ex
  * @access Private
  */
 router.post('/self-exclusion', async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const ip = req.clientIP || req.ip;
         const userAgent = req.headers['user-agent'];
         const exclusion = await (0, self_exclusion_service_1.createSelfExclusion)({
@@ -91,9 +90,8 @@ router.post('/self-exclusion', async (req, res, next) => {
  * @access Private
  */
 router.get('/self-exclusion', async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const exclusion = await (0, self_exclusion_service_1.getUserSelfExclusion)(userId);
         res.json({
             success: true,
@@ -110,9 +108,8 @@ router.get('/self-exclusion', async (req, res, next) => {
  * @access Private
  */
 router.get('/self-exclusion/status', async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const status = await (0, self_exclusion_service_1.checkSelfExclusionStatus)(userId);
         res.json({
             success: true,
@@ -129,9 +126,8 @@ router.get('/self-exclusion/status', async (req, res, next) => {
  * @access Private
  */
 router.post('/self-exclusion/revoke', async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const { reason } = req.body;
         if (!reason) {
             res.status(400).json({
@@ -160,9 +156,8 @@ router.post('/self-exclusion/revoke', async (req, res, next) => {
  * @access Private
  */
 router.get('/self-exclusion/history', async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const history = await (0, self_exclusion_service_1.getSelfExclusionHistory)(userId);
         res.json({
             success: true,

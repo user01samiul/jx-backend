@@ -228,7 +228,10 @@ class ActivityLoggerService {
     }
     // Generic
     static async logGenericAction(req, action, details, module) {
-        await (0, activity_logger_1.logActivity)(req, action, Object.assign(Object.assign({}, details), { module }));
+        await (0, activity_logger_1.logActivity)(req, action, {
+            ...details,
+            module,
+        });
     }
 }
 exports.ActivityLoggerService = ActivityLoggerService;

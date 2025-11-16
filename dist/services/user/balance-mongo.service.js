@@ -19,13 +19,12 @@ class BalanceMongoService {
      * Calculate real-time balance from transactions (using MongoDB)
      */
     static async calculateRealTimeBalance(userId) {
-        var _a, _b;
         console.log('[DEBUG][BALANCE CALC][ENTERED] userId:', userId);
         const client = await postgres_1.default.connect();
         try {
             // Get user currency (still using PostgreSQL for user profiles)
             const currencyResult = await client.query("SELECT currency FROM user_profiles WHERE user_id = $1", [userId]);
-            const currency = ((_a = currencyResult.rows[0]) === null || _a === void 0 ? void 0 : _a.currency) || 'USD';
+            const currency = currencyResult.rows[0]?.currency || 'USD';
             console.log('[DEBUG][BALANCE CALC][CURRENCY]', currency);
             // Calculate balance from main wallet transactions only (exclude category transactions) - using MongoDB
             const transactions = await mongo_hybrid_service_1.MongoHybridService.getMongoService().getTransactionsCollection().find({
@@ -103,7 +102,7 @@ class BalanceMongoService {
             const lockedBalance = pendingBets.reduce((sum, bet) => sum + Number(bet.bet_amount), 0);
             // Get bonus balance (still using PostgreSQL for user_balances)
             const bonusResult = await client.query("SELECT bonus_balance FROM user_balances WHERE user_id = $1", [userId]);
-            const bonusBalance = Number(((_b = bonusResult.rows[0]) === null || _b === void 0 ? void 0 : _b.bonus_balance) || 0);
+            const bonusBalance = Number(bonusResult.rows[0]?.bonus_balance || 0);
             return {
                 balance: Math.max(0, netBalance - lockedBalance), // Available balance
                 bonus_balance: bonusBalance,
@@ -184,7 +183,6 @@ class BalanceMongoService {
      * Process a transaction and update balance atomically (using MongoDB for transactions)
      */
     static async processTransaction(transactionData, clientParam) {
-        var _a;
         console.log('[DEBUG] START processTransaction', transactionData);
         const client = clientParam || await postgres_1.default.connect();
         let startedTransaction = false;
@@ -198,7 +196,7 @@ class BalanceMongoService {
                 user_id: transactionData.user_id,
                 type: transactionData.type,
                 amount: transactionData.amount,
-                category: ((_a = transactionData.metadata) === null || _a === void 0 ? void 0 : _a.category) || null
+                category: transactionData.metadata?.category || null
             });
             // Check if this is a category bet (category wallet)
             const isCategoryBet = transactionData.metadata && transactionData.metadata.category;

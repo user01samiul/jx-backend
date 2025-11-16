@@ -10,9 +10,8 @@ const messages_1 = require("../../constants/messages");
 // In-memory storage for captcha sessions (in production, use Redis or database)
 const captchaStore = new Map();
 class CaptchaService {
-    constructor() {
-        this.CAPTCHA_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
-    }
+    static instance;
+    CAPTCHA_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
     static getInstance() {
         if (!CaptchaService.instance) {
             CaptchaService.instance = new CaptchaService();

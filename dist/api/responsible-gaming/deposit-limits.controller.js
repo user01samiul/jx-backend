@@ -8,9 +8,8 @@ const deposit_limits_service_1 = require("../../services/responsible-gaming/depo
  * @access Private (Player)
  */
 const createLimit = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -39,9 +38,8 @@ exports.createLimit = createLimit;
  * @access Private (Player)
  */
 const updateLimit = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -78,9 +76,8 @@ exports.updateLimit = updateLimit;
  * @access Private (Player)
  */
 const getLimits = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -103,9 +100,8 @@ exports.getLimits = getLimits;
  * @access Private (Player)
  */
 const getLimitsGrouped = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -127,9 +123,8 @@ exports.getLimitsGrouped = getLimitsGrouped;
  * @access Private (Player)
  */
 const checkLimit = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -159,14 +154,13 @@ exports.checkLimit = checkLimit;
  * @access Private (Player)
  */
 const deleteLimit = async (req, res, next) => {
-    var _a, _b;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const limitType = (_b = req.params.limitType) === null || _b === void 0 ? void 0 : _b.toUpperCase();
+        const limitType = req.params.limitType?.toUpperCase();
         if (!['DAILY', 'WEEKLY', 'MONTHLY'].includes(limitType)) {
             res.status(400).json({
                 success: false,
@@ -198,9 +192,8 @@ exports.deleteLimit = deleteLimit;
  * @access Private (Player)
  */
 const getLimitHistory = async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;

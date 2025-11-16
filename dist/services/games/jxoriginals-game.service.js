@@ -164,13 +164,24 @@ class JxOriginalsGameService {
                         lines: "20",
                         currentState: "beginGame",
                         lastGame: {
-                            endGame: Object.assign(Object.assign({}, (freeSpinsStr && { freeGames: freeSpinsStr })), { money: balanceInCents.toString(), bet: gameBets[0].toString(), symbols: {
+                            endGame: {
+                                ...(freeSpinsStr && { freeGames: freeSpinsStr }),
+                                money: balanceInCents.toString(),
+                                bet: gameBets[0].toString(),
+                                symbols: {
                                     line: ["-1--1--1--1--1", "-1--1--1--1--1", "-1--1--1--1--1"]
-                                }, lines: {}, totalWinnings: "0", totalWinningsMoney: "0", doubleWin: {
+                                },
+                                lines: {},
+                                totalWinnings: "0",
+                                totalWinningsMoney: "0",
+                                doubleWin: {
                                     totalWinnings: "0",
                                     totalWinningsMoney: "0",
                                     money: balanceInCents.toString()
-                                }, totalMultiplier: {}, bonusRequest: {} })
+                                },
+                                totalMultiplier: {},
+                                bonusRequest: {}
+                            }
                         }
                     }
                 }

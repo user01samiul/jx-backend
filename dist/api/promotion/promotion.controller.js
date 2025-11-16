@@ -8,9 +8,8 @@ const postgres_1 = __importDefault(require("../../db/postgres"));
 const promotion_service_1 = require("../../services/promotion/promotion.service");
 // Get available promotions for user
 const getAvailablePromotions = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         // Get all active promotions
         const promotionsResult = await postgres_1.default.query(`SELECT
         p.id, p.title, p.description, p.type, p.bonus_percentage,
@@ -59,11 +58,10 @@ const getAvailablePromotions = async (req, res) => {
 exports.getAvailablePromotions = getAvailablePromotions;
 // Claim a promotion/bonus
 const claimPromotion = async (req, res) => {
-    var _a, _b;
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const { promotion_id } = req.body;
         if (!promotion_id) {
             res.status(400).json({
@@ -128,7 +126,7 @@ const claimPromotion = async (req, res) => {
         if (bonusAmount > 0) {
             // Get current balance
             const balanceResult = await client.query("SELECT bonus_balance FROM user_balances WHERE user_id = $1", [userId]);
-            const currentBonusBalance = Number(((_b = balanceResult.rows[0]) === null || _b === void 0 ? void 0 : _b.bonus_balance) || 0);
+            const currentBonusBalance = Number(balanceResult.rows[0]?.bonus_balance || 0);
             const newBonusBalance = currentBonusBalance + bonusAmount;
             // Update bonus balance
             await client.query(`INSERT INTO user_balances (user_id, bonus_balance, updated_at)
@@ -163,9 +161,8 @@ const claimPromotion = async (req, res) => {
 exports.claimPromotion = claimPromotion;
 // Get user's claimed promotions
 const getUserPromotions = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const result = await postgres_1.default.query(`SELECT 
         up.id, up.status, up.claimed_at, up.completed_at, up.bonus_amount, up.wagering_completed,
         p.id as promotion_id, p.name, p.description, p.type, p.wagering_requirement, p.free_spins_count
@@ -186,9 +183,8 @@ const getUserPromotions = async (req, res) => {
 exports.getUserPromotions = getUserPromotions;
 // Daily spin functionality
 const getDailySpin = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         // Check if user already spun today
         const today = new Date().toISOString().split('T')[0];
         const existingSpinResult = await postgres_1.default.query("SELECT * FROM user_activity_logs WHERE user_id = $1 AND action = 'daily_spin' AND DATE(created_at) = $2", [userId, today]);
@@ -214,11 +210,10 @@ const getDailySpin = async (req, res) => {
 exports.getDailySpin = getDailySpin;
 // Perform daily spin
 const performDailySpin = async (req, res) => {
-    var _a, _b;
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         // Check if user already spun today
         const today = new Date().toISOString().split('T')[0];
         const existingSpinResult = await client.query("SELECT * FROM user_activity_logs WHERE user_id = $1 AND action = 'daily_spin' AND DATE(created_at) = $2", [userId, today]);
@@ -238,7 +233,7 @@ const performDailySpin = async (req, res) => {
         if (spinResult.type === 'bonus' && spinResult.amount > 0) {
             // Add bonus to user's balance
             const balanceResult = await client.query("SELECT bonus_balance FROM user_balances WHERE user_id = $1", [userId]);
-            const currentBonusBalance = Number(((_b = balanceResult.rows[0]) === null || _b === void 0 ? void 0 : _b.bonus_balance) || 0);
+            const currentBonusBalance = Number(balanceResult.rows[0]?.bonus_balance || 0);
             const newBonusBalance = currentBonusBalance + spinResult.amount;
             // Update bonus balance
             await client.query(`INSERT INTO user_balances (user_id, bonus_balance, updated_at)
@@ -271,9 +266,8 @@ const performDailySpin = async (req, res) => {
 exports.performDailySpin = performDailySpin;
 // Get wagering progress for user's active promotions
 const getWageringProgress = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const wageringProgress = await promotion_service_1.PromotionService.getWageringProgress(userId);
         res.json({
             success: true,
@@ -288,9 +282,8 @@ const getWageringProgress = async (req, res) => {
 exports.getWageringProgress = getWageringProgress;
 // Get bonus balance summary
 const getBonusBalanceSummary = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const bonusSummary = await promotion_service_1.PromotionService.getBonusBalanceSummary(userId);
         res.json({
             success: true,
@@ -305,9 +298,8 @@ const getBonusBalanceSummary = async (req, res) => {
 exports.getBonusBalanceSummary = getBonusBalanceSummary;
 // Transfer bonus balance to main balance
 const transferBonusToMain = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const { amount } = req.body;
         if (!amount || amount <= 0) {
             res.status(400).json({
@@ -338,9 +330,8 @@ const transferBonusToMain = async (req, res) => {
 exports.transferBonusToMain = transferBonusToMain;
 // Check promotion eligibility
 const checkPromotionEligibility = async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const { promotion_id } = req.params;
         if (!promotion_id) {
             res.status(400).json({
@@ -415,10 +406,9 @@ function generateSpinResult() {
 }
 // Validate promo code
 const validatePromoCode = async (req, res) => {
-    var _a;
     try {
         const { promo_code } = req.body;
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         if (!promo_code) {
             res.status(400).json({
                 success: false,
@@ -490,12 +480,11 @@ const validatePromoCode = async (req, res) => {
 exports.validatePromoCode = validatePromoCode;
 // Apply promo code (auto-claim promotion)
 const applyPromoCode = async (req, res) => {
-    var _a;
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
         const { promo_code, deposit_amount } = req.body;
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         if (!promo_code) {
             res.status(400).json({
                 success: false,
@@ -598,12 +587,11 @@ const applyPromoCode = async (req, res) => {
 exports.applyPromoCode = applyPromoCode;
 // Auto-apply best promotion on deposit (no promo code required)
 const autoApplyBestPromotion = async (req, res) => {
-    var _a;
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
         const { deposit_amount, is_first_deposit } = req.body;
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         if (!userId) {
             res.status(401).json({
                 success: false,

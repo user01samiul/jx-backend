@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.KYCComplianceReportSchema = exports.KYCRiskAssessmentSchema = exports.KYCDocumentVerificationSchema = exports.KYCFiltersSchema = exports.KYCVerificationSchema = exports.UpdateKYCDocumentSchema = exports.CreateKYCDocumentSchema = exports.KYC_STATUS_TYPES = exports.KYC_DOCUMENT_TYPES = void 0;
+exports.KYCComplianceReportSchema = exports.KYCRiskAssessmentBodySchema = exports.KYCRiskAssessmentSchema = exports.KYCDocumentVerificationSchema = exports.KYCFiltersSchema = exports.KYCUserIdParamSchema = exports.KYCRejectSchema = exports.KYCApproveSchema = exports.KYCVerificationSchema = exports.UpdateKYCDocumentSchema = exports.CreateKYCDocumentSchema = exports.KYC_STATUS_TYPES = exports.KYC_DOCUMENT_TYPES = void 0;
 const zod_1 = require("zod");
 // KYC Document Types
 exports.KYC_DOCUMENT_TYPES = [
@@ -50,19 +50,35 @@ exports.KYCVerificationSchema = zod_1.z.object({
     risk_score: zod_1.z.number().min(0).max(100).optional(),
     compliance_level: zod_1.z.enum(["low", "medium", "high"]).optional()
 });
+// KYC Approve Schema (user_id comes from URL params)
+exports.KYCApproveSchema = zod_1.z.object({
+    admin_notes: zod_1.z.string().optional(),
+    expiry_date: zod_1.z.string().datetime().optional(),
+    risk_score: zod_1.z.number().min(0).max(100).optional(),
+    compliance_level: zod_1.z.enum(["low", "medium", "high"]).optional()
+});
+// KYC Reject Schema (user_id comes from URL params)
+exports.KYCRejectSchema = zod_1.z.object({
+    reason: zod_1.z.string().min(1, "Rejection reason is required"),
+    admin_notes: zod_1.z.string().optional()
+});
+// KYC User ID Param Schema
+exports.KYCUserIdParamSchema = zod_1.z.object({
+    user_id: zod_1.z.coerce.number().int().positive()
+});
 // KYC Filters Schema
 exports.KYCFiltersSchema = zod_1.z.object({
-    page: zod_1.z.number().int().min(1).default(1),
-    limit: zod_1.z.number().int().min(1).max(100).default(20),
+    page: zod_1.z.coerce.number().int().min(1).default(1),
+    limit: zod_1.z.coerce.number().int().min(1).max(100).default(20),
     search: zod_1.z.string().optional(),
     status: zod_1.z.enum(exports.KYC_STATUS_TYPES).optional(),
     document_type: zod_1.z.enum(exports.KYC_DOCUMENT_TYPES).optional(),
-    user_id: zod_1.z.number().int().positive().optional(),
+    user_id: zod_1.z.coerce.number().int().positive().optional(),
     start_date: zod_1.z.string().datetime().optional(),
     end_date: zod_1.z.string().datetime().optional(),
     compliance_level: zod_1.z.enum(["low", "medium", "high"]).optional(),
-    risk_score_min: zod_1.z.number().min(0).max(100).optional(),
-    risk_score_max: zod_1.z.number().min(0).max(100).optional()
+    risk_score_min: zod_1.z.coerce.number().min(0).max(100).optional(),
+    risk_score_max: zod_1.z.coerce.number().min(0).max(100).optional()
 });
 // KYC Document Verification Schema
 exports.KYCDocumentVerificationSchema = zod_1.z.object({
@@ -74,9 +90,18 @@ exports.KYCDocumentVerificationSchema = zod_1.z.object({
     verified_by: zod_1.z.string().optional(),
     verification_date: zod_1.z.string().datetime().optional()
 });
-// KYC Risk Assessment Schema
+// KYC Risk Assessment Schema (when user_id is in body)
 exports.KYCRiskAssessmentSchema = zod_1.z.object({
     user_id: zod_1.z.number().int().positive(),
+    risk_factors: zod_1.z.array(zod_1.z.string()).optional(),
+    risk_score: zod_1.z.number().min(0).max(100),
+    risk_level: zod_1.z.enum(["low", "medium", "high", "critical"]),
+    assessment_notes: zod_1.z.string().optional(),
+    recommended_actions: zod_1.z.array(zod_1.z.string()).optional(),
+    assessment_date: zod_1.z.string().datetime().optional()
+});
+// KYC Risk Assessment Body Schema (when user_id is in URL params)
+exports.KYCRiskAssessmentBodySchema = zod_1.z.object({
     risk_factors: zod_1.z.array(zod_1.z.string()).optional(),
     risk_score: zod_1.z.number().min(0).max(100),
     risk_level: zod_1.z.enum(["low", "medium", "high", "critical"]),

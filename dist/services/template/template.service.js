@@ -35,7 +35,7 @@ class TemplateService {
             is_required: row.is_required,
             created_at: row.created_at
         }));
-        return Object.assign(Object.assign({}, template), { configs });
+        return { ...template, configs };
     }
     // Get templates by type
     static async getTemplatesByType(type) {

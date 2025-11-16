@@ -19,15 +19,15 @@ exports.UpdateGameCategorySchema = exports.CreateGameCategorySchema.partial();
 // Schema for category filters
 exports.CategoryFiltersSchema = zod_1.z.object({
     search: zod_1.z.string().optional(),
-    is_active: zod_1.z.boolean().optional(),
-    parent_category_id: zod_1.z.number().int().positive().optional(),
-    page: zod_1.z.number().int().min(1).default(1),
-    limit: zod_1.z.number().int().min(1).max(100).default(20)
+    is_active: zod_1.z.coerce.boolean().optional(),
+    parent_category_id: zod_1.z.coerce.number().int().positive().optional(),
+    page: zod_1.z.coerce.number().int().min(1).default(1),
+    limit: zod_1.z.coerce.number().int().min(1).max(100).default(20)
 });
 // Schema for bulk category operations
 exports.BulkCategoryOperationSchema = zod_1.z.object({
     category_ids: zod_1.z.array(zod_1.z.number().int().positive()).min(1, "At least one category ID is required"),
-    operation: zod_1.z.enum(["activate", "deactivate", "delete"]),
+    action: zod_1.z.enum(["activate", "deactivate", "delete"]),
     reason: zod_1.z.string().optional()
 });
 // Schema for category statistics

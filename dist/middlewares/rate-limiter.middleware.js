@@ -7,15 +7,13 @@ exports.authRateLimiter = exports.loginRateLimiter = exports.providerRateLimiter
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const cloudflare_config_1 = require("../configs/cloudflare.config");
 class CircuitBreaker {
-    constructor() {
-        this.state = {
-            isOpen: false,
-            failureCount: 0,
-            lastFailureTime: 0,
-            threshold: 5, // Number of failures before opening circuit
-            timeout: 30000 // 30 seconds timeout
-        };
-    }
+    state = {
+        isOpen: false,
+        failureCount: 0,
+        lastFailureTime: 0,
+        threshold: 5, // Number of failures before opening circuit
+        timeout: 30000 // 30 seconds timeout
+    };
     isOpen() {
         if (!this.state.isOpen)
             return false;

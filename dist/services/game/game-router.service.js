@@ -38,7 +38,6 @@ class GameRouterService {
      * Detect provider type for a game
      */
     static async detectProviderType(gameId) {
-        var _a, _b;
         console.log('[GAME_ROUTER] Detecting provider type for game:', gameId);
         const result = await postgres_1.default.query('SELECT provider, category FROM games WHERE id = $1', [gameId]);
         if (result.rows.length === 0) {
@@ -47,8 +46,8 @@ class GameRouterService {
         const game = result.rows[0];
         const providerType = PROVIDER_MAP[game.provider];
         // Special case: IGPixel games
-        if (((_a = game.category) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'sportsbook' ||
-            ((_b = game.provider) === null || _b === void 0 ? void 0 : _b.toLowerCase().includes('igpixel'))) {
+        if (game.category?.toLowerCase() === 'sportsbook' ||
+            game.provider?.toLowerCase().includes('igpixel')) {
             console.log('[GAME_ROUTER] Detected IGPixel/Sportsbook game');
             return ProviderType.IGPIXEL;
         }
@@ -96,7 +95,10 @@ class GameRouterService {
             }
             // Log successful launch
             await this.logGameLaunch(userId, gameId, providerType);
-            return Object.assign(Object.assign({}, launchResponse), { provider_type: providerType });
+            return {
+                ...launchResponse,
+                provider_type: providerType
+            };
         }
         catch (error) {
             console.error('[GAME_ROUTER] Launch error:', error);
@@ -183,7 +185,11 @@ class GameRouterService {
         }
         const game = result.rows[0];
         const providerType = await this.detectProviderType(gameId);
-        return Object.assign(Object.assign({}, game), { provider_type: providerType, integration_type: providerType === ProviderType.JXORIGINALS ? 'internal' : 'external' });
+        return {
+            ...game,
+            provider_type: providerType,
+            integration_type: providerType === ProviderType.JXORIGINALS ? 'internal' : 'external'
+        };
     }
     /**
      * List games grouped by provider type
@@ -250,7 +256,11 @@ class GameRouterService {
         query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
         params.push(limit, offset);
         const result = await postgres_1.default.query(query, params);
-        return result.rows.map(row => (Object.assign(Object.assign({}, row), { provider_type: providerType, integration_type: providerType === ProviderType.JXORIGINALS ? 'internal' : 'external' })));
+        return result.rows.map(row => ({
+            ...row,
+            provider_type: providerType,
+            integration_type: providerType === ProviderType.JXORIGINALS ? 'internal' : 'external'
+        }));
     }
     /**
      * Log game launch

@@ -903,7 +903,7 @@ router.delete("/games/:id", admin_controller_1.deleteGame);
  *       401:
  *         description: Unauthorized
  */
-router.post("/categories", (0, validate_1.validate)({ body: admin_category_schema_1.CreateGameCategorySchema }), admin_category_controller_1.createCategory);
+router.post("/categories", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_category_schema_1.CreateGameCategorySchema }), admin_category_controller_1.createCategory);
 /**
  * @openapi
  * /api/admin/categories:
@@ -949,7 +949,7 @@ router.post("/categories", (0, validate_1.validate)({ body: admin_category_schem
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories", (0, validate_1.validate)({ query: admin_category_schema_1.CategoryFiltersSchema }), admin_category_controller_1.getCategories);
+router.get("/categories", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ query: admin_category_schema_1.CategoryFiltersSchema }), admin_category_controller_1.getCategories);
 /**
  * @openapi
  * /api/admin/categories/{id}:
@@ -973,7 +973,7 @@ router.get("/categories", (0, validate_1.validate)({ query: admin_category_schem
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/:id", admin_category_controller_1.getCategoryById);
+router.get("/categories/:id", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.getCategoryById);
 /**
  * @openapi
  * /api/admin/categories/{id}:
@@ -1005,7 +1005,7 @@ router.get("/categories/:id", admin_category_controller_1.getCategoryById);
  *       401:
  *         description: Unauthorized
  */
-router.put("/categories/:id", (0, validate_1.validate)({ body: admin_category_schema_1.UpdateGameCategorySchema }), admin_category_controller_1.updateCategory);
+router.put("/categories/:id", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_category_schema_1.UpdateGameCategorySchema }), admin_category_controller_1.updateCategory);
 /**
  * @openapi
  * /api/admin/categories/{id}:
@@ -1031,7 +1031,7 @@ router.put("/categories/:id", (0, validate_1.validate)({ body: admin_category_sc
  *       401:
  *         description: Unauthorized
  */
-router.delete("/categories/:id", admin_category_controller_1.deleteCategory);
+router.delete("/categories/:id", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.deleteCategory);
 /**
  * @openapi
  * /api/admin/categories/bulk:
@@ -1074,7 +1074,7 @@ router.delete("/categories/:id", admin_category_controller_1.deleteCategory);
  *       401:
  *         description: Unauthorized
  */
-router.post("/categories/bulk", (0, validate_1.validate)({ body: admin_category_schema_1.BulkCategoryOperationSchema }), admin_category_controller_1.bulkCategoryOperation);
+router.post("/categories/bulk", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_category_schema_1.BulkCategoryOperationSchema }), admin_category_controller_1.bulkCategoryOperation);
 /**
  * @openapi
  * /api/admin/categories/stats:
@@ -1108,7 +1108,7 @@ router.post("/categories/bulk", (0, validate_1.validate)({ body: admin_category_
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/stats", (0, validate_1.validate)({ query: admin_category_schema_1.CategoryStatsFiltersSchema }), admin_category_controller_1.getCategoryStats);
+router.get("/categories/stats", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ query: admin_category_schema_1.CategoryStatsFiltersSchema }), admin_category_controller_1.getCategoryStats);
 /**
  * @openapi
  * /api/admin/categories/hierarchy:
@@ -1123,7 +1123,7 @@ router.get("/categories/stats", (0, validate_1.validate)({ query: admin_category
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/hierarchy", admin_category_controller_1.getCategoryHierarchy);
+router.get("/categories/hierarchy", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.getCategoryHierarchy);
 /**
  * @openapi
  * /api/admin/categories/migrate:
@@ -1138,7 +1138,7 @@ router.get("/categories/hierarchy", admin_category_controller_1.getCategoryHiera
  *       401:
  *         description: Unauthorized
  */
-router.post("/categories/migrate", admin_category_controller_1.migrateExistingCategories);
+router.post("/categories/migrate", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.migrateExistingCategories);
 /**
  * @openapi
  * /api/admin/categories/{id}/games:
@@ -1177,7 +1177,7 @@ router.post("/categories/migrate", admin_category_controller_1.migrateExistingCa
  *       401:
  *         description: Unauthorized
  */
-router.get("/categories/:id/games", admin_category_controller_1.getGamesInCategory);
+router.get("/categories/:id/games", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.getGamesInCategory);
 // =====================================================
 // USER ROLE MANAGEMENT ROUTES
 // =====================================================
@@ -1434,7 +1434,10 @@ router.post("/users/:id/roles", async (req, res) => {
         res.status(201).json({
             success: true,
             message: "Previous roles removed and new role assigned successfully",
-            data: Object.assign(Object.assign({}, result.rows[0]), { role_name: roleName })
+            data: {
+                ...result.rows[0],
+                role_name: roleName
+            }
         });
     }
     catch (error) {
@@ -1528,7 +1531,6 @@ router.delete("/users/:id/roles/:roleId", async (req, res) => {
  *         description: Password changed successfully
  */
 router.put("/users/:id/password", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), async (req, res) => {
-    var _a;
     try {
         const userId = parseInt(req.params.id);
         const { new_password, reason, force_password_change } = req.body;
@@ -1564,7 +1566,7 @@ router.put("/users/:id/password", authenticate_1.authenticate, (0, authorize_1.a
             data: {
                 user_id: userId,
                 username: userCheck.rows[0].username,
-                changed_by: ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || 'admin',
+                changed_by: req.user?.id || 'admin',
                 reason: reason || 'Password changed by admin',
                 force_password_change: force_password_change || false
             }
@@ -3029,9 +3031,8 @@ router.post("/import-all-games", authenticate_1.authenticate, adminAuth, async (
  *         description: Gateway code already exists
  */
 router.post("/payment-gateways", (0, validate_1.validate)({ body: admin_schema_1.CreatePaymentGatewayInput }), async (req, res) => {
-    var _a;
     try {
-        const gatewayData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
+        const gatewayData = req.validated?.body;
         const gateway = await (0, payment_gateway_service_1.createPaymentGatewayService)(gatewayData);
         res.status(201).json({ success: true, data: gateway });
     }
@@ -3174,14 +3175,13 @@ router.get("/payment-gateways/:id", async (req, res) => {
  *         description: Unauthorized
  */
 router.put("/payment-gateways/:id", (0, validate_1.validate)({ body: admin_schema_1.UpdatePaymentGatewayInput }), async (req, res) => {
-    var _a;
     try {
         const gatewayId = parseInt(req.params.id);
         if (isNaN(gatewayId)) {
             res.status(400).json({ success: false, message: "Invalid gateway ID" });
             return;
         }
-        const gatewayData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
+        const gatewayData = req.validated?.body;
         const gateway = await (0, payment_gateway_service_1.updatePaymentGatewayService)(gatewayId, gatewayData);
         res.status(200).json({ success: true, data: gateway });
     }
@@ -5097,19 +5097,18 @@ router.get("/bets", authenticate_1.authenticate, (0, authorize_1.authorize)(["Ad
         // Get user and game data from PostgreSQL
         const pool = require("../db/postgres").default;
         const enrichedBets = await Promise.all(bets.map(async (bet) => {
-            var _a, _b, _c, _d;
             // Get user data
             const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [bet.user_id]);
-            const username = ((_a = userResult.rows[0]) === null || _a === void 0 ? void 0 : _a.username) || 'Unknown';
+            const username = userResult.rows[0]?.username || 'Unknown';
             // Get game data
             const gameResult = await pool.query('SELECT name, category FROM games WHERE id = $1', [bet.game_id]);
-            const gameName = ((_b = gameResult.rows[0]) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown Game';
-            const category = ((_c = gameResult.rows[0]) === null || _c === void 0 ? void 0 : _c.category) || 'slots';
+            const gameName = gameResult.rows[0]?.name || 'Unknown Game';
+            const category = gameResult.rows[0]?.category || 'slots';
             // Get transaction data
             const transaction = await mongoHybridService.getTransaction(bet.transaction_id);
             // Get access token
             const tokenResult = await pool.query('SELECT access_token FROM tokens WHERE user_id = $1 AND expired_at > NOW() ORDER BY created_at DESC LIMIT 1', [bet.user_id]);
-            const accessToken = ((_d = tokenResult.rows[0]) === null || _d === void 0 ? void 0 : _d.access_token) || '';
+            const accessToken = tokenResult.rows[0]?.access_token || '';
             return {
                 bet_id: bet.id,
                 user_id: bet.user_id,
@@ -5122,10 +5121,10 @@ router.get("/bets", authenticate_1.authenticate, (0, authorize_1.authorize)(["Ad
                 outcome: bet.outcome,
                 placed_at: bet.placed_at,
                 result_at: bet.result_at,
-                transaction_id: (transaction === null || transaction === void 0 ? void 0 : transaction.external_reference) || bet.transaction_id,
+                transaction_id: transaction?.external_reference || bet.transaction_id,
                 access_token: accessToken,
-                balance_before: transaction === null || transaction === void 0 ? void 0 : transaction.balance_before,
-                balance_after: transaction === null || transaction === void 0 ? void 0 : transaction.balance_after
+                balance_before: transaction?.balance_before,
+                balance_after: transaction?.balance_after
             };
         }));
         res.json({ success: true, data: enrichedBets });
@@ -5242,12 +5241,11 @@ router.get("/bets", authenticate_1.authenticate, (0, authorize_1.authorize)(["Ad
  *         description: Internal server error
  */
 router.post("/bets/:id/cancel", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), async (req, res) => {
-    var _a, _b, _c;
     try {
         const betId = parseInt(req.params.id);
         const { reason, admin_note, notify_user, refund_method, force_cancel } = req.body;
-        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
-        const adminUsername = ((_b = req.user) === null || _b === void 0 ? void 0 : _b.username) || 'admin';
+        const adminId = req.user?.userId;
+        const adminUsername = req.user?.username || 'admin';
         if (!betId) {
             return res.status(400).json({ success: false, message: 'Bet ID is required' });
         }
@@ -5267,7 +5265,7 @@ router.post("/bets/:id/cancel", authenticate_1.authenticate, (0, authorize_1.aut
         // Get user details from PostgreSQL
         const pool = require("../db/postgres").default;
         const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [bet.user_id]);
-        const username = ((_c = userResult.rows[0]) === null || _c === void 0 ? void 0 : _c.username) || 'Unknown';
+        const username = userResult.rows[0]?.username || 'Unknown';
         // Cancel the transaction using the existing cancelGameService
         const { cancelGameService } = require("../services/game/game.service");
         const result = await cancelGameService(bet.user_id, transaction.external_reference || transaction.id.toString(), // Use external_reference if available
@@ -6581,7 +6579,7 @@ router.get("/kyc/:user_id", authenticate_1.authenticate, (0, authorize_1.authori
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/:user_id/approve", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_kyc_schema_1.KYCVerificationSchema }), admin_kyc_controller_1.approveKYC);
+router.put("/kyc/:user_id/approve", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ params: admin_kyc_schema_1.KYCUserIdParamSchema, body: admin_kyc_schema_1.KYCApproveSchema }), admin_kyc_controller_1.approveKYC);
 /**
  * @swagger
  * /api/admin/kyc/{user_id}/reject:
@@ -6644,7 +6642,7 @@ router.put("/kyc/:user_id/approve", authenticate_1.authenticate, (0, authorize_1
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.put("/kyc/:user_id/reject", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_kyc_schema_1.KYCVerificationSchema }), admin_kyc_controller_1.rejectKYC);
+router.put("/kyc/:user_id/reject", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ params: admin_kyc_schema_1.KYCUserIdParamSchema, body: admin_kyc_schema_1.KYCRejectSchema }), admin_kyc_controller_1.rejectKYC);
 /**
  * @swagger
  * /api/admin/kyc/{user_id}/unapprove:
@@ -6983,7 +6981,7 @@ router.put("/kyc/documents/:document_id/verify", authenticate_1.authenticate, (0
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.post("/kyc/:user_id/risk-assessment", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_kyc_schema_1.KYCRiskAssessmentSchema }), admin_kyc_controller_1.createRiskAssessment);
+router.post("/kyc/:user_id/risk-assessment", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ params: admin_kyc_schema_1.KYCUserIdParamSchema, body: admin_kyc_schema_1.KYCRiskAssessmentBodySchema }), admin_kyc_controller_1.createRiskAssessment);
 /**
  * @swagger
  * /api/admin/kyc/reports:
@@ -7438,7 +7436,14 @@ router.post("/users/:id/blacklist", authenticate_1.authenticate, (0, authorize_1
         // - Setting expiration date if duration is temporary
         res.status(200).json({
             success: true,
-            data: Object.assign(Object.assign({}, user), { blacklisted_at: new Date().toISOString(), blacklist_reason: reason, admin_note: admin_note || null, notify_user: notify_user || false, duration: duration || 'permanent' }),
+            data: {
+                ...user,
+                blacklisted_at: new Date().toISOString(),
+                blacklist_reason: reason,
+                admin_note: admin_note || null,
+                notify_user: notify_user || false,
+                duration: duration || 'permanent'
+            },
             message: "User blacklisted successfully"
         });
     }
@@ -7508,7 +7513,13 @@ router.post("/users/:id/unblacklist", authenticate_1.authenticate, (0, authorize
         // - Logging admin note
         res.status(200).json({
             success: true,
-            data: Object.assign(Object.assign({}, user), { unblacklisted_at: new Date().toISOString(), unblacklist_reason: reason || "Removed from blacklist by admin", admin_note: admin_note || null, notify_user: notify_user || false }),
+            data: {
+                ...user,
+                unblacklisted_at: new Date().toISOString(),
+                unblacklist_reason: reason || "Removed from blacklist by admin",
+                admin_note: admin_note || null,
+                notify_user: notify_user || false
+            },
             message: "User removed from blacklist successfully"
         });
     }
@@ -7637,8 +7648,11 @@ router.get("/users/blacklist", authenticate_1.authenticate, (0, authorize_1.auth
         const result = await postgres_1.default.query(query, values);
         res.status(200).json({
             success: true,
-            data: result.rows.map(user => (Object.assign(Object.assign({}, user), { blacklisted_at: user.updated_at, blacklist_reason: "Banned by admin" // You could store this in a separate table
-             }))),
+            data: result.rows.map(user => ({
+                ...user,
+                blacklisted_at: user.updated_at,
+                blacklist_reason: "Banned by admin" // You could store this in a separate table
+            })),
             pagination: {
                 total,
                 page,

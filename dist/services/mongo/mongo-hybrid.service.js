@@ -125,7 +125,6 @@ class MongoHybridService {
      * Place a bet using MongoDB for bet/transaction data and PostgreSQL for user balance
      */
     async placeBet(userId, gameId, betAmount, gameData) {
-        var _a;
         const client = await postgres_1.default.connect();
         try {
             await client.query('BEGIN');
@@ -135,7 +134,7 @@ class MongoHybridService {
                 throw new Error("Game not found or inactive");
             }
             const game = gameResult.rows[0];
-            const category = ((_a = game.category) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) || 'slots';
+            const category = game.category?.toLowerCase().trim() || 'slots';
             // Get current category balance from MongoDB
             const currentBalance = await this.getCategoryBalance(userId, category);
             if (currentBalance < betAmount) {
@@ -172,7 +171,7 @@ class MongoHybridService {
                 game_data: gameData,
                 placed_at: new Date(),
                 result_at: null,
-                session_id: (gameData === null || gameData === void 0 ? void 0 : gameData.session_id) || null
+                session_id: gameData?.session_id || null
             };
             const bet = await this.insertBet(betData);
             await client.query('COMMIT');
@@ -197,7 +196,6 @@ class MongoHybridService {
      * Process bet result using MongoDB for bet/transaction data
      */
     async processBetResult(betId, outcome, winAmount = 0, gameResult) {
-        var _a;
         const client = await postgres_1.default.connect();
         try {
             await client.query('BEGIN');
@@ -212,7 +210,7 @@ class MongoHybridService {
                 throw new Error("Game not found");
             }
             const game = gameResult.rows[0];
-            const category = ((_a = game.category) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) || 'slots';
+            const category = game.category?.toLowerCase().trim() || 'slots';
             // Update bet outcome in MongoDB
             await this.updateBet(betId, {
                 outcome: outcome,
@@ -288,14 +286,13 @@ class MongoHybridService {
      * Admin topup - creates deposit transaction in MongoDB and syncs PostgreSQL balance
      */
     async adminTopup(userId, amount, description = 'Admin top-up') {
-        var _a, _b;
         const client = await postgres_1.default.connect();
         try {
             await client.query('BEGIN');
             // Get current balance from PostgreSQL
             const currentBalanceResult = await client.query('SELECT balance, total_deposited FROM user_balances WHERE user_id = $1', [userId]);
-            const currentBalance = parseFloat(((_a = currentBalanceResult.rows[0]) === null || _a === void 0 ? void 0 : _a.balance) || 0);
-            const currentTotalDeposited = parseFloat(((_b = currentBalanceResult.rows[0]) === null || _b === void 0 ? void 0 : _b.total_deposited) || 0);
+            const currentBalance = parseFloat(currentBalanceResult.rows[0]?.balance || 0);
+            const currentTotalDeposited = parseFloat(currentBalanceResult.rows[0]?.total_deposited || 0);
             const newBalance = currentBalance + amount;
             const newTotalDeposited = currentTotalDeposited + amount;
             // Create deposit transaction in MongoDB (main wallet transaction)

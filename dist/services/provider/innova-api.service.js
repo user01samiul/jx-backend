@@ -1,15 +1,21 @@
 "use strict";
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InnovaApiService = void 0;
 const http_retry_service_1 = require("../http/http-retry.service");
 const env_1 = require("../../configs/env");
 class InnovaApiService {
+    static DEFAULT_CONFIG = {
+        baseUrl: process.env.INNOVA_API_BASE_URL || 'https://backend.jackpotx.net',
+        operatorId: env_1.env.SUPPLIER_OPERATOR_ID,
+        secretKey: env_1.env.SUPPLIER_SECRET_KEY,
+        timeout: 10000
+    };
+    static config = this.DEFAULT_CONFIG;
     /**
      * Initialize the service with custom configuration
      */
     static initialize(config) {
-        this.config = Object.assign(Object.assign({}, this.DEFAULT_CONFIG), config);
+        this.config = { ...this.DEFAULT_CONFIG, ...config };
     }
     /**
      * Generate hash for Innova API requests
@@ -33,7 +39,6 @@ class InnovaApiService {
      * Make an authenticated request to Innova API with retry logic
      */
     static async makeRequest(endpoint, data, command) {
-        var _b, _c;
         const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
         const hash = this.generateHash(command, timestamp);
         const authHeader = this.generateAuthHeader(command);
@@ -70,9 +75,9 @@ class InnovaApiService {
         }
         catch (error) {
             console.error(`[INNOVA_API] ${command} request failed:`, {
-                status: (_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.status,
-                message: error === null || error === void 0 ? void 0 : error.message,
-                data: (_c = error === null || error === void 0 ? void 0 : error.response) === null || _c === void 0 ? void 0 : _c.data
+                status: error?.response?.status,
+                message: error?.message,
+                data: error?.response?.data
             });
             throw error;
         }
@@ -170,7 +175,6 @@ class InnovaApiService {
      * @param vendorId The vendor ID (optional, defaults to operator ID)
      */
     static async getHandHistory(transactionId, historyId, vendorId) {
-        var _b, _c;
         const crypto = require('crypto');
         const command = 'handHistory';
         const authHeader = crypto.createHash('sha1')
@@ -199,20 +203,12 @@ class InnovaApiService {
         }
         catch (error) {
             console.error(`[INNOVA_API] Hand history request failed:`, {
-                status: (_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.status,
-                message: error === null || error === void 0 ? void 0 : error.message,
-                data: (_c = error === null || error === void 0 ? void 0 : error.response) === null || _c === void 0 ? void 0 : _c.data
+                status: error?.response?.status,
+                message: error?.message,
+                data: error?.response?.data
             });
             throw error;
         }
     }
 }
 exports.InnovaApiService = InnovaApiService;
-_a = InnovaApiService;
-InnovaApiService.DEFAULT_CONFIG = {
-    baseUrl: process.env.INNOVA_API_BASE_URL || 'https://backend.jackpotx.net',
-    operatorId: env_1.env.SUPPLIER_OPERATOR_ID,
-    secretKey: env_1.env.SUPPLIER_SECRET_KEY,
-    timeout: 10000
-};
-InnovaApiService.config = _a.DEFAULT_CONFIG;

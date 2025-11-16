@@ -270,7 +270,7 @@ class AdminCategoryService {
             await client.query('BEGIN');
             for (const categoryId of data.category_ids) {
                 try {
-                    switch (data.operation) {
+                    switch (data.action) {
                         case 'activate':
                             await client.query('UPDATE game_categories SET is_active = true, updated_by = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [adminId, categoryId]);
                             results.push({

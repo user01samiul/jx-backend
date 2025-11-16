@@ -124,9 +124,8 @@ router.post('/:id/finish', auth_middleware_1.authenticate, auth_middleware_1.adm
  * @access Public/Player
  */
 router.get('/active', async (req, res) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const userId = req.user?.id;
         const tournaments = await TournamentService_1.default.getActiveTournaments(userId);
         res.json({ success: true, data: tournaments });
     }

@@ -16,7 +16,7 @@ const getMaintenance = async (req, res) => {
             try {
                 settings[row.key] = JSON.parse(row.value);
             }
-            catch (_a) {
+            catch {
                 // If not JSON, use as string
                 settings[row.key] = row.value;
             }
@@ -53,7 +53,7 @@ const setMaintenance = async (req, res) => {
             try {
                 settings[row.key] = JSON.parse(row.value);
             }
-            catch (_a) {
+            catch {
                 settings[row.key] = row.value;
             }
         });

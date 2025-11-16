@@ -19,16 +19,16 @@ export const UpdateGameCategorySchema = CreateGameCategorySchema.partial();
 // Schema for category filters
 export const CategoryFiltersSchema = z.object({
   search: z.string().optional(),
-  is_active: z.boolean().optional(),
-  parent_category_id: z.number().int().positive().optional(),
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(100).default(20)
+  is_active: z.coerce.boolean().optional(),
+  parent_category_id: z.coerce.number().int().positive().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20)
 });
 
 // Schema for bulk category operations
 export const BulkCategoryOperationSchema = z.object({
   category_ids: z.array(z.number().int().positive()).min(1, "At least one category ID is required"),
-  operation: z.enum(["activate", "deactivate", "delete"]),
+  action: z.enum(["activate", "deactivate", "delete"]),
   reason: z.string().optional()
 });
 

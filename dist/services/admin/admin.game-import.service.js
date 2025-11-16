@@ -231,7 +231,7 @@ class AdminGameImportService {
                     offset: 0,
                     force_update: false
                 });
-                results.push(Object.assign({ category }, importResult));
+                results.push({ category, ...importResult });
             }
             return { success: true, message: "Imported all categories", results };
         }
@@ -456,7 +456,7 @@ class AdminGameImportService {
             }
             catch (error) {
                 failedCount++;
-                const errorMsg = `Failed to import game ${(game === null || game === void 0 ? void 0 : game.name) || '[unknown]'}: ${getErrorMessage(error)}`;
+                const errorMsg = `Failed to import game ${game?.name || '[unknown]'}: ${getErrorMessage(error)}`;
                 errors.push(errorMsg);
                 console.error(`${errorMsg} | Type of error: ${typeof error} | Value: ${JSON.stringify(error)}`);
             }

@@ -43,10 +43,9 @@ const getManagerTeams = async (req, res) => {
 };
 exports.getManagerTeams = getManagerTeams;
 const createTeam = async (req, res) => {
-    var _a;
     try {
         const managerId = req.user.id;
-        const teamData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
+        const teamData = req.validated?.body;
         const team = await manager_service_1.ManagerService.createTeam(managerId, teamData);
         res.status(201).json({
             success: true,
@@ -63,11 +62,10 @@ const createTeam = async (req, res) => {
 };
 exports.createTeam = createTeam;
 const updateTeam = async (req, res) => {
-    var _a;
     try {
         const managerId = req.user.id;
         const teamId = parseInt(req.params.id);
-        const teamData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
+        const teamData = req.validated?.body;
         const team = await manager_service_1.ManagerService.updateTeam(teamId, managerId, teamData);
         res.json({
             success: true,
@@ -102,10 +100,9 @@ const getTeamAffiliates = async (req, res) => {
 };
 exports.getTeamAffiliates = getTeamAffiliates;
 const assignAffiliateToTeam = async (req, res) => {
-    var _a;
     try {
         const managerId = req.user.id;
-        const { affiliate_id, team_id } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
+        const { affiliate_id, team_id } = req.validated?.body;
         await manager_service_1.ManagerService.assignAffiliateToTeam(affiliate_id, team_id, managerId);
         res.json({
             success: true,

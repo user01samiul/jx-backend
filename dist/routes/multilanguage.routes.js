@@ -87,9 +87,8 @@ router.get('/translation/:key', async (req, res, next) => {
  * @access Private
  */
 router.post('/user/preferred-language', authenticate_1.authenticate, async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const { language_code } = req.body;
         if (!language_code) {
             res.status(400).json({
@@ -114,9 +113,8 @@ router.post('/user/preferred-language', authenticate_1.authenticate, async (req,
  * @access Private
  */
 router.get('/user/preferred-language', authenticate_1.authenticate, async (req, res, next) => {
-    var _a;
     try {
-        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const userId = req.user?.userId;
         const language = await (0, translation_service_1.getUserPreferredLanguage)(userId);
         res.json({
             success: true,

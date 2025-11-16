@@ -46,7 +46,6 @@ const cdn_storage_util_1 = require("../../utils/cdn-storage.util");
  * Get KYC status for a user
  */
 const getKYCStatusService = async (userId) => {
-    var _a, _b, _c;
     const client = await postgres_1.default.connect();
     try {
         // Get verification status
@@ -116,7 +115,7 @@ const getKYCStatusService = async (userId) => {
         const rejectedDocsResult = await client.query(rejectedDocsQuery, [userId]);
         const rejectedDocumentTypes = rejectedDocsResult.rows.map((row) => row.document_type);
         // Get required documents list
-        const verificationLevel = ((_a = profileResult.rows[0]) === null || _a === void 0 ? void 0 : _a.verification_level) || 0;
+        const verificationLevel = profileResult.rows[0]?.verification_level || 0;
         const requiredDocuments = getRequiredDocumentsForLevel(verificationLevel);
         // Determine overall KYC status
         let overallStatus = 'not_submitted';
@@ -142,8 +141,8 @@ const getKYCStatusService = async (userId) => {
             status: overallStatus,
             verification: verificationResult.rows[0] || null,
             verification_level: verificationLevel,
-            is_verified: ((_b = profileResult.rows[0]) === null || _b === void 0 ? void 0 : _b.is_verified) || false,
-            reason: ((_c = verificationResult.rows[0]) === null || _c === void 0 ? void 0 : _c.reason) || null,
+            is_verified: profileResult.rows[0]?.is_verified || false,
+            reason: verificationResult.rows[0]?.reason || null,
             documents_required: requiredDocuments,
             documents_approved: approvedDocumentTypes,
             documents_pending: pendingDocumentTypes,
