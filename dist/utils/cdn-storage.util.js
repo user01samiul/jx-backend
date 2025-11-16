@@ -39,7 +39,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.isCDNUrl = exports.getFileNameFromCDNUrl = exports.getCDNUrl = exports.uploadAndCleanup = exports.deleteLocalFile = exports.uploadBufferToCDN = exports.uploadToCDN = void 0;
 // src/utils/cdn-storage.util.ts
 const axios_1 = __importDefault(require("axios"));
-const form_data_1 = __importDefault(require("form-data"));
+const FormData = __importStar(require("form-data"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 /**
@@ -69,7 +69,7 @@ const uploadToCDN = async (filePath, fileName) => {
         // Use provided filename or extract from path
         const uploadFileName = fileName || path.basename(filePath);
         // Create form data
-        const formData = new form_data_1.default();
+        const formData = new FormData();
         formData.append('action', 'upload');
         formData.append('file', fileBuffer, {
             filename: uploadFileName,
@@ -153,7 +153,7 @@ const getMimeType = (fileName) => {
 const uploadBufferToCDN = async (buffer, fileName, mimeType) => {
     try {
         // Create form data
-        const formData = new form_data_1.default();
+        const formData = new FormData();
         formData.append('action', 'upload');
         formData.append('file', buffer, {
             filename: fileName,

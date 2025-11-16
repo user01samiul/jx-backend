@@ -58,7 +58,6 @@ export const getKYCDocuments = async (
 
 /**
  * Upload a new KYC document
- * IMPORTANT: CDN ONLY - No fallback to local storage
  */
 export const uploadKYCDocument = async (
   req: Request,
@@ -103,12 +102,20 @@ export const uploadKYCDocument = async (
       return;
     }
 
-    // Upload to CDN storage - NO FALLBACK (CDN only)
+    // Upload to CDN storage
+    let cdnUrl: string;
     const localFilePath = path.join(process.cwd(), 'uploads', 'kyc', req.file.filename);
 
-    // Upload to CDN - will throw error if upload fails (no fallback to local storage)
-    const cdnUrl = await uploadAndCleanup(localFilePath, req.file.filename);
-    console.log(`✓ KYC document uploaded to CDN: ${cdnUrl}`);
+    try {
+      cdnUrl = await uploadAndCleanup(localFilePath, req.file.filename);
+      console.log(`✓ KYC document uploaded to CDN: ${cdnUrl}`);
+    } catch (cdnError: any) {
+      console.error('✗ CDN upload failed:', cdnError.message);
+      // Fallback to local storage if CDN upload fails
+      // This ensures the user's upload is not blocked by CDN issues
+      cdnUrl = `/uploads/kyc/${req.file.filename}`;
+      console.log(`→ Using local storage as fallback: ${cdnUrl}`);
+    }
 
     // Prepare document data
     const documentData = {
@@ -123,7 +130,7 @@ export const uploadKYCDocument = async (
     const document = await uploadKYCDocumentService(userId, documentData);
     res.status(201).json({
       success: true,
-      message: "Document uploaded successfully to CDN",
+      message: "Document uploaded successfully",
       data: document
     });
   } catch (err) {
