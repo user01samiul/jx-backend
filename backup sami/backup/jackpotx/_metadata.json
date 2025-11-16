@@ -1,0 +1,17 @@
+{
+  "backupDate": "2025-11-16T10:12:56.662Z",
+  "database": "jackpotx",
+  "collections": [
+    "rtp_adjustment_log",
+    "daily_profit_summary",
+    "categorybalances",
+    "sequences",
+    "profit_tracking",
+    "transactions",
+    "user_category_balances",
+    "bets",
+    "user_category_balances_backup",
+    "games"
+  ],
+  "totalCollections": 10
+}

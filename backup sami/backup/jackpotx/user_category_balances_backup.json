@@ -1,0 +1,128 @@
+[
+  {
+    "_id": "689d49e6387e987b9d189176",
+    "category": "slots",
+    "user_id": 48,
+    "balance": 151.5439583333339,
+    "updated_at": "2025-09-20T07:25:48.231Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "689d8829387e987b9d18d97c",
+    "category": "slots",
+    "user_id": 1,
+    "balance": 371.1135416666672,
+    "updated_at": "2025-10-05T07:39:58.345Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "689fe631387e987b9d1bb478",
+    "category": "sportsbook",
+    "user_id": 48,
+    "balance": 50,
+    "updated_at": "2025-08-16T02:00:17.960Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68a34fd5387e987b9d206b75",
+    "category": "lobby",
+    "user_id": 1,
+    "balance": 0,
+    "updated_at": "2025-09-06T12:07:02.844Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68a7171a387e987b9d2556c7",
+    "category": "lobby",
+    "user_id": 48,
+    "balance": 10,
+    "updated_at": "2025-08-21T12:54:50.318Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68b129f90db02e458f1067ec",
+    "category": "dragontiger",
+    "user_id": 1,
+    "balance": 10,
+    "updated_at": "2025-08-29T04:18:01.288Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68b165a40db02e458f10ae37",
+    "category": "dice",
+    "user_id": 1,
+    "balance": 19.177500000000002,
+    "updated_at": "2025-09-08T06:36:47.937Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68b41b5a0db02e458f13c6a6",
+    "category": "lottery",
+    "user_id": 1,
+    "balance": 10,
+    "updated_at": "2025-08-31T09:52:26.513Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68badce10db02e458f1ba9b9",
+    "category": "shooting",
+    "user_id": 48,
+    "balance": 4,
+    "updated_at": "2025-09-05T12:52:09.903Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68be77250db02e458f1fb52b",
+    "category": "tablegames",
+    "user_id": 1,
+    "balance": 80,
+    "updated_at": "2025-09-08T06:26:45.987Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68be7ead0db02e458f1fc0aa",
+    "category": "slots",
+    "user_id": 62,
+    "balance": 6330.645833333334,
+    "updated_at": "2025-09-10T06:09:32.274Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68be807a0db02e458f1fc3cb",
+    "category": "interactivegame",
+    "user_id": 62,
+    "balance": 1267.2,
+    "updated_at": "2025-09-08T07:06:34.098Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "68bf03540db02e458f208025",
+    "category": "dice",
+    "user_id": 62,
+    "balance": 611.3874999999999,
+    "updated_at": "2025-09-08T16:29:42.993Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  },
+  {
+    "_id": "690b36d4b858e93fe40154da",
+    "user_id": 72,
+    "category": "slots",
+    "balance": 159.72000000000003,
+    "updated_at": "2025-11-05T12:23:00.926Z",
+    "backup_date": "2025-11-05T13:08:51.366Z",
+    "migration_reason": "unified_wallet"
+  }
+]

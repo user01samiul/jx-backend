@@ -37,7 +37,12 @@
       "Bash(psql:*)",
       "Bash(node test-cdn-upload.js:*)",
       "Bash(curl -H \"Authorization: Bearer 2ZqQk9\" -F \"action=upload\" -F \"file=@package.json\" https://cdn.jackpotx.net/storage.php)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(mkdir:*)",
+      "Bash(PGPASSWORD='2025' pg_dump:*)",
+      "Bash(mongodump:*)",
+      "Bash(where:*)",
+      "Bash(node \"backup sami/mongo-backup.js\")"
     ],
     "deny": [],
     "ask": []
