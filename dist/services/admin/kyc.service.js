@@ -628,10 +628,11 @@ class AdminKYCService {
     }
     // Get all KYC submissions with pagination
     static async getAllKYCSubmissions(filters) {
+        var _a;
         const page = filters.page || 1;
         const limit = Math.min(filters.limit || 20, 100);
         const offset = (page - 1) * limit;
-        const search = filters.search?.trim() || '';
+        const search = ((_a = filters.search) === null || _a === void 0 ? void 0 : _a.trim()) || '';
         let whereConditions = [];
         let queryParams = [];
         let paramIndex = 1;
@@ -726,10 +727,11 @@ class AdminKYCService {
     }
     // Get KYC submissions by status with pagination
     static async getKYCByStatus(status, filters) {
+        var _a;
         const page = filters.page || 1;
         const limit = Math.min(filters.limit || 20, 100);
         const offset = (page - 1) * limit;
-        const search = filters.search?.trim() || '';
+        const search = ((_a = filters.search) === null || _a === void 0 ? void 0 : _a.trim()) || '';
         let whereConditions = [`kd.status = $1`];
         let queryParams = [status];
         let paramIndex = 2;

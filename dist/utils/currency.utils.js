@@ -5,18 +5,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CurrencyUtils = void 0;
 class CurrencyUtils {
-    static DEFAULT_OPTIONS = {
-        currency: 'USD',
-        locale: 'en-US',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        showSymbol: true
-    };
     /**
      * Format a number as currency
      */
     static format(amount, options = {}) {
-        const finalOptions = { ...this.DEFAULT_OPTIONS, ...options };
+        const finalOptions = Object.assign(Object.assign({}, this.DEFAULT_OPTIONS), options);
         if (!finalOptions.showSymbol) {
             // Return just the number with proper decimal places
             return amount.toFixed(finalOptions.maximumFractionDigits);
@@ -193,3 +186,10 @@ class CurrencyUtils {
     }
 }
 exports.CurrencyUtils = CurrencyUtils;
+CurrencyUtils.DEFAULT_OPTIONS = {
+    currency: 'USD',
+    locale: 'en-US',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    showSymbol: true
+};

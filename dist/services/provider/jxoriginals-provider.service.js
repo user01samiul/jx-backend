@@ -77,6 +77,7 @@ class JxOriginalsProviderService {
      * Launch a JxOriginals game
      */
     static async launchGame(request) {
+        var _a;
         const { gameId, userId, currency = 'USD', language = 'en', mode = 'real' } = request;
         console.log('[JXORIGINALS] Launching game:', { gameId, userId, mode });
         try {
@@ -107,7 +108,7 @@ class JxOriginalsProviderService {
             const user = userResult.rows[0];
             const userCurrency = currency || user.currency || 'USD';
             // 3. Get category balance
-            const category = game.category?.toLowerCase().trim() || 'slots';
+            const category = ((_a = game.category) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) || 'slots';
             const { MongoService } = require("../mongo/mongo.service");
             await MongoService.initialize();
             const balance = await MongoService.getCategoryBalance(userId, category);
@@ -171,11 +172,7 @@ class JxOriginalsProviderService {
             return {
                 success: true,
                 play_url: playUrl,
-                game: {
-                    ...game,
-                    architecture,
-                    folder: gameFolder
-                },
+                game: Object.assign(Object.assign({}, game), { architecture, folder: gameFolder }),
                 session: {
                     token,
                     session_id: sessionId,
@@ -194,8 +191,9 @@ class JxOriginalsProviderService {
      * Routes through universal launcher since these games need special WebSocket client
      */
     static buildPragmaticUrl(gameFolder, token, sessionId, userId, balance, currency) {
+        var _a;
         // Get game_code from folder name using reverse lookup
-        const gameCode = Object.entries(GAME_TYPE_MAP).find(([code, folder]) => folder === gameFolder)?.[0] || gameFolder.toLowerCase();
+        const gameCode = ((_a = Object.entries(GAME_TYPE_MAP).find(([code, folder]) => folder === gameFolder)) === null || _a === void 0 ? void 0 : _a[0]) || gameFolder.toLowerCase();
         const params = new URLSearchParams({
             game: gameCode,
             token,
@@ -212,8 +210,9 @@ class JxOriginalsProviderService {
      * Routes through universal launcher which handles game-specific HTML files
      */
     static buildISBUrl(gameFolder, token, sessionId, userId, balance, currency) {
+        var _a;
         // Get game_code from folder name using reverse lookup
-        const gameCode = Object.entries(GAME_TYPE_MAP).find(([code, folder]) => folder === gameFolder)?.[0] || gameFolder.toLowerCase();
+        const gameCode = ((_a = Object.entries(GAME_TYPE_MAP).find(([code, folder]) => folder === gameFolder)) === null || _a === void 0 ? void 0 : _a[0]) || gameFolder.toLowerCase();
         const params = new URLSearchParams({
             game: gameCode,
             token,
@@ -230,8 +229,9 @@ class JxOriginalsProviderService {
      * Routes through universal launcher
      */
     static buildCTUrl(gameFolder, token, sessionId, userId, balance, currency) {
+        var _a;
         // Get game_code from folder name using reverse lookup
-        const gameCode = Object.entries(GAME_TYPE_MAP).find(([code, folder]) => folder === gameFolder)?.[0] || gameFolder.toLowerCase();
+        const gameCode = ((_a = Object.entries(GAME_TYPE_MAP).find(([code, folder]) => folder === gameFolder)) === null || _a === void 0 ? void 0 : _a[0]) || gameFolder.toLowerCase();
         const params = new URLSearchParams({
             game: gameCode,
             token,

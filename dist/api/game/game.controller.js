@@ -118,13 +118,14 @@ const getGameStatistics = async (req, res, next) => {
 exports.getGameStatistics = getGameStatistics;
 // Toggle game favorite status
 const toggleGameFavorite = async (req, res, next) => {
+    var _a, _b;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const { game_id } = req.validated?.body;
+        const { game_id } = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
         const result = await (0, game_service_1.toggleGameFavoriteService)(userId, game_id);
         res.status(200).json({ success: true, data: result });
     }
@@ -135,13 +136,14 @@ const toggleGameFavorite = async (req, res, next) => {
 exports.toggleGameFavorite = toggleGameFavorite;
 // Record game play
 const recordGamePlay = async (req, res, next) => {
+    var _a, _b;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const { game_id, play_time_seconds } = req.validated?.body;
+        const { game_id, play_time_seconds } = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
         await (0, game_service_1.recordGamePlayService)(userId, game_id, play_time_seconds || 0);
         res.status(200).json({ success: true, message: "Game play recorded successfully" });
     }
@@ -152,13 +154,14 @@ const recordGamePlay = async (req, res, next) => {
 exports.recordGamePlay = recordGamePlay;
 // Place a bet
 const placeBet = async (req, res, next) => {
+    var _a, _b;
     try {
-        const adminUserId = req.user?.userId;
+        const adminUserId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!adminUserId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        let { game_id, bet_amount, game_data, user_id } = req.validated?.body;
+        let { game_id, bet_amount, game_data, user_id } = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
         // Use user_id from request body if provided (for admin operations), otherwise use authenticated user
         const userId = user_id || adminUserId;
         // If game_data is missing or empty, auto-generate it
@@ -214,8 +217,9 @@ const placeBet = async (req, res, next) => {
 exports.placeBet = placeBet;
 // Process bet result (admin only)
 const processBetResult = async (req, res, next) => {
+    var _a;
     try {
-        const { bet_id, outcome, win_amount, game_result } = req.validated?.body;
+        const { bet_id, outcome, win_amount, game_result } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const { MongoHybridService } = require('../../services/mongo/mongo-hybrid.service');
         const mongoHybridService = new MongoHybridService();
         const result = await mongoHybridService.processBetResult(bet_id, outcome, win_amount || 0, game_result);
@@ -240,13 +244,14 @@ const getAvailableGamesLegacy = (req, res) => {
 exports.getAvailableGamesLegacy = getAvailableGamesLegacy;
 // Play game (get play URL and info from provider)
 const playGame = async (req, res, next) => {
+    var _a, _b;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const { game_id } = req.validated?.body;
+        const { game_id } = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
         if (!game_id && game_id !== 0) {
             res.status(400).json({ success: false, message: "game_id is required" });
             return;
@@ -310,9 +315,10 @@ const getGameDataSample = async (req, res) => {
 };
 exports.getGameDataSample = getGameDataSample;
 const getBetResults = async (req, res, next) => {
+    var _a, _b;
     try {
-        const userId = req.user?.userId;
-        const role = req.user?.role;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const role = (_b = req.user) === null || _b === void 0 ? void 0 : _b.role;
         const isAdmin = role && (role === 'Admin' || role === 'admin');
         let targetUserId = userId;
         let limit = parseInt(req.query.limit) || 50;
@@ -326,9 +332,10 @@ const getBetResults = async (req, res, next) => {
         // Get game data from PostgreSQL
         const pool = require('../../db/postgres').default;
         const enrichedBets = await Promise.all(bets.map(async (bet) => {
+            var _a, _b;
             const gameResult = await pool.query('SELECT name, category FROM games WHERE id = $1', [bet.game_id]);
-            const gameName = gameResult.rows[0]?.name || 'Unknown Game';
-            const category = gameResult.rows[0]?.category || 'slots';
+            const gameName = ((_a = gameResult.rows[0]) === null || _a === void 0 ? void 0 : _a.name) || 'Unknown Game';
+            const category = ((_b = gameResult.rows[0]) === null || _b === void 0 ? void 0 : _b.category) || 'slots';
             return {
                 bet_id: bet.id,
                 user_id: bet.user_id,
@@ -363,13 +370,14 @@ const getGamesByCategory = async (req, res, next) => {
 exports.getGamesByCategory = getGamesByCategory;
 // Cancel game transaction
 const cancelGame = async (req, res, next) => {
+    var _a, _b;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const { transaction_id, game_id, reason } = req.validated?.body;
+        const { transaction_id, game_id, reason } = (_b = req.validated) === null || _b === void 0 ? void 0 : _b.body;
         if (!transaction_id) {
             res.status(400).json({ success: false, message: "Transaction ID is required" });
             return;

@@ -177,7 +177,7 @@ class AdminModulesService {
         const rootModules = [];
         // Create map of all modules
         modules.forEach(module => {
-            moduleMap.set(module.id, { ...module, children: [] });
+            moduleMap.set(module.id, Object.assign(Object.assign({}, module), { children: [] }));
         });
         // Build tree structure
         modules.forEach(module => {

@@ -123,7 +123,7 @@ router.post('/shop/purchase/:id', auth_middleware_1.authenticateToken, async (re
         const userId = req.user.id;
         const { id } = req.params;
         const result = await LoyaltyService_1.default.purchaseShopItem(userId, parseInt(id));
-        res.json({ success: true, ...result });
+        res.json(Object.assign({ success: true }, result));
     }
     catch (error) {
         console.error('[LOYALTY] Error purchasing item:', error);
@@ -223,7 +223,7 @@ router.post('/admin/points/add', auth_middleware_1.authenticateToken, admin_midd
             return res.status(400).json({ success: false, error: 'userId and points are required' });
         }
         const result = await LoyaltyService_1.default.addPoints(userId, points, reason || 'Admin adjustment');
-        res.json({ success: true, ...result });
+        res.json(Object.assign({ success: true }, result));
     }
     catch (error) {
         console.error('[LOYALTY] Error adding points:', error);
@@ -242,7 +242,7 @@ router.post('/admin/points/deduct', auth_middleware_1.authenticateToken, admin_m
             return res.status(400).json({ success: false, error: 'userId and points are required' });
         }
         const result = await LoyaltyService_1.default.deductPoints(userId, points, reason || 'Admin adjustment');
-        res.json({ success: true, ...result });
+        res.json(Object.assign({ success: true }, result));
     }
     catch (error) {
         console.error('[LOYALTY] Error deducting points:', error);

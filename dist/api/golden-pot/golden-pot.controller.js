@@ -69,10 +69,11 @@ exports.getAllLotteries = getAllLotteries;
  * GET /api/golden-pot/comp-points
  */
 const getCompPoints = async (req, res) => {
+    var _a;
     try {
         // TODO: Query database for user comp points when tables are implemented
         // For now, return 0 points
-        const userId = req.user?.userId || null;
+        const userId = ((_a = req.user) === null || _a === void 0 ? void 0 : _a.userId) || null;
         res.json({
             success: true,
             data: {

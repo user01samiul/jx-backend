@@ -186,11 +186,7 @@ class RFMSegmentationService {
         return result.rows.map(row => {
             const rfmScore = `${row.recency_score}-${row.frequency_score}-${row.monetary_score}`;
             const segment = this.determineSegment(row.recency_score, row.frequency_score, row.monetary_score);
-            return {
-                ...row,
-                rfm_score: rfmScore,
-                segment: segment
-            };
+            return Object.assign(Object.assign({}, row), { rfm_score: rfmScore, segment: segment });
         });
     }
     /**
@@ -241,7 +237,7 @@ class RFMSegmentationService {
                         recency_days: score.recency_days,
                         frequency_count: score.frequency_count,
                         monetary_value: score.monetary_value,
-                        recommended_action: segmentDef?.recommended_action
+                        recommended_action: segmentDef === null || segmentDef === void 0 ? void 0 : segmentDef.recommended_action
                     })
                 ]);
             }
@@ -311,12 +307,7 @@ class RFMSegmentationService {
                 avg_score: 0,
                 total_value: 0
             };
-            return {
-                ...def,
-                user_count: Number(dist.user_count),
-                avg_score: Number(dist.avg_score).toFixed(2),
-                total_value: Number(dist.total_value).toFixed(2)
-            };
+            return Object.assign(Object.assign({}, def), { user_count: Number(dist.user_count), avg_score: Number(dist.avg_score).toFixed(2), total_value: Number(dist.total_value).toFixed(2) });
         });
     }
     /**
@@ -343,7 +334,7 @@ class RFMSegmentationService {
      */
     static getSegmentRecommendations(segment) {
         const def = SEGMENT_DEFINITIONS.find(d => d.segment === segment);
-        return def?.recommended_action || 'No specific action recommended';
+        return (def === null || def === void 0 ? void 0 : def.recommended_action) || 'No specific action recommended';
     }
     /**
      * Get segment health score (overall platform health based on distribution)

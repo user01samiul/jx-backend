@@ -40,16 +40,17 @@ const getHomeDataService = async (userId) => {
 };
 exports.getHomeDataService = getHomeDataService;
 const getQuickStats = async () => {
+    var _a, _b, _c, _d;
     try {
         const gamesResult = await postgres_1.default.query("SELECT COUNT(*) as total_games FROM games WHERE is_active = true");
         const categoriesResult = await postgres_1.default.query("SELECT COUNT(DISTINCT category) as total_categories FROM games WHERE is_active = true");
         const providersResult = await postgres_1.default.query("SELECT COUNT(DISTINCT provider) as total_providers FROM games WHERE is_active = true");
         const activePlayersResult = await postgres_1.default.query("SELECT COUNT(*) as active_players FROM users u JOIN statuses s ON u.status_id = s.id WHERE s.name = 'Active'");
         return {
-            total_games: gamesResult.rows[0]?.total_games || 0,
-            total_categories: categoriesResult.rows[0]?.total_categories || 0,
-            total_providers: providersResult.rows[0]?.total_providers || 0,
-            active_players: activePlayersResult.rows[0]?.active_players || 0,
+            total_games: ((_a = gamesResult.rows[0]) === null || _a === void 0 ? void 0 : _a.total_games) || 0,
+            total_categories: ((_b = categoriesResult.rows[0]) === null || _b === void 0 ? void 0 : _b.total_categories) || 0,
+            total_providers: ((_c = providersResult.rows[0]) === null || _c === void 0 ? void 0 : _c.total_providers) || 0,
+            active_players: ((_d = activePlayersResult.rows[0]) === null || _d === void 0 ? void 0 : _d.active_players) || 0,
         };
     }
     catch (error) {
@@ -129,10 +130,7 @@ const getUserStats = async (userId) => {
 const getRecentActivity = async (userId) => {
     try {
         const activityResult = await postgres_1.default.query("SELECT action, category, description, created_at FROM user_activity_logs WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2", [userId, 10]);
-        return activityResult.rows.map(activity => ({
-            ...activity,
-            created_at: activity.created_at,
-        }));
+        return activityResult.rows.map(activity => (Object.assign(Object.assign({}, activity), { created_at: activity.created_at })));
     }
     catch (error) {
         console.error("Error fetching recent activity:", error);
@@ -142,11 +140,7 @@ const getRecentActivity = async (userId) => {
 const getActivePromotions = async () => {
     try {
         const promotionsResult = await postgres_1.default.query("SELECT id, name, description, type, value, start_date, end_date, is_active FROM promotions WHERE is_active = true AND (end_date IS NULL OR end_date > CURRENT_TIMESTAMP) ORDER BY created_at DESC LIMIT 5");
-        return promotionsResult.rows.map(promo => ({
-            ...promo,
-            start_date: promo.start_date,
-            end_date: promo.end_date,
-        }));
+        return promotionsResult.rows.map(promo => (Object.assign(Object.assign({}, promo), { start_date: promo.start_date, end_date: promo.end_date })));
     }
     catch (error) {
         console.error("Error fetching promotions:", error);
@@ -156,10 +150,7 @@ const getActivePromotions = async () => {
 const getAnnouncements = async () => {
     try {
         const announcementsResult = await postgres_1.default.query("SELECT id, title, content, type, is_active, created_at FROM announcements WHERE is_active = true ORDER BY created_at DESC LIMIT 5");
-        return announcementsResult.rows.map(announcement => ({
-            ...announcement,
-            created_at: announcement.created_at,
-        }));
+        return announcementsResult.rows.map(announcement => (Object.assign(Object.assign({}, announcement), { created_at: announcement.created_at })));
     }
     catch (error) {
         console.error("Error fetching announcements:", error);

@@ -92,7 +92,7 @@ const getAllModules = async (req, res) => {
         const menuStructure = [];
         // Create a map of all modules
         modules.forEach(module => {
-            moduleMap.set(module.id, { ...module, submenu: [] });
+            moduleMap.set(module.id, Object.assign(Object.assign({}, module), { submenu: [] }));
         });
         // Build parent-child relationships
         modules.forEach(module => {
@@ -205,9 +205,10 @@ const getModuleById = async (req, res) => {
 exports.getModuleById = getModuleById;
 // Create new module
 const createModule = async (req, res) => {
+    var _a;
     try {
         const moduleData = req.body;
-        const adminId = req.user?.userId;
+        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         // Check if parent module exists if parentId is provided
         if (moduleData.parentId) {
             const parentCheck = await postgres_1.default.query(`SELECT id FROM modules WHERE id = $1`, [moduleData.parentId]);
@@ -262,10 +263,11 @@ const createModule = async (req, res) => {
 exports.createModule = createModule;
 // Update module
 const updateModule = async (req, res) => {
+    var _a;
     try {
         const { id } = req.params;
         const updateData = req.body;
-        const adminId = req.user?.userId;
+        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         // Check if module exists
         const existingModule = await postgres_1.default.query(`SELECT id FROM modules WHERE id = $1`, [id]);
         if (existingModule.rows.length === 0) {
@@ -383,9 +385,10 @@ const updateModule = async (req, res) => {
 exports.updateModule = updateModule;
 // Delete module
 const deleteModule = async (req, res) => {
+    var _a;
     try {
         const { id } = req.params;
-        const adminId = req.user?.userId;
+        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         // Check if module exists
         const existingModule = await postgres_1.default.query(`SELECT id, title, "menuName" FROM modules WHERE id = $1`, [id]);
         if (existingModule.rows.length === 0) {
@@ -441,7 +444,7 @@ const getModuleHierarchy = async (req, res) => {
         const hierarchy = [];
         // Create a map of all modules
         modules.forEach(module => {
-            moduleMap.set(module.id, { ...module, children: [] });
+            moduleMap.set(module.id, Object.assign(Object.assign({}, module), { children: [] }));
         });
         // Build parent-child relationships
         modules.forEach(module => {

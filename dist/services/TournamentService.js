@@ -49,16 +49,16 @@ class TournamentService {
         let query = 'SELECT * FROM tournament_schedules WHERE 1=1';
         const params = [];
         let paramIndex = 1;
-        if (filters?.status) {
+        if (filters === null || filters === void 0 ? void 0 : filters.status) {
             query += ` AND status = $${paramIndex++}`;
             params.push(filters.status);
         }
-        if (filters?.currency) {
+        if (filters === null || filters === void 0 ? void 0 : filters.currency) {
             query += ` AND currency_code = $${paramIndex++}`;
             params.push(filters.currency);
         }
         query += ' ORDER BY start_time DESC';
-        if (filters?.limit) {
+        if (filters === null || filters === void 0 ? void 0 : filters.limit) {
             query += ` LIMIT $${paramIndex}`;
             params.push(filters.limit);
         }

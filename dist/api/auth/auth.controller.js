@@ -6,8 +6,9 @@ const user_service_1 = require("../../services/user/user.service");
 const messages_1 = require("../../constants/messages");
 const captcha_service_1 = require("../../services/captcha/captcha.service");
 const login = async (req, res, next) => {
+    var _a;
     try {
-        const reqBody = req.validated?.body;
+        const reqBody = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const identifier = reqBody.username;
         if (!identifier) {
             res.status(400).json({ success: false, message: 'Username or email is required' });
@@ -59,8 +60,9 @@ const login = async (req, res, next) => {
 };
 exports.login = login;
 const register = async (req, res, next) => {
+    var _a;
     try {
-        const reqBody = req.validated?.body;
+        const reqBody = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const response = await (0, auth_service_1.registerService)(reqBody);
         res.json({
             success: true,

@@ -457,10 +457,7 @@ class SegmentationService {
         const allFilters = [];
         for (const [category, filters] of Object.entries(exports.AVAILABLE_FILTERS)) {
             filters.forEach(filter => {
-                allFilters.push({
-                    ...filter,
-                    category
-                });
+                allFilters.push(Object.assign(Object.assign({}, filter), { category }));
             });
         }
         return {
@@ -665,6 +662,7 @@ class SegmentationService {
      * Get detailed players from segment
      */
     async getSegmentPlayers(filters, page = 1, limit = 100) {
+        var _a, _b;
         const { where, params } = this.buildWhereClause(filters);
         const offset = (page - 1) * limit;
         const query = `
@@ -701,10 +699,10 @@ class SegmentationService {
         ]);
         return {
             players: players.rows,
-            total: parseInt(countResult.rows[0]?.total || '0'),
+            total: parseInt(((_a = countResult.rows[0]) === null || _a === void 0 ? void 0 : _a.total) || '0'),
             page,
             limit,
-            totalPages: Math.ceil(parseInt(countResult.rows[0]?.total || '0') / limit)
+            totalPages: Math.ceil(parseInt(((_b = countResult.rows[0]) === null || _b === void 0 ? void 0 : _b.total) || '0') / limit)
         };
     }
     /**
@@ -745,10 +743,7 @@ class SegmentationService {
       ORDER BY created_at DESC
     `;
         const result = await postgres_1.default.query(query);
-        return result.rows.map(row => ({
-            ...row,
-            filters: typeof row.filters === 'string' ? JSON.parse(row.filters) : row.filters
-        }));
+        return result.rows.map(row => (Object.assign(Object.assign({}, row), { filters: typeof row.filters === 'string' ? JSON.parse(row.filters) : row.filters })));
     }
     /**
      * Update segment player count

@@ -11,10 +11,6 @@ const jwt_schema_1 = require("./jwt.schema");
 const apiError_1 = require("../../utils/apiError");
 const messages_1 = require("../../constants/messages");
 class JwtService {
-    accessSecret;
-    refreshSecret;
-    accessTokenExpiresIn;
-    refreshTokenExpiresIn;
     constructor() {
         this.accessSecret = config_1.Config.jwt.accessSecret;
         this.refreshSecret = config_1.Config.jwt.refreshSecret;
@@ -22,17 +18,11 @@ class JwtService {
         this.refreshTokenExpiresIn = config_1.Config.jwt.refreshTokenExpiresIn;
     }
     signAccessToken(payload, options = {}) {
-        const accessTokenOptions = {
-            expiresIn: this.accessTokenExpiresIn,
-            ...options,
-        };
+        const accessTokenOptions = Object.assign({ expiresIn: this.accessTokenExpiresIn }, options);
         return jsonwebtoken_1.default.sign(payload, this.accessSecret, accessTokenOptions);
     }
     signRefreshToken(payload, options = {}) {
-        const refreshTokenOptions = {
-            expiresIn: this.refreshTokenExpiresIn,
-            ...options,
-        };
+        const refreshTokenOptions = Object.assign({ expiresIn: this.refreshTokenExpiresIn }, options);
         console.log("[JWT] Signing refresh token with secret:", this.refreshSecret);
         return jsonwebtoken_1.default.sign(payload, this.refreshSecret, refreshTokenOptions);
     }

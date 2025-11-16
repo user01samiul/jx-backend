@@ -23,10 +23,11 @@ class JxOriginalsGameController {
      * - game: Game code (e.g., 'aztec_gold_megaways')
      */
     static async handleGameRequest(req, res) {
+        var _a;
         try {
             const { cmd } = req.body;
             // Get token from multiple possible sources
-            const token = req.body.token || req.query.token || req.headers['authorization']?.replace('Bearer ', '');
+            const token = req.body.token || req.query.token || ((_a = req.headers['authorization']) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', ''));
             // Get game code from query params or body
             const gameCode = req.query.game || req.body.game;
             if (!cmd) {
@@ -71,13 +72,9 @@ class JxOriginalsGameController {
                 betAmount = parseInt(commandParts[1].trim());
             }
             // Handle game command
-            const result = await jxoriginals_game_service_1.JxOriginalsGameService.handleGameCommand({
-                cmd,
+            const result = await jxoriginals_game_service_1.JxOriginalsGameService.handleGameCommand(Object.assign({ cmd,
                 token,
-                userId,
-                gameCode: gameCode,
-                ...(betAmount && { betAmount })
-            });
+                userId, gameCode: gameCode }, (betAmount && { betAmount })));
             // Return JSON response
             res.json(result);
         }

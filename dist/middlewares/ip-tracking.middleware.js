@@ -59,7 +59,8 @@ async function logIPActivity(options) {
  */
 function trackIP(action) {
     return async (req, res, next) => {
-        const userId = req.user?.userId;
+        var _a;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         const ip = getClientIP(req);
         const userAgent = req.headers['user-agent'];
         // Store IP in request for later use

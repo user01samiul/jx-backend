@@ -5,21 +5,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.HealthMonitorService = void 0;
 class HealthMonitorService {
-    static metrics = {
-        uptime: 0,
-        memoryUsage: process.memoryUsage(),
-        cpuUsage: 0,
-        activeConnections: 0,
-        requestCount: 0,
-        errorCount: 0,
-        rateLimitCount: 0,
-        cloudflareRequests: 0,
-        circuitBreakerStatus: null,
-        lastHealthCheck: new Date()
-    };
-    static startTime = Date.now();
-    static isMonitoring = false;
-    static criticalErrors = [];
     /**
      * Start health monitoring
      */
@@ -136,7 +121,7 @@ class HealthMonitorService {
         return {
             status,
             timestamp: new Date(),
-            metrics: { ...this.metrics },
+            metrics: Object.assign({}, this.metrics),
             checks
         };
     }
@@ -144,6 +129,7 @@ class HealthMonitorService {
      * Perform individual health checks
      */
     static performHealthChecks() {
+        var _a;
         const memoryUsage = this.metrics.memoryUsage;
         const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
         return {
@@ -151,7 +137,7 @@ class HealthMonitorService {
             memory: memoryUsagePercent < 90, // Healthy if less than 90% memory usage
             cpu: this.metrics.cpuUsage < 80, // Healthy if CPU usage less than 80%
             rateLimiting: this.metrics.rateLimitCount < 100, // Healthy if rate limit count is reasonable
-            circuitBreaker: !this.metrics.circuitBreakerStatus?.isOpen
+            circuitBreaker: !((_a = this.metrics.circuitBreakerStatus) === null || _a === void 0 ? void 0 : _a.isOpen)
         };
     }
     /**
@@ -183,6 +169,7 @@ class HealthMonitorService {
      * Log health status
      */
     static logHealthStatus() {
+        var _a;
         const status = this.getHealthStatus();
         const memoryUsage = this.metrics.memoryUsage;
         const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
@@ -194,7 +181,7 @@ class HealthMonitorService {
         console.log(`[HEALTH_MONITOR] Errors: ${this.metrics.errorCount}`);
         console.log(`[HEALTH_MONITOR] Rate Limits: ${this.metrics.rateLimitCount}`);
         console.log(`[HEALTH_MONITOR] Cloudflare Requests: ${this.metrics.cloudflareRequests}`);
-        console.log(`[HEALTH_MONITOR] Circuit Breaker: ${this.metrics.circuitBreakerStatus?.isOpen ? 'OPEN' : 'CLOSED'}`);
+        console.log(`[HEALTH_MONITOR] Circuit Breaker: ${((_a = this.metrics.circuitBreakerStatus) === null || _a === void 0 ? void 0 : _a.isOpen) ? 'OPEN' : 'CLOSED'}`);
     }
     /**
      * Get detailed metrics
@@ -202,15 +189,9 @@ class HealthMonitorService {
     static getDetailedMetrics() {
         const memoryUsage = this.metrics.memoryUsage;
         const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-        return {
-            ...this.metrics,
-            memoryUsagePercent: memoryUsagePercent.toFixed(2),
-            uptimeFormatted: this.formatUptime(this.metrics.uptime),
-            errorRate: this.metrics.requestCount > 0 ?
-                ((this.metrics.errorCount / this.metrics.requestCount) * 100).toFixed(2) : '0.00',
-            rateLimitRate: this.metrics.requestCount > 0 ?
-                ((this.metrics.rateLimitCount / this.metrics.requestCount) * 100).toFixed(2) : '0.00'
-        };
+        return Object.assign(Object.assign({}, this.metrics), { memoryUsagePercent: memoryUsagePercent.toFixed(2), uptimeFormatted: this.formatUptime(this.metrics.uptime), errorRate: this.metrics.requestCount > 0 ?
+                ((this.metrics.errorCount / this.metrics.requestCount) * 100).toFixed(2) : '0.00', rateLimitRate: this.metrics.requestCount > 0 ?
+                ((this.metrics.rateLimitCount / this.metrics.requestCount) * 100).toFixed(2) : '0.00' });
     }
     /**
      * Format uptime in human readable format
@@ -265,3 +246,18 @@ class HealthMonitorService {
     }
 }
 exports.HealthMonitorService = HealthMonitorService;
+HealthMonitorService.metrics = {
+    uptime: 0,
+    memoryUsage: process.memoryUsage(),
+    cpuUsage: 0,
+    activeConnections: 0,
+    requestCount: 0,
+    errorCount: 0,
+    rateLimitCount: 0,
+    cloudflareRequests: 0,
+    circuitBreakerStatus: null,
+    lastHealthCheck: new Date()
+};
+HealthMonitorService.startTime = Date.now();
+HealthMonitorService.isMonitoring = false;
+HealthMonitorService.criticalErrors = [];

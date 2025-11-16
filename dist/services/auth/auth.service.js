@@ -155,8 +155,8 @@ password, authCode, roleId, req) => {
         action: "login",
         category: "auth",
         description: "User logged in",
-        ipAddress: req?.ip || undefined,
-        userAgent: req?.headers["user-agent"] || undefined,
+        ipAddress: (req === null || req === void 0 ? void 0 : req.ip) || undefined,
+        userAgent: (req === null || req === void 0 ? void 0 : req.headers["user-agent"]) || undefined,
     });
     // If admin login, also log to admin_activities
     if (selectedRole.name === 'Admin') {
@@ -166,8 +166,8 @@ password, authCode, roleId, req) => {
                 user.id,
                 'admin_login',
                 JSON.stringify({ username: user.username, role: selectedRole.name, timestamp: new Date().toISOString() }),
-                req?.ip || req?.headers['x-forwarded-for'] || null,
-                req?.headers["user-agent"] || null
+                (req === null || req === void 0 ? void 0 : req.ip) || (req === null || req === void 0 ? void 0 : req.headers['x-forwarded-for']) || null,
+                (req === null || req === void 0 ? void 0 : req.headers["user-agent"]) || null
             ]);
             console.log(`[AdminActivity] Admin login logged for user ${user.id}`);
         }
@@ -260,7 +260,7 @@ const registerService = async (reqBody) => {
         try {
             await client.query('BEGIN');
             // Create user with QR data (null if QR generation failed)
-            const userResult = await client.query(auth_query_1.Query.REGISTER_USER, [username, email, hashedPassword, qrData?.secret || null, qrData?.qr_code || null]);
+            const userResult = await client.query(auth_query_1.Query.REGISTER_USER, [username, email, hashedPassword, (qrData === null || qrData === void 0 ? void 0 : qrData.secret) || null, (qrData === null || qrData === void 0 ? void 0 : qrData.qr_code) || null]);
             if (userResult.rows.length === 0) {
                 throw new apiError_1.ApiError('User creation failed', 500);
             }
@@ -372,8 +372,9 @@ const refreshTokenService = async (refreshToken) => {
 };
 exports.refreshTokenService = refreshTokenService;
 const refreshToken = async (req, res, next) => {
+    var _a;
     try {
-        const refreshToken = req.body?.refresh_token;
+        const refreshToken = (_a = req.body) === null || _a === void 0 ? void 0 : _a.refresh_token;
         if (!refreshToken) {
             res.status(400).json({
                 success: false,

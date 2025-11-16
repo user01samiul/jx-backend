@@ -72,9 +72,10 @@ exports.getJxOriginalsGame = getJxOriginalsGame;
  * POST /api/jxoriginals/launch/:gameId
  */
 const launchJxOriginalsGame = async (req, res) => {
+    var _a;
     try {
         const gameId = parseInt(req.params.gameId);
-        const userId = req.user?.id;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         if (!userId) {
             throw new apiError_1.ApiError('User not authenticated', 401);
         }
@@ -201,10 +202,7 @@ const getJxOriginalsVendors = async (req, res) => {
                 ven.categories.add(game.category);
             }
         });
-        const vendors = Array.from(vendorsMap.values()).map(v => ({
-            ...v,
-            categories: Array.from(v.categories)
-        }));
+        const vendors = Array.from(vendorsMap.values()).map(v => (Object.assign(Object.assign({}, v), { categories: Array.from(v.categories) })));
         res.json({
             success: true,
             provider: 'JxOriginals',
@@ -263,9 +261,12 @@ const searchJxOriginalsGames = async (req, res) => {
         });
         // Simple search in name and description
         const searchTerm = q.toLowerCase();
-        const results = allGames.filter(game => game.name.toLowerCase().includes(searchTerm) ||
-            game.description?.toLowerCase().includes(searchTerm) ||
-            game.game_code?.toLowerCase().includes(searchTerm));
+        const results = allGames.filter(game => {
+            var _a, _b;
+            return game.name.toLowerCase().includes(searchTerm) ||
+                ((_a = game.description) === null || _a === void 0 ? void 0 : _a.toLowerCase().includes(searchTerm)) ||
+                ((_b = game.game_code) === null || _b === void 0 ? void 0 : _b.toLowerCase().includes(searchTerm));
+        });
         // Apply pagination
         const start = offset ? parseInt(offset) : 0;
         const end = start + (limit ? parseInt(limit) : 20);

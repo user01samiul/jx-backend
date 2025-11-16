@@ -215,9 +215,10 @@ class RiskManagementService {
      * Check multi-account
      */
     async checkMultiAccount(userId, condition) {
+        var _a;
         // Check for users with same IP, device, or payment method
         const user = await postgres_1.default.query('SELECT last_login_ip FROM users WHERE id = $1', [userId]);
-        if (!user.rows[0]?.last_login_ip) {
+        if (!((_a = user.rows[0]) === null || _a === void 0 ? void 0 : _a.last_login_ip)) {
             return false;
         }
         const sameIpUsers = await postgres_1.default.query('SELECT COUNT(*) as count FROM users WHERE last_login_ip = $1 AND id != $2', [user.rows[0].last_login_ip, userId]);

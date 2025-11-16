@@ -7,10 +7,6 @@ const axios_1 = __importDefault(require("axios"));
 const crypto_1 = __importDefault(require("crypto"));
 const postgres_1 = __importDefault(require("../db/postgres"));
 class CampaignsService {
-    apiClient;
-    operatorId;
-    secretKey;
-    platformApiHost;
     constructor() {
         // Configurare din environment variables
         this.operatorId = process.env.INNOVA_OPERATOR_ID || 'jackpotx';
@@ -71,17 +67,17 @@ class CampaignsService {
     async listCampaigns(filters) {
         try {
             const params = {};
-            if (filters?.vendors)
+            if (filters === null || filters === void 0 ? void 0 : filters.vendors)
                 params.vendors = filters.vendors;
-            if (filters?.currencies)
+            if (filters === null || filters === void 0 ? void 0 : filters.currencies)
                 params.currencies = filters.currencies;
-            if (filters?.players)
+            if (filters === null || filters === void 0 ? void 0 : filters.players)
                 params.players = filters.players;
-            if (filters?.games)
+            if (filters === null || filters === void 0 ? void 0 : filters.games)
                 params.games = filters.games;
-            if (filters?.include_expired !== undefined)
+            if ((filters === null || filters === void 0 ? void 0 : filters.include_expired) !== undefined)
                 params.include_expired = filters.include_expired;
-            if (filters?.per_page)
+            if (filters === null || filters === void 0 ? void 0 : filters.per_page)
                 params.per_page = filters.per_page;
             const response = await this.apiClient.get('/list', { params });
             return response.data;

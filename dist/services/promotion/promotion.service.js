@@ -111,18 +111,19 @@ class PromotionService {
      * Transfer bonus balance to main balance (after wagering completion)
      */
     static async transferBonusToMain(userId, amount) {
+        var _a, _b;
         const client = await postgres_1.default.connect();
         try {
             await client.query('BEGIN');
             // Check if user has enough bonus balance
             const balanceResult = await client.query("SELECT bonus_balance FROM user_balances WHERE user_id = $1", [userId]);
-            const currentBonusBalance = Number(balanceResult.rows[0]?.bonus_balance || 0);
+            const currentBonusBalance = Number(((_a = balanceResult.rows[0]) === null || _a === void 0 ? void 0 : _a.bonus_balance) || 0);
             if (currentBonusBalance < amount) {
                 return false;
             }
             // Get current main balance
             const mainBalanceResult = await client.query("SELECT balance FROM user_balances WHERE user_id = $1", [userId]);
-            const currentMainBalance = Number(mainBalanceResult.rows[0]?.balance || 0);
+            const currentMainBalance = Number(((_b = mainBalanceResult.rows[0]) === null || _b === void 0 ? void 0 : _b.balance) || 0);
             // Update balances
             await client.query(`UPDATE user_balances 
          SET bonus_balance = bonus_balance - $1, balance = balance + $1, updated_at = CURRENT_TIMESTAMP

@@ -63,9 +63,7 @@ exports.cloudflareConfig = {
 };
 // Environment-specific overrides with configurable rate limits
 const getCloudflareConfig = () => {
-    return {
-        ...exports.cloudflareConfig,
-        rateLimiting: {
+    return Object.assign(Object.assign({}, exports.cloudflareConfig), { rateLimiting: {
             standard: {
                 windowMs: env_1.env.RATE_LIMIT_STANDARD_WINDOW_MS,
                 max: env_1.env.RATE_LIMIT_STANDARD_MAX,
@@ -86,12 +84,7 @@ const getCloudflareConfig = () => {
                 max: env_1.env.RATE_LIMIT_AUTH_MAX,
                 message: 'Too many authentication attempts. Please try again later.'
             }
-        },
-        circuitBreaker: {
-            ...exports.cloudflareConfig.circuitBreaker,
-            threshold: parseInt(process.env.CF_CIRCUIT_BREAKER_THRESHOLD || '5')
-        }
-    };
+        }, circuitBreaker: Object.assign(Object.assign({}, exports.cloudflareConfig.circuitBreaker), { threshold: parseInt(process.env.CF_CIRCUIT_BREAKER_THRESHOLD || '5') }) });
 };
 exports.getCloudflareConfig = getCloudflareConfig;
 // Cloudflare-specific utility functions
@@ -108,8 +101,9 @@ const getCloudflareRay = (headers) => {
 };
 exports.getCloudflareRay = getCloudflareRay;
 const shouldRetryOnError = (error) => {
+    var _a;
     const status = error.status || error.statusCode;
-    const message = error.message?.toLowerCase() || '';
+    const message = ((_a = error.message) === null || _a === void 0 ? void 0 : _a.toLowerCase()) || '';
     return status === 429 || // Rate limited
         status === 502 || // Bad Gateway
         status === 503 || // Service Unavailable

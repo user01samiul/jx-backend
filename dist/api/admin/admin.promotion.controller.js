@@ -95,7 +95,7 @@ const updatePromotion = async (req, res) => {
                 message: "Invalid promotion ID"
             });
         }
-        const data = { ...req.body, id };
+        const data = Object.assign(Object.assign({}, req.body), { id });
         const promotion = await promotion_service_1.AdminPromotionService.updatePromotion(id, data);
         if (!promotion) {
             return res.status(404).json({

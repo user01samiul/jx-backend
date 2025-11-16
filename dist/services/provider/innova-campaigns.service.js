@@ -25,7 +25,6 @@ const INNOVA_CAMPAIGNS_CONFIG = {
  * Innova Campaigns API Service
  */
 class InnovaCampaignsService {
-    axiosInstance;
     constructor() {
         this.axiosInstance = axios_1.default.create({
             baseURL: INNOVA_CAMPAIGNS_CONFIG.baseUrl,
@@ -72,6 +71,7 @@ class InnovaCampaignsService {
      * Get game limits for campaigns
      */
     async getGameLimits(vendors, games, currencies) {
+        var _a;
         try {
             const params = {};
             if (vendors && vendors.length > 0)
@@ -83,7 +83,7 @@ class InnovaCampaignsService {
             console.log('[INNOVA_CAMPAIGNS] Fetching game limits with params:', params);
             const response = await this.axiosInstance.get('/api/generic/campaigns/vendors/limits', { params });
             if (response.data.status === 'OK') {
-                console.log('[INNOVA_CAMPAIGNS] Game limits fetched, count:', response.data.data?.length || 0);
+                console.log('[INNOVA_CAMPAIGNS] Game limits fetched, count:', ((_a = response.data.data) === null || _a === void 0 ? void 0 : _a.length) || 0);
                 return response.data.data;
             }
             throw new Error('Failed to fetch game limits');
@@ -97,24 +97,25 @@ class InnovaCampaignsService {
      * List campaigns with optional filters
      */
     async listCampaigns(filters) {
+        var _a;
         try {
             const params = {};
-            if (filters?.vendors)
+            if (filters === null || filters === void 0 ? void 0 : filters.vendors)
                 params.vendors = filters.vendors.join(',');
-            if (filters?.currencies)
+            if (filters === null || filters === void 0 ? void 0 : filters.currencies)
                 params.currencies = filters.currencies.join(',');
-            if (filters?.players)
+            if (filters === null || filters === void 0 ? void 0 : filters.players)
                 params.players = filters.players.join(',');
-            if (filters?.games)
+            if (filters === null || filters === void 0 ? void 0 : filters.games)
                 params.games = filters.games.join(',');
-            if (filters?.include_expired !== undefined)
+            if ((filters === null || filters === void 0 ? void 0 : filters.include_expired) !== undefined)
                 params.include_expired = filters.include_expired;
-            if (filters?.per_page)
+            if (filters === null || filters === void 0 ? void 0 : filters.per_page)
                 params.per_page = filters.per_page;
             console.log('[INNOVA_CAMPAIGNS] Listing campaigns with filters:', params);
             const response = await this.axiosInstance.get('/api/generic/campaigns/list', { params });
             if (response.data.status === 'OK') {
-                console.log('[INNOVA_CAMPAIGNS] Campaigns listed, count:', response.data.data?.length || 0);
+                console.log('[INNOVA_CAMPAIGNS] Campaigns listed, count:', ((_a = response.data.data) === null || _a === void 0 ? void 0 : _a.length) || 0);
                 return response.data;
             }
             throw new Error('Failed to list campaigns');
@@ -146,6 +147,7 @@ class InnovaCampaignsService {
      * Create a new free spins campaign
      */
     async createCampaign(request) {
+        var _a, _b, _c;
         try {
             console.log('[INNOVA_CAMPAIGNS] Creating campaign:', {
                 campaign_code: request.campaign_code,
@@ -162,8 +164,8 @@ class InnovaCampaignsService {
             throw new Error(`Failed to create campaign: ${response.data.status}`);
         }
         catch (error) {
-            console.error('[INNOVA_CAMPAIGNS] Error creating campaign:', error.response?.data || error.message);
-            throw new Error(`Failed to create Innova campaign: ${error.response?.data?.message || error.message}`);
+            console.error('[INNOVA_CAMPAIGNS] Error creating campaign:', ((_a = error.response) === null || _a === void 0 ? void 0 : _a.data) || error.message);
+            throw new Error(`Failed to create Innova campaign: ${((_c = (_b = error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.message) || error.message}`);
         }
     }
     /**

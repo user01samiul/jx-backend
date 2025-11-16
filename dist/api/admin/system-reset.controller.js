@@ -12,8 +12,9 @@ const user_activity_service_1 = require("../../services/user/user-activity.servi
  * @access Admin only
  */
 const resetSystem = async (req, res, next) => {
+    var _a;
     try {
-        const adminUserId = req.user?.userId;
+        const adminUserId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!adminUserId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -246,8 +247,9 @@ async function performSystemReset(client, resetType, userId) {
  * @access Admin only
  */
 const getResetStats = async (req, res, next) => {
+    var _a;
     try {
-        const adminUserId = req.user?.userId;
+        const adminUserId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!adminUserId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;

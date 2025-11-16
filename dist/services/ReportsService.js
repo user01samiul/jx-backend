@@ -318,11 +318,7 @@ class ReportsService {
             throw new Error('Invalid template index');
         }
         const template = templates[templateIndex];
-        return await this.createReport({
-            ...template,
-            status: 'ACTIVE',
-            created_by: createdBy
-        });
+        return await this.createReport(Object.assign(Object.assign({}, template), { status: 'ACTIVE', created_by: createdBy }));
     }
 }
 exports.default = new ReportsService();

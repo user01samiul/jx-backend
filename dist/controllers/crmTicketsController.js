@@ -144,8 +144,9 @@ async function getTicketDetails(req, res) {
  * POST /api/admin/crm/tickets
  */
 async function createSupportTicket(req, res) {
+    var _a;
     const { user_id, department, category, sub_category, priority, subject, description, source = 'portal', language = 'en', } = req.body;
-    const agentId = req.user?.userId;
+    const agentId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
     try {
         const result = await postgres_1.default.query(`INSERT INTO support_tickets
        (user_id, department, category, sub_category, priority, status, subject, description, source, language, created_by)
@@ -167,9 +168,10 @@ async function createSupportTicket(req, res) {
  * PATCH /api/admin/crm/tickets/:ticketId/status
  */
 async function updateTicketStatus(req, res) {
+    var _a;
     const { ticketId } = req.params;
     const { status } = req.body;
-    const agentId = req.user?.userId;
+    const agentId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
     try {
         const updateFields = ['status = $1', 'updated_at = NOW()', 'updated_by = $2'];
         const params = [status, agentId];
@@ -199,9 +201,10 @@ async function updateTicketStatus(req, res) {
  * POST /api/admin/crm/tickets/:ticketId/messages
  */
 async function addTicketMessage(req, res) {
+    var _a;
     const { ticketId } = req.params;
     const { message, is_internal = false, attachments } = req.body;
-    const agentId = req.user?.userId;
+    const agentId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
     try {
         const result = await postgres_1.default.query(`INSERT INTO support_messages
        (ticket_id, sender_id, sender_type, message, message_type, is_internal, attachments)
@@ -223,9 +226,10 @@ async function addTicketMessage(req, res) {
  * PATCH /api/admin/crm/tickets/:ticketId/assign
  */
 async function assignTicket(req, res) {
+    var _a;
     const { ticketId } = req.params;
     const { agent_id } = req.body;
-    const agentId = req.user?.userId;
+    const agentId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
     try {
         const result = await postgres_1.default.query(`UPDATE support_tickets
        SET assigned_to = $1, updated_at = NOW(), updated_by = $2

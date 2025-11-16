@@ -44,7 +44,8 @@
       "Bash(where:*)",
       "Bash(node \"backup sami/mongo-backup.js\")",
       "Bash(sort:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(pm2 restart:*)"
     ],
     "deny": [],
     "ask": []

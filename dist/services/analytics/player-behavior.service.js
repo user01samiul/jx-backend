@@ -79,9 +79,9 @@ class PlayerBehaviorService {
     `;
         const result = await postgres_1.default.query(query, [
             sessionId,
-            metrics?.total_bets || 0,
-            metrics?.total_wins || 0,
-            JSON.stringify(metrics?.games_played || [])
+            (metrics === null || metrics === void 0 ? void 0 : metrics.total_bets) || 0,
+            (metrics === null || metrics === void 0 ? void 0 : metrics.total_wins) || 0,
+            JSON.stringify((metrics === null || metrics === void 0 ? void 0 : metrics.games_played) || [])
         ]);
         if (result.rows.length > 0) {
             // Track logout event
@@ -165,6 +165,7 @@ class PlayerBehaviorService {
      * Calculate behavior scores for a player
      */
     static async calculateBehaviorScores(userId) {
+        var _a, _b;
         const behavior = await this.getPlayerBehavior(userId, 30);
         if (!behavior) {
             return {
@@ -200,7 +201,7 @@ class PlayerBehaviorService {
             value_score: Number(valueScore.toFixed(2)),
             avg_session_duration: Number(behavior.avg_duration) || 0,
             sessions_per_week: Number(sessionsPerWeek.toFixed(2)),
-            favorite_game_category: behavior.favorite_games?.[0]?.category,
+            favorite_game_category: (_b = (_a = behavior.favorite_games) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.category,
             betting_pattern: behavior.betting_pattern
         };
         // Save to database
@@ -285,6 +286,7 @@ class PlayerBehaviorService {
      * Detect loss chasing behavior
      */
     static async detectLossChasing(userId) {
+        var _a;
         const query = `
       WITH recent_bets AS (
         SELECT
@@ -310,7 +312,7 @@ class PlayerBehaviorService {
       FROM loss_streak
     `;
         const result = await postgres_1.default.query(query, [userId]);
-        return result.rows[0]?.is_chasing || false;
+        return ((_a = result.rows[0]) === null || _a === void 0 ? void 0 : _a.is_chasing) || false;
     }
 }
 exports.PlayerBehaviorService = PlayerBehaviorService;

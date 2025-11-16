@@ -2,10 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentIntegrationService = void 0;
 class PaymentIntegrationService {
-    static instance;
-    gatewayHandlers = new Map();
-    webhookHandlers = new Map();
     constructor() {
+        this.gatewayHandlers = new Map();
+        this.webhookHandlers = new Map();
         this.initializeGatewayHandlers();
         this.initializeWebhookHandlers();
     }
@@ -116,6 +115,7 @@ class PaymentIntegrationService {
     }
     // Stripe Payment Handler
     async handleStripePayment(config, request) {
+        var _a, _b;
         try {
             const stripe = require('stripe')(config.api_secret);
             const session = await stripe.checkout.sessions.create({
@@ -131,12 +131,9 @@ class PaymentIntegrationService {
                         quantity: 1,
                     }],
                 mode: 'payment',
-                success_url: request.return_url || `${config.config?.success_url}`,
-                cancel_url: request.cancel_url || `${config.config?.cancel_url}`,
-                metadata: {
-                    order_id: request.order_id,
-                    ...request.metadata,
-                },
+                success_url: request.return_url || `${(_a = config.config) === null || _a === void 0 ? void 0 : _a.success_url}`,
+                cancel_url: request.cancel_url || `${(_b = config.config) === null || _b === void 0 ? void 0 : _b.cancel_url}`,
+                metadata: Object.assign({ order_id: request.order_id }, request.metadata),
             });
             return {
                 success: true,
@@ -156,9 +153,10 @@ class PaymentIntegrationService {
     }
     // PayPal Payment Handler
     async handlePayPalPayment(config, request) {
+        var _a, _b;
         try {
             const paypal = require('@paypal/checkout-server-sdk');
-            const environment = config.config?.sandbox_mode ?
+            const environment = ((_a = config.config) === null || _a === void 0 ? void 0 : _a.sandbox_mode) ?
                 new paypal.core.SandboxEnvironment(config.api_key, config.api_secret) :
                 new paypal.core.LiveEnvironment(config.api_key, config.api_secret);
             const client = new paypal.core.PayPalHttpClient(environment);
@@ -180,7 +178,7 @@ class PaymentIntegrationService {
                 },
             });
             const order = await client.execute(request_paypal);
-            const approvalUrl = order.result.links.find((link) => link.rel === 'approve')?.href;
+            const approvalUrl = (_b = order.result.links.find((link) => link.rel === 'approve')) === null || _b === void 0 ? void 0 : _b.href;
             return {
                 success: true,
                 transaction_id: order.result.id,
@@ -199,6 +197,7 @@ class PaymentIntegrationService {
     }
     // Razorpay Payment Handler
     async handleRazorpayPayment(config, request) {
+        var _a;
         try {
             const Razorpay = require('razorpay');
             const razorpay = new Razorpay({
@@ -209,10 +208,7 @@ class PaymentIntegrationService {
                 amount: Math.round(request.amount * 100), // Razorpay uses paise
                 currency: request.currency,
                 receipt: request.order_id,
-                notes: {
-                    description: request.description || 'Payment',
-                    ...request.metadata,
-                },
+                notes: Object.assign({ description: request.description || 'Payment' }, request.metadata),
                 callback_url: request.return_url,
                 cancel_url: request.cancel_url,
             };
@@ -220,7 +216,7 @@ class PaymentIntegrationService {
             return {
                 success: true,
                 transaction_id: order.id,
-                payment_url: `${config.config?.payment_url || 'https://checkout.razorpay.com/v1/checkout.html'}?key=${config.api_key}&amount=${options.amount}&currency=${options.currency}&order_id=${order.id}`,
+                payment_url: `${((_a = config.config) === null || _a === void 0 ? void 0 : _a.payment_url) || 'https://checkout.razorpay.com/v1/checkout.html'}?key=${config.api_key}&amount=${options.amount}&currency=${options.currency}&order_id=${order.id}`,
                 status: 'pending',
                 gateway_response: order,
             };
@@ -246,10 +242,7 @@ class PaymentIntegrationService {
                     currency: request.currency,
                 },
                 pricing_type: 'fixed_price',
-                metadata: {
-                    order_id: request.order_id,
-                    ...request.metadata,
-                },
+                metadata: Object.assign({ order_id: request.order_id }, request.metadata),
                 redirect_url: request.return_url,
                 cancel_url: request.cancel_url,
             });
@@ -271,6 +264,7 @@ class PaymentIntegrationService {
     }
     // Oxapay Payment Handler
     async handleOxapayPayment(config, request) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         try {
             const axios = require('axios');
             // Try different possible endpoints for creating invoices
@@ -283,18 +277,7 @@ class PaymentIntegrationService {
             let lastError = null;
             for (const endpoint of possibleEndpoints) {
                 try {
-                    const res = await axios.post(`${config.api_endpoint}${endpoint}`, {
-                        amount: request.amount,
-                        currency: request.currency,
-                        callback_url: config.webhook_url,
-                        order_id: request.order_id,
-                        network: config.config?.network || 'TRC20',
-                        lifetime: config.config?.invoice_lifetime || 900,
-                        confirmations: config.config?.callback_confirmations || 1,
-                        description: request.description || 'Deposit',
-                        merchant_id: config.merchant_id,
-                        ...request.metadata,
-                    }, {
+                    const res = await axios.post(`${config.api_endpoint}${endpoint}`, Object.assign({ amount: request.amount, currency: request.currency, callback_url: config.webhook_url, order_id: request.order_id, network: ((_a = config.config) === null || _a === void 0 ? void 0 : _a.network) || 'TRC20', lifetime: ((_b = config.config) === null || _b === void 0 ? void 0 : _b.invoice_lifetime) || 900, confirmations: ((_c = config.config) === null || _c === void 0 ? void 0 : _c.callback_confirmations) || 1, description: request.description || 'Deposit', merchant_id: config.merchant_id }, request.metadata), {
                         headers: {
                             'merchant_api_key': config.merchant_id || config.api_key,
                             'Content-Type': 'application/json'
@@ -303,8 +286,8 @@ class PaymentIntegrationService {
                     console.log('OxaPay response:', JSON.stringify(res.data, null, 2));
                     return {
                         success: true,
-                        transaction_id: res.data.data?.track_id || res.data.invoice_id || res.data.id,
-                        payment_url: res.data.data?.payment_url || res.data.payment_url || res.data.pay_address_url || res.data.url,
+                        transaction_id: ((_d = res.data.data) === null || _d === void 0 ? void 0 : _d.track_id) || res.data.invoice_id || res.data.id,
+                        payment_url: ((_e = res.data.data) === null || _e === void 0 ? void 0 : _e.payment_url) || res.data.payment_url || res.data.pay_address_url || res.data.url,
                         status: 'pending',
                         gateway_response: res.data,
                     };
@@ -312,7 +295,7 @@ class PaymentIntegrationService {
                 catch (error) {
                     lastError = error;
                     // If it's a 404, try the next endpoint
-                    if (error?.response?.status === 404) {
+                    if (((_f = error === null || error === void 0 ? void 0 : error.response) === null || _f === void 0 ? void 0 : _f.status) === 404) {
                         continue;
                     }
                     // If it's a different error, break and return the error
@@ -323,41 +306,42 @@ class PaymentIntegrationService {
             return {
                 success: false,
                 status: 'failed',
-                message: lastError?.response?.data?.message || lastError?.message || 'Oxapay payment creation failed - no valid endpoint found',
-                gateway_response: lastError?.response?.data,
+                message: ((_h = (_g = lastError === null || lastError === void 0 ? void 0 : lastError.response) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h.message) || (lastError === null || lastError === void 0 ? void 0 : lastError.message) || 'Oxapay payment creation failed - no valid endpoint found',
+                gateway_response: (_j = lastError === null || lastError === void 0 ? void 0 : lastError.response) === null || _j === void 0 ? void 0 : _j.data,
             };
         }
         catch (error) {
             return {
                 success: false,
                 status: 'failed',
-                message: error?.response?.data?.message || error.message || 'Oxapay payment creation failed',
-                gateway_response: error?.response?.data,
+                message: ((_l = (_k = error === null || error === void 0 ? void 0 : error.response) === null || _k === void 0 ? void 0 : _k.data) === null || _l === void 0 ? void 0 : _l.message) || error.message || 'Oxapay payment creation failed',
+                gateway_response: (_m = error === null || error === void 0 ? void 0 : error.response) === null || _m === void 0 ? void 0 : _m.data,
             };
         }
     }
     // Oxapay Withdrawal Handler
     async handleOxapayWithdrawal(config, request) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
         try {
             const axios = require('axios');
             console.log('OxaPay Withdrawal Request:', {
                 endpoint: `${config.api_endpoint}/payout`,
-                address: request.metadata?.address,
+                address: (_a = request.metadata) === null || _a === void 0 ? void 0 : _a.address,
                 amount: request.amount,
                 currency: request.currency,
-                network: request.metadata?.network || config.config?.network || 'TRC20',
-                memo: request.metadata?.memo,
+                network: ((_b = request.metadata) === null || _b === void 0 ? void 0 : _b.network) || ((_c = config.config) === null || _c === void 0 ? void 0 : _c.network) || 'TRC20',
+                memo: (_d = request.metadata) === null || _d === void 0 ? void 0 : _d.memo,
                 description: request.description || 'Withdrawal',
                 order_id: request.order_id,
                 payout_api_key: config.payout_api_key ? 'SET' : 'NOT SET'
             });
             // Use the payout API endpoint and authentication header
             const res = await axios.post(`${config.api_endpoint}/payout`, {
-                address: request.metadata?.address,
+                address: (_e = request.metadata) === null || _e === void 0 ? void 0 : _e.address,
                 amount: request.amount,
                 currency: request.currency,
-                network: request.metadata?.network || config.config?.network || 'TRC20',
-                memo: request.metadata?.memo,
+                network: ((_f = request.metadata) === null || _f === void 0 ? void 0 : _f.network) || ((_g = config.config) === null || _g === void 0 ? void 0 : _g.network) || 'TRC20',
+                memo: (_h = request.metadata) === null || _h === void 0 ? void 0 : _h.memo,
                 description: request.description || 'Withdrawal',
                 order_id: request.order_id,
             }, {
@@ -377,22 +361,23 @@ class PaymentIntegrationService {
         }
         catch (error) {
             console.log('OxaPay Withdrawal Error:', {
-                message: error?.response?.data?.message || error.message,
-                status: error?.response?.status,
-                data: error?.response?.data
+                message: ((_k = (_j = error === null || error === void 0 ? void 0 : error.response) === null || _j === void 0 ? void 0 : _j.data) === null || _k === void 0 ? void 0 : _k.message) || error.message,
+                status: (_l = error === null || error === void 0 ? void 0 : error.response) === null || _l === void 0 ? void 0 : _l.status,
+                data: (_m = error === null || error === void 0 ? void 0 : error.response) === null || _m === void 0 ? void 0 : _m.data
             });
             // Extract the specific error message from OxaPay response
-            const oxaPayError = error?.response?.data?.error?.message || error?.response?.data?.message;
+            const oxaPayError = ((_q = (_p = (_o = error === null || error === void 0 ? void 0 : error.response) === null || _o === void 0 ? void 0 : _o.data) === null || _p === void 0 ? void 0 : _p.error) === null || _q === void 0 ? void 0 : _q.message) || ((_s = (_r = error === null || error === void 0 ? void 0 : error.response) === null || _r === void 0 ? void 0 : _r.data) === null || _s === void 0 ? void 0 : _s.message);
             return {
                 success: false,
                 status: 'failed',
                 message: oxaPayError || error.message || 'Oxapay withdrawal creation failed',
-                gateway_response: error?.response?.data,
+                gateway_response: (_t = error === null || error === void 0 ? void 0 : error.response) === null || _t === void 0 ? void 0 : _t.data,
             };
         }
     }
     // IGPX Sportsbook Payment Handler
     async handleIgpxPayment(config, request) {
+        var _a, _b, _c, _d, _e, _f;
         try {
             const axios = require('axios');
             // Step 1: Authenticate to get token
@@ -407,9 +392,9 @@ class PaymentIntegrationService {
             const expiresIn = authResponse.data.expires_in;
             // Step 2: Start session to get play URL
             const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, {
-                user_id: request.metadata?.user_id?.toString() || request.order_id,
+                user_id: ((_b = (_a = request.metadata) === null || _a === void 0 ? void 0 : _a.user_id) === null || _b === void 0 ? void 0 : _b.toString()) || request.order_id,
                 currency: request.currency,
-                lang: request.metadata?.language || 'en'
+                lang: ((_c = request.metadata) === null || _c === void 0 ? void 0 : _c.language) || 'en'
             }, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -434,8 +419,8 @@ class PaymentIntegrationService {
             return {
                 success: false,
                 status: 'failed',
-                message: error?.response?.data?.message || error.message || 'IGPX payment creation failed',
-                gateway_response: error?.response?.data,
+                message: ((_e = (_d = error === null || error === void 0 ? void 0 : error.response) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.message) || error.message || 'IGPX payment creation failed',
+                gateway_response: (_f = error === null || error === void 0 ? void 0 : error.response) === null || _f === void 0 ? void 0 : _f.data,
             };
         }
     }
@@ -462,6 +447,7 @@ class PaymentIntegrationService {
         }
     }
     async checkStripeStatus(config, transactionId) {
+        var _a;
         try {
             const stripe = require('stripe')(config.api_secret);
             const session = await stripe.checkout.sessions.retrieve(transactionId);
@@ -477,7 +463,7 @@ class PaymentIntegrationService {
                 transaction_id: session.id,
                 status,
                 amount: session.amount_total ? session.amount_total / 100 : undefined,
-                currency: session.currency?.toUpperCase(),
+                currency: (_a = session.currency) === null || _a === void 0 ? void 0 : _a.toUpperCase(),
                 gateway_response: session,
             };
         }
@@ -491,9 +477,10 @@ class PaymentIntegrationService {
         }
     }
     async checkPayPalStatus(config, transactionId) {
+        var _a;
         try {
             const paypal = require('@paypal/checkout-server-sdk');
-            const environment = config.config?.sandbox_mode ?
+            const environment = ((_a = config.config) === null || _a === void 0 ? void 0 : _a.sandbox_mode) ?
                 new paypal.core.SandboxEnvironment(config.api_key, config.api_secret) :
                 new paypal.core.LiveEnvironment(config.api_key, config.api_secret);
             const client = new paypal.core.PayPalHttpClient(environment);
@@ -591,6 +578,7 @@ class PaymentIntegrationService {
         }
     }
     async checkOxapayStatus(config, transactionId) {
+        var _a, _b, _c;
         try {
             const axios = require('axios');
             const res = await axios.get(`${config.api_endpoint}/merchant/invoice/${transactionId}`, {
@@ -623,8 +611,8 @@ class PaymentIntegrationService {
                 success: false,
                 transaction_id: transactionId,
                 status: 'failed',
-                message: error?.response?.data?.message || error.message || 'Oxapay status check failed',
-                gateway_response: error?.response?.data,
+                message: ((_b = (_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.message) || error.message || 'Oxapay status check failed',
+                gateway_response: (_c = error === null || error === void 0 ? void 0 : error.response) === null || _c === void 0 ? void 0 : _c.data,
             };
         }
     }
@@ -665,9 +653,10 @@ class PaymentIntegrationService {
         }
     }
     async testPayPalConnection(config) {
+        var _a;
         try {
             const paypal = require('@paypal/checkout-server-sdk');
-            const environment = config.config?.sandbox_mode ?
+            const environment = ((_a = config.config) === null || _a === void 0 ? void 0 : _a.sandbox_mode) ?
                 new paypal.core.SandboxEnvironment(config.api_key, config.api_secret) :
                 new paypal.core.LiveEnvironment(config.api_key, config.api_secret);
             const client = new paypal.core.PayPalHttpClient(environment);
@@ -740,6 +729,7 @@ class PaymentIntegrationService {
         }
     }
     async testOxapayConnection(config) {
+        var _a, _b, _c, _d, _e, _f;
         try {
             const axios = require('axios');
             // Test with the general API endpoint that we know works
@@ -758,10 +748,10 @@ class PaymentIntegrationService {
         }
         catch (error) {
             // If we get a specific error about balance or invalid data, the connection is working
-            if (error?.response?.status === 400 && error?.response?.data?.error?.key) {
+            if (((_a = error === null || error === void 0 ? void 0 : error.response) === null || _a === void 0 ? void 0 : _a.status) === 400 && ((_d = (_c = (_b = error === null || error === void 0 ? void 0 : error.response) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.error) === null || _d === void 0 ? void 0 : _d.key)) {
                 return { success: true, message: 'Oxapay connection successful' };
             }
-            return { success: false, message: error?.response?.data?.message || error.message || 'Oxapay connection failed' };
+            return { success: false, message: ((_f = (_e = error === null || error === void 0 ? void 0 : error.response) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.message) || error.message || 'Oxapay connection failed' };
         }
     }
     // Get available gateways
@@ -786,6 +776,7 @@ class PaymentIntegrationService {
     }
     // Stripe Webhook Handler
     async handleStripeWebhook(config, data, signature) {
+        var _a, _b, _c, _d, _e, _f;
         try {
             // Verify webhook signature
             if (signature && config.webhook_secret) {
@@ -807,17 +798,17 @@ class PaymentIntegrationService {
                 default:
                     return {
                         success: false,
-                        transaction_id: eventData?.object?.id || 'unknown',
+                        transaction_id: ((_a = eventData === null || eventData === void 0 ? void 0 : eventData.object) === null || _a === void 0 ? void 0 : _a.id) || 'unknown',
                         status: 'pending',
                         message: `Unhandled Stripe event: ${type}`
                     };
             }
             return {
                 success: true,
-                transaction_id: eventData?.object?.id,
+                transaction_id: (_b = eventData === null || eventData === void 0 ? void 0 : eventData.object) === null || _b === void 0 ? void 0 : _b.id,
                 status: status,
-                amount: eventData?.object?.amount ? eventData.object.amount / 100 : 0,
-                currency: eventData?.object?.currency,
+                amount: ((_c = eventData === null || eventData === void 0 ? void 0 : eventData.object) === null || _c === void 0 ? void 0 : _c.amount) ? eventData.object.amount / 100 : 0,
+                currency: (_d = eventData === null || eventData === void 0 ? void 0 : eventData.object) === null || _d === void 0 ? void 0 : _d.currency,
                 type: transactionType,
                 gateway_data: data
             };
@@ -825,7 +816,7 @@ class PaymentIntegrationService {
         catch (error) {
             return {
                 success: false,
-                transaction_id: data?.data?.object?.id || 'unknown',
+                transaction_id: ((_f = (_e = data === null || data === void 0 ? void 0 : data.data) === null || _e === void 0 ? void 0 : _e.object) === null || _f === void 0 ? void 0 : _f.id) || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'Stripe webhook processing failed',
                 gateway_data: data
@@ -834,6 +825,7 @@ class PaymentIntegrationService {
     }
     // PayPal Webhook Handler
     async handlePayPalWebhook(config, data, signature) {
+        var _a, _b, _c;
         try {
             const { event_type, resource } = data;
             let status = 'pending';
@@ -849,17 +841,17 @@ class PaymentIntegrationService {
                 default:
                     return {
                         success: false,
-                        transaction_id: resource?.id || 'unknown',
+                        transaction_id: (resource === null || resource === void 0 ? void 0 : resource.id) || 'unknown',
                         status: 'pending',
                         message: `Unhandled PayPal event: ${event_type}`
                     };
             }
             return {
                 success: true,
-                transaction_id: resource?.id,
+                transaction_id: resource === null || resource === void 0 ? void 0 : resource.id,
                 status: status,
-                amount: resource?.amount?.value ? parseFloat(resource.amount.value) : 0,
-                currency: resource?.amount?.currency_code,
+                amount: ((_a = resource === null || resource === void 0 ? void 0 : resource.amount) === null || _a === void 0 ? void 0 : _a.value) ? parseFloat(resource.amount.value) : 0,
+                currency: (_b = resource === null || resource === void 0 ? void 0 : resource.amount) === null || _b === void 0 ? void 0 : _b.currency_code,
                 type: transactionType,
                 gateway_data: data
             };
@@ -867,7 +859,7 @@ class PaymentIntegrationService {
         catch (error) {
             return {
                 success: false,
-                transaction_id: data?.resource?.id || 'unknown',
+                transaction_id: ((_c = data === null || data === void 0 ? void 0 : data.resource) === null || _c === void 0 ? void 0 : _c.id) || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'PayPal webhook processing failed',
                 gateway_data: data
@@ -876,6 +868,7 @@ class PaymentIntegrationService {
     }
     // Razorpay Webhook Handler
     async handleRazorpayWebhook(config, data, signature) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         try {
             // Verify webhook signature
             if (signature && config.webhook_secret) {
@@ -902,17 +895,17 @@ class PaymentIntegrationService {
                 default:
                     return {
                         success: false,
-                        transaction_id: payload?.payment?.entity?.id || 'unknown',
+                        transaction_id: ((_b = (_a = payload === null || payload === void 0 ? void 0 : payload.payment) === null || _a === void 0 ? void 0 : _a.entity) === null || _b === void 0 ? void 0 : _b.id) || 'unknown',
                         status: 'pending',
                         message: `Unhandled Razorpay event: ${event}`
                     };
             }
             return {
                 success: true,
-                transaction_id: payload?.payment?.entity?.id,
+                transaction_id: (_d = (_c = payload === null || payload === void 0 ? void 0 : payload.payment) === null || _c === void 0 ? void 0 : _c.entity) === null || _d === void 0 ? void 0 : _d.id,
                 status: status,
-                amount: payload?.payment?.entity?.amount ? payload.payment.entity.amount / 100 : 0,
-                currency: payload?.payment?.entity?.currency,
+                amount: ((_f = (_e = payload === null || payload === void 0 ? void 0 : payload.payment) === null || _e === void 0 ? void 0 : _e.entity) === null || _f === void 0 ? void 0 : _f.amount) ? payload.payment.entity.amount / 100 : 0,
+                currency: (_h = (_g = payload === null || payload === void 0 ? void 0 : payload.payment) === null || _g === void 0 ? void 0 : _g.entity) === null || _h === void 0 ? void 0 : _h.currency,
                 type: transactionType,
                 gateway_data: data
             };
@@ -920,7 +913,7 @@ class PaymentIntegrationService {
         catch (error) {
             return {
                 success: false,
-                transaction_id: data?.payload?.payment?.entity?.id || 'unknown',
+                transaction_id: ((_l = (_k = (_j = data === null || data === void 0 ? void 0 : data.payload) === null || _j === void 0 ? void 0 : _j.payment) === null || _k === void 0 ? void 0 : _k.entity) === null || _l === void 0 ? void 0 : _l.id) || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'Razorpay webhook processing failed',
                 gateway_data: data
@@ -929,6 +922,7 @@ class PaymentIntegrationService {
     }
     // Crypto Webhook Handler
     async handleCryptoWebhook(config, data, signature) {
+        var _a, _b, _c, _d, _e;
         try {
             const { type, data: eventData } = data;
             let status = 'pending';
@@ -944,17 +938,17 @@ class PaymentIntegrationService {
                 default:
                     return {
                         success: false,
-                        transaction_id: eventData?.id || 'unknown',
+                        transaction_id: (eventData === null || eventData === void 0 ? void 0 : eventData.id) || 'unknown',
                         status: 'pending',
                         message: `Unhandled Crypto event: ${type}`
                     };
             }
             return {
                 success: true,
-                transaction_id: eventData?.id,
+                transaction_id: eventData === null || eventData === void 0 ? void 0 : eventData.id,
                 status: status,
-                amount: eventData?.pricing?.local?.amount ? parseFloat(eventData.pricing.local.amount) : 0,
-                currency: eventData?.pricing?.local?.currency,
+                amount: ((_b = (_a = eventData === null || eventData === void 0 ? void 0 : eventData.pricing) === null || _a === void 0 ? void 0 : _a.local) === null || _b === void 0 ? void 0 : _b.amount) ? parseFloat(eventData.pricing.local.amount) : 0,
+                currency: (_d = (_c = eventData === null || eventData === void 0 ? void 0 : eventData.pricing) === null || _c === void 0 ? void 0 : _c.local) === null || _d === void 0 ? void 0 : _d.currency,
                 type: transactionType,
                 gateway_data: data
             };
@@ -962,7 +956,7 @@ class PaymentIntegrationService {
         catch (error) {
             return {
                 success: false,
-                transaction_id: data?.data?.id || 'unknown',
+                transaction_id: ((_e = data === null || data === void 0 ? void 0 : data.data) === null || _e === void 0 ? void 0 : _e.id) || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'Crypto webhook processing failed',
                 gateway_data: data
@@ -1001,7 +995,7 @@ class PaymentIntegrationService {
         catch (error) {
             return {
                 success: false,
-                transaction_id: data?.invoice_id || 'unknown',
+                transaction_id: (data === null || data === void 0 ? void 0 : data.invoice_id) || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'Oxapay webhook processing failed',
                 gateway_data: data
@@ -1063,7 +1057,7 @@ class PaymentIntegrationService {
         catch (error) {
             return {
                 success: false,
-                transaction_id: data?.transaction_id || 'unknown',
+                transaction_id: (data === null || data === void 0 ? void 0 : data.transaction_id) || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'IGPX webhook processing failed',
                 gateway_data: data

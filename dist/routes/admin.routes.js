@@ -1434,10 +1434,7 @@ router.post("/users/:id/roles", async (req, res) => {
         res.status(201).json({
             success: true,
             message: "Previous roles removed and new role assigned successfully",
-            data: {
-                ...result.rows[0],
-                role_name: roleName
-            }
+            data: Object.assign(Object.assign({}, result.rows[0]), { role_name: roleName })
         });
     }
     catch (error) {
@@ -1531,6 +1528,7 @@ router.delete("/users/:id/roles/:roleId", async (req, res) => {
  *         description: Password changed successfully
  */
 router.put("/users/:id/password", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), async (req, res) => {
+    var _a;
     try {
         const userId = parseInt(req.params.id);
         const { new_password, reason, force_password_change } = req.body;
@@ -1566,7 +1564,7 @@ router.put("/users/:id/password", authenticate_1.authenticate, (0, authorize_1.a
             data: {
                 user_id: userId,
                 username: userCheck.rows[0].username,
-                changed_by: req.user?.id || 'admin',
+                changed_by: ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id) || 'admin',
                 reason: reason || 'Password changed by admin',
                 force_password_change: force_password_change || false
             }
@@ -3031,8 +3029,9 @@ router.post("/import-all-games", authenticate_1.authenticate, adminAuth, async (
  *         description: Gateway code already exists
  */
 router.post("/payment-gateways", (0, validate_1.validate)({ body: admin_schema_1.CreatePaymentGatewayInput }), async (req, res) => {
+    var _a;
     try {
-        const gatewayData = req.validated?.body;
+        const gatewayData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const gateway = await (0, payment_gateway_service_1.createPaymentGatewayService)(gatewayData);
         res.status(201).json({ success: true, data: gateway });
     }
@@ -3175,13 +3174,14 @@ router.get("/payment-gateways/:id", async (req, res) => {
  *         description: Unauthorized
  */
 router.put("/payment-gateways/:id", (0, validate_1.validate)({ body: admin_schema_1.UpdatePaymentGatewayInput }), async (req, res) => {
+    var _a;
     try {
         const gatewayId = parseInt(req.params.id);
         if (isNaN(gatewayId)) {
             res.status(400).json({ success: false, message: "Invalid gateway ID" });
             return;
         }
-        const gatewayData = req.validated?.body;
+        const gatewayData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const gateway = await (0, payment_gateway_service_1.updatePaymentGatewayService)(gatewayId, gatewayData);
         res.status(200).json({ success: true, data: gateway });
     }
@@ -5097,18 +5097,19 @@ router.get("/bets", authenticate_1.authenticate, (0, authorize_1.authorize)(["Ad
         // Get user and game data from PostgreSQL
         const pool = require("../db/postgres").default;
         const enrichedBets = await Promise.all(bets.map(async (bet) => {
+            var _a, _b, _c, _d;
             // Get user data
             const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [bet.user_id]);
-            const username = userResult.rows[0]?.username || 'Unknown';
+            const username = ((_a = userResult.rows[0]) === null || _a === void 0 ? void 0 : _a.username) || 'Unknown';
             // Get game data
             const gameResult = await pool.query('SELECT name, category FROM games WHERE id = $1', [bet.game_id]);
-            const gameName = gameResult.rows[0]?.name || 'Unknown Game';
-            const category = gameResult.rows[0]?.category || 'slots';
+            const gameName = ((_b = gameResult.rows[0]) === null || _b === void 0 ? void 0 : _b.name) || 'Unknown Game';
+            const category = ((_c = gameResult.rows[0]) === null || _c === void 0 ? void 0 : _c.category) || 'slots';
             // Get transaction data
             const transaction = await mongoHybridService.getTransaction(bet.transaction_id);
             // Get access token
             const tokenResult = await pool.query('SELECT access_token FROM tokens WHERE user_id = $1 AND expired_at > NOW() ORDER BY created_at DESC LIMIT 1', [bet.user_id]);
-            const accessToken = tokenResult.rows[0]?.access_token || '';
+            const accessToken = ((_d = tokenResult.rows[0]) === null || _d === void 0 ? void 0 : _d.access_token) || '';
             return {
                 bet_id: bet.id,
                 user_id: bet.user_id,
@@ -5121,10 +5122,10 @@ router.get("/bets", authenticate_1.authenticate, (0, authorize_1.authorize)(["Ad
                 outcome: bet.outcome,
                 placed_at: bet.placed_at,
                 result_at: bet.result_at,
-                transaction_id: transaction?.external_reference || bet.transaction_id,
+                transaction_id: (transaction === null || transaction === void 0 ? void 0 : transaction.external_reference) || bet.transaction_id,
                 access_token: accessToken,
-                balance_before: transaction?.balance_before,
-                balance_after: transaction?.balance_after
+                balance_before: transaction === null || transaction === void 0 ? void 0 : transaction.balance_before,
+                balance_after: transaction === null || transaction === void 0 ? void 0 : transaction.balance_after
             };
         }));
         res.json({ success: true, data: enrichedBets });
@@ -5241,11 +5242,12 @@ router.get("/bets", authenticate_1.authenticate, (0, authorize_1.authorize)(["Ad
  *         description: Internal server error
  */
 router.post("/bets/:id/cancel", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), async (req, res) => {
+    var _a, _b, _c;
     try {
         const betId = parseInt(req.params.id);
         const { reason, admin_note, notify_user, refund_method, force_cancel } = req.body;
-        const adminId = req.user?.userId;
-        const adminUsername = req.user?.username || 'admin';
+        const adminId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+        const adminUsername = ((_b = req.user) === null || _b === void 0 ? void 0 : _b.username) || 'admin';
         if (!betId) {
             return res.status(400).json({ success: false, message: 'Bet ID is required' });
         }
@@ -5265,7 +5267,7 @@ router.post("/bets/:id/cancel", authenticate_1.authenticate, (0, authorize_1.aut
         // Get user details from PostgreSQL
         const pool = require("../db/postgres").default;
         const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [bet.user_id]);
-        const username = userResult.rows[0]?.username || 'Unknown';
+        const username = ((_c = userResult.rows[0]) === null || _c === void 0 ? void 0 : _c.username) || 'Unknown';
         // Cancel the transaction using the existing cancelGameService
         const { cancelGameService } = require("../services/game/game.service");
         const result = await cancelGameService(bet.user_id, transaction.external_reference || transaction.id.toString(), // Use external_reference if available
@@ -7436,14 +7438,7 @@ router.post("/users/:id/blacklist", authenticate_1.authenticate, (0, authorize_1
         // - Setting expiration date if duration is temporary
         res.status(200).json({
             success: true,
-            data: {
-                ...user,
-                blacklisted_at: new Date().toISOString(),
-                blacklist_reason: reason,
-                admin_note: admin_note || null,
-                notify_user: notify_user || false,
-                duration: duration || 'permanent'
-            },
+            data: Object.assign(Object.assign({}, user), { blacklisted_at: new Date().toISOString(), blacklist_reason: reason, admin_note: admin_note || null, notify_user: notify_user || false, duration: duration || 'permanent' }),
             message: "User blacklisted successfully"
         });
     }
@@ -7513,13 +7508,7 @@ router.post("/users/:id/unblacklist", authenticate_1.authenticate, (0, authorize
         // - Logging admin note
         res.status(200).json({
             success: true,
-            data: {
-                ...user,
-                unblacklisted_at: new Date().toISOString(),
-                unblacklist_reason: reason || "Removed from blacklist by admin",
-                admin_note: admin_note || null,
-                notify_user: notify_user || false
-            },
+            data: Object.assign(Object.assign({}, user), { unblacklisted_at: new Date().toISOString(), unblacklist_reason: reason || "Removed from blacklist by admin", admin_note: admin_note || null, notify_user: notify_user || false }),
             message: "User removed from blacklist successfully"
         });
     }
@@ -7648,11 +7637,8 @@ router.get("/users/blacklist", authenticate_1.authenticate, (0, authorize_1.auth
         const result = await postgres_1.default.query(query, values);
         res.status(200).json({
             success: true,
-            data: result.rows.map(user => ({
-                ...user,
-                blacklisted_at: user.updated_at,
-                blacklist_reason: "Banned by admin" // You could store this in a separate table
-            })),
+            data: result.rows.map(user => (Object.assign(Object.assign({}, user), { blacklisted_at: user.updated_at, blacklist_reason: "Banned by admin" // You could store this in a separate table
+             }))),
             pagination: {
                 total,
                 page,

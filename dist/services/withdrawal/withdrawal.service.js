@@ -308,12 +308,8 @@ class WithdrawalService {
         else if (riskScore >= 30) {
             riskLevel = 'medium';
         }
-        return {
-            riskScore,
-            riskLevel,
-            isHighRisk: riskScore >= 50,
-            ...checks
-        };
+        return Object.assign({ riskScore,
+            riskLevel, isHighRisk: riskScore >= 50 }, checks);
     }
     /**
      * Check if current time is within auto-processing hours
@@ -661,11 +657,7 @@ class WithdrawalService {
                     });
                 }
             }
-            return {
-                success: true,
-                ...results,
-                message: `Processed ${results.processed} withdrawals, ${results.failed} failed`
-            };
+            return Object.assign(Object.assign({ success: true }, results), { message: `Processed ${results.processed} withdrawals, ${results.failed} failed` });
         }
         finally {
             client.release();

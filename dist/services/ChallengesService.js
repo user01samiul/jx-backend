@@ -152,7 +152,7 @@ class ChallengesService {
             if (challenge.expires_at && new Date(challenge.expires_at) < new Date()) {
                 await client.query(`UPDATE player_challenges SET status = 'EXPIRED' WHERE id = $1`, [challenge.id]);
                 await client.query('COMMIT');
-                return { ...challenge, status: 'EXPIRED' };
+                return Object.assign(Object.assign({}, challenge), { status: 'EXPIRED' });
             }
             // Update progress
             const newProgress = challenge.progress + progressIncrement;

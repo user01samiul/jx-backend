@@ -10,8 +10,9 @@ const adminGameImportService = new admin_game_import_service_1.AdminGameImportSe
 // GAME MANAGEMENT CONTROLLERS
 // =====================================================
 const createGame = async (req, res, next) => {
+    var _a;
     try {
-        const gameData = req.validated?.body;
+        const gameData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const game = await (0, admin_service_1.createGameService)(gameData);
         // Log activity
         await activity_logger_service_1.ActivityLoggerService.logGameCreated(req, game.id, game.name, game.provider || 'Unknown');
@@ -23,13 +24,14 @@ const createGame = async (req, res, next) => {
 };
 exports.createGame = createGame;
 const updateGame = async (req, res, next) => {
+    var _a;
     try {
         const gameId = parseInt(req.params.id);
         if (isNaN(gameId)) {
             res.status(400).json({ success: false, message: "Invalid game ID" });
             return;
         }
-        const gameData = req.validated?.body;
+        const gameData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const game = await (0, admin_service_1.updateGameService)(gameId, gameData);
         // Log activity for each updated field
         for (const [field, value] of Object.entries(gameData)) {
@@ -85,13 +87,14 @@ const getUsersForAdmin = async (req, res, next) => {
 };
 exports.getUsersForAdmin = getUsersForAdmin;
 const updateUserStatus = async (req, res, next) => {
+    var _a;
     try {
         const userId = parseInt(req.params.id);
         if (isNaN(userId)) {
             res.status(400).json({ success: false, message: "Invalid user ID" });
             return;
         }
-        const statusData = req.validated?.body;
+        const statusData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const user = await (0, admin_service_1.updateUserStatusService)(userId, statusData);
         // Log activity
         await activity_logger_service_1.ActivityLoggerService.logUserStatusChanged(req, userId, statusData.status || 'unknown', user.status || statusData.status);
@@ -103,13 +106,14 @@ const updateUserStatus = async (req, res, next) => {
 };
 exports.updateUserStatus = updateUserStatus;
 const updateUserBalance = async (req, res, next) => {
+    var _a;
     try {
         const userId = parseInt(req.params.id);
         if (isNaN(userId)) {
             res.status(400).json({ success: false, message: "Invalid user ID" });
             return;
         }
-        const balanceData = req.validated?.body;
+        const balanceData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const result = await (0, admin_service_1.updateUserBalanceService)(userId, balanceData);
         // Log activity
         await activity_logger_service_1.ActivityLoggerService.logUserBalanceAdjusted(req, userId, balanceData.amount, balanceData.type || 'adjustment', balanceData.reason || 'Manual adjustment');
@@ -269,8 +273,9 @@ const getSystemSettings = async (req, res, next) => {
 };
 exports.getSystemSettings = getSystemSettings;
 const updateSystemSettings = async (req, res, next) => {
+    var _a;
     try {
-        const settingsData = req.validated?.body;
+        const settingsData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const settings = await (0, admin_service_1.updateSystemSettingsService)(settingsData);
         // Log activity for each updated setting
         for (const [key, value] of Object.entries(settingsData)) {
@@ -320,8 +325,9 @@ exports.getUserAnalytics = getUserAnalytics;
 // PAYMENT GATEWAY CONTROLLERS
 // =====================================================
 const createPaymentGateway = async (req, res, next) => {
+    var _a;
     try {
-        const gatewayData = req.validated?.body;
+        const gatewayData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const gateway = await (0, payment_gateway_service_1.createPaymentGatewayService)(gatewayData);
         res.status(201).json({ success: true, data: gateway });
     }
@@ -331,13 +337,14 @@ const createPaymentGateway = async (req, res, next) => {
 };
 exports.createPaymentGateway = createPaymentGateway;
 const updatePaymentGateway = async (req, res, next) => {
+    var _a;
     try {
         const gatewayId = parseInt(req.params.id);
         if (isNaN(gatewayId)) {
             res.status(400).json({ success: false, message: "Invalid gateway ID" });
             return;
         }
-        const gatewayData = req.validated?.body;
+        const gatewayData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const gateway = await (0, payment_gateway_service_1.updatePaymentGatewayService)(gatewayId, gatewayData);
         res.status(200).json({ success: true, data: gateway });
     }
@@ -502,8 +509,9 @@ const getRTPAnalytics = async (req, res, next) => {
 };
 exports.getRTPAnalytics = getRTPAnalytics;
 const bulkUpdateRTP = async (req, res, next) => {
+    var _a;
     try {
-        const { game_ids, rtp_percentage, category, provider } = req.validated?.body;
+        const { game_ids, rtp_percentage, category, provider } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const { bulkUpdateRTPService } = require("../../services/admin/rtp.service");
         const result = await bulkUpdateRTPService({
             game_ids,
@@ -674,8 +682,9 @@ const triggerManualDailySummary = async (req, res, next) => {
 };
 exports.triggerManualDailySummary = triggerManualDailySummary;
 const createUser = async (req, res, next) => {
+    var _a;
     try {
-        const userData = req.validated?.body;
+        const userData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         // Import the register service and modify it for admin use
         const { registerService } = require('../../services/auth/auth.service');
         // Create a modified version of the registration data without captcha

@@ -273,9 +273,9 @@ async function getDashboardStats(req, res) {
     }
     catch (error) {
         console.error("Error fetching dashboard stats:", error);
-        console.error("Error stack:", error?.stack);
-        console.error("Error message:", error?.message);
-        res.status(500).json({ success: false, error: "Internal server error", details: error?.message });
+        console.error("Error stack:", error === null || error === void 0 ? void 0 : error.stack);
+        console.error("Error message:", error === null || error === void 0 ? void 0 : error.message);
+        res.status(500).json({ success: false, error: "Internal server error", details: error === null || error === void 0 ? void 0 : error.message });
     }
 }
 /**

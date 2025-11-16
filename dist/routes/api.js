@@ -1710,8 +1710,9 @@ router.get("/games/:id/game-data-sample", game_controller_1.getGameDataSample);
  *         description: Unauthorized
  */
 router.get("/user/game-bets", authenticate_1.authenticate, async (req, res) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         const { MongoHybridService } = require("../services/mongo/mongo-hybrid.service");
         const mongoHybridService = new MongoHybridService();
         // Get category balances from MongoDB
@@ -1719,12 +1720,13 @@ router.get("/user/game-bets", authenticate_1.authenticate, async (req, res) => {
         // Get game data from PostgreSQL
         const pool = require("../db/postgres").default;
         const enrichedBalances = await Promise.all(categoryBalances.map(async (balance) => {
+            var _a;
             // Get game stats for this category
             const gameStatsResult = await pool.query('SELECT COUNT(*) as game_count FROM games WHERE category = $1 AND is_active = true', [balance.category]);
             return {
                 category: balance.category,
                 balance: balance.balance,
-                game_count: parseInt(gameStatsResult.rows[0]?.game_count || 0)
+                game_count: parseInt(((_a = gameStatsResult.rows[0]) === null || _a === void 0 ? void 0 : _a.game_count) || 0)
             };
         }));
         res.json({ success: true, data: enrichedBalances });
@@ -1903,8 +1905,9 @@ router.get("/payment/gateways", authenticate_1.authenticate, (0, validate_1.vali
  *         description: Deposit initiated
  */
 router.post("/payment/create", authenticate_1.authenticate, async (req, res) => {
+    var _a, _b, _c, _d;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -1953,17 +1956,13 @@ router.post("/payment/create", authenticate_1.authenticate, async (req, res) => 
             amount,
             currency,
             order_id: orderId,
-            customer_email: req.user?.email,
-            customer_name: `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim(),
+            customer_email: (_b = req.user) === null || _b === void 0 ? void 0 : _b.email,
+            customer_name: `${((_c = req.user) === null || _c === void 0 ? void 0 : _c.first_name) || ''} ${((_d = req.user) === null || _d === void 0 ? void 0 : _d.last_name) || ''}`.trim(),
             description: description || `${type} payment`,
             return_url: return_url || `${process.env.FRONTEND_URL}/payment/success`,
             cancel_url: cancel_url || `${process.env.FRONTEND_URL}/payment/cancel`,
-            metadata: {
-                user_id: userId,
-                gateway_id: gateway_id,
-                type: type,
-                ...metadata // Include any additional metadata
-            }
+            metadata: Object.assign({ user_id: userId, gateway_id: gateway_id, type: type }, metadata // Include any additional metadata
+            )
         };
         const paymentResponse = await paymentService.createPayment(gateway.code, config, paymentRequest);
         if (!paymentResponse.success) {
@@ -2031,8 +2030,9 @@ router.post("/payment/create", authenticate_1.authenticate, async (req, res) => 
  *         description: Withdrawal initiated
  */
 router.post("/payment/withdraw", authenticate_1.authenticate, async (req, res) => {
+    var _a, _b, _c, _d;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -2081,21 +2081,12 @@ router.post("/payment/withdraw", authenticate_1.authenticate, async (req, res) =
             amount,
             currency,
             order_id: orderId,
-            customer_email: req.user?.email,
-            customer_name: `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim(),
+            customer_email: (_b = req.user) === null || _b === void 0 ? void 0 : _b.email,
+            customer_name: `${((_c = req.user) === null || _c === void 0 ? void 0 : _c.first_name) || ''} ${((_d = req.user) === null || _d === void 0 ? void 0 : _d.last_name) || ''}`.trim(),
             description: `Withdrawal to ${address}`,
             return_url: `${process.env.FRONTEND_URL}/payment/success`, // Placeholder, adjust as needed
             cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`, // Placeholder, adjust as needed
-            metadata: {
-                user_id: userId,
-                gateway_id: gateway.id,
-                type: 'withdrawal',
-                address: address,
-                network: network,
-                memo: memo,
-                ...(network ? { network: network } : {}),
-                ...(memo ? { memo: memo } : {})
-            }
+            metadata: Object.assign(Object.assign({ user_id: userId, gateway_id: gateway.id, type: 'withdrawal', address: address, network: network, memo: memo }, (network ? { network: network } : {})), (memo ? { memo: memo } : {}))
         };
         const withdrawalResponse = await paymentService.createWithdrawal(gateway.code, config, withdrawalRequest);
         if (!withdrawalResponse.success) {
@@ -2217,8 +2208,9 @@ router.post("/payment/withdraw", authenticate_1.authenticate, async (req, res) =
  *         description: Transaction not found
  */
 router.get("/payment/status/:transaction_id", authenticate_1.authenticate, async (req, res) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -2380,6 +2372,7 @@ router.get("/payment/status/:transaction_id", authenticate_1.authenticate, async
  *         description: Internal server error
  */
 router.post("/payment/webhook/igpx", async (req, res) => {
+    var _a, _b, _c;
     try {
         const webhookData = req.body;
         const securityHash = req.headers['x-security-hash'];
@@ -2418,21 +2411,21 @@ router.post("/payment/webhook/igpx", async (req, res) => {
                 // Bet placed - deduct from balance
                 await BalanceService.deductBalance(userId, webhookResult.amount || 0, 'IGPX Sportsbook Bet', {
                     igpx_transaction_id: webhookResult.transaction_id,
-                    igpx_action: webhookResult.metadata?.igpx_action
+                    igpx_action: (_a = webhookResult.metadata) === null || _a === void 0 ? void 0 : _a.igpx_action
                 });
             }
             else if (webhookResult.type === 'deposit') {
                 // Result/win - add to balance
                 await BalanceService.addBalance(userId, webhookResult.amount || 0, 'IGPX Sportsbook Result', {
                     igpx_transaction_id: webhookResult.transaction_id,
-                    igpx_action: webhookResult.metadata?.igpx_action
+                    igpx_action: (_b = webhookResult.metadata) === null || _b === void 0 ? void 0 : _b.igpx_action
                 });
             }
         }
         // Log the webhook
         console.log('IGPX webhook processed successfully:', {
             transaction_id: webhookResult.transaction_id,
-            action: webhookResult.metadata?.igpx_action,
+            action: (_c = webhookResult.metadata) === null || _c === void 0 ? void 0 : _c.igpx_action,
             user_id: userId,
             amount: webhookResult.amount,
             type: webhookResult.type

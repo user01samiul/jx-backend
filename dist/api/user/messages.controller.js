@@ -6,8 +6,9 @@ const messages_service_1 = require("../../services/user/messages.service");
  * Get user messages with filtering and pagination
  */
 const getUserMessages = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -33,8 +34,9 @@ exports.getUserMessages = getUserMessages;
  * Mark a message as read
  */
 const markMessageAsRead = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -63,8 +65,9 @@ exports.markMessageAsRead = markMessageAsRead;
  * Get unread message count
  */
 const getUnreadCount = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;

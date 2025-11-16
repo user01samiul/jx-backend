@@ -28,12 +28,13 @@ class BalanceService {
      * Calculate real-time balance from transactions
      */
     static async calculateRealTimeBalance(userId) {
+        var _a, _b, _c;
         console.log('[DEBUG][BALANCE CALC][ENTERED] userId:', userId);
         const client = await postgres_1.default.connect();
         try {
             // Get user currency
             const currencyResult = await client.query("SELECT currency FROM user_profiles WHERE user_id = $1", [userId]);
-            const currency = currencyResult.rows[0]?.currency || 'USD';
+            const currency = ((_a = currencyResult.rows[0]) === null || _a === void 0 ? void 0 : _a.currency) || 'USD';
             console.log('[DEBUG][BALANCE CALC][CURRENCY]', currency);
             // Calculate balance from main wallet transactions only (exclude category transactions)
             const txDebugResult = await client.query(`SELECT id, type, amount, metadata, status, description, created_at FROM transactions WHERE user_id = $1 AND status = 'completed' AND (metadata->>'category' IS NULL OR metadata->>'category' = '') ORDER BY created_at DESC`, [userId]);
@@ -77,10 +78,10 @@ class BalanceService {
         FROM bets 
         WHERE user_id = $1 AND outcome = 'pending'
         `, [userId]);
-            const lockedBalance = Number(lockedResult.rows[0]?.locked_amount || 0);
+            const lockedBalance = Number(((_b = lockedResult.rows[0]) === null || _b === void 0 ? void 0 : _b.locked_amount) || 0);
             // Get bonus balance
             const bonusResult = await client.query("SELECT bonus_balance FROM user_balances WHERE user_id = $1", [userId]);
-            const bonusBalance = Number(bonusResult.rows[0]?.bonus_balance || 0);
+            const bonusBalance = Number(((_c = bonusResult.rows[0]) === null || _c === void 0 ? void 0 : _c.bonus_balance) || 0);
             return {
                 balance: Math.max(0, netBalance - lockedBalance), // Available balance
                 bonus_balance: bonusBalance,
@@ -162,6 +163,7 @@ class BalanceService {
      * Process a transaction and update balance atomically
      */
     static async processTransaction(transactionData, clientParam) {
+        var _a;
         console.log('[DEBUG] START processTransaction', transactionData);
         const client = clientParam || await postgres_1.default.connect();
         let startedTransaction = false;
@@ -175,7 +177,7 @@ class BalanceService {
                 user_id: transactionData.user_id,
                 type: transactionData.type,
                 amount: transactionData.amount,
-                category: transactionData.metadata?.category || null
+                category: ((_a = transactionData.metadata) === null || _a === void 0 ? void 0 : _a.category) || null
             });
             // Check if this is a category bet (category wallet)
             const isCategoryBet = transactionData.metadata && transactionData.metadata.category;

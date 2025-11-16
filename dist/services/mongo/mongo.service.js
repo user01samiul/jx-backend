@@ -4,8 +4,6 @@ exports.MongoService = void 0;
 const mongodb_1 = require("mongodb");
 const env_1 = require("../../configs/env");
 class MongoService {
-    static client;
-    static db;
     /**
      * Initialize MongoDB connection
      */
@@ -79,7 +77,7 @@ class MongoService {
      */
     static async getNextSequence(name) {
         const result = await this.getSequencesCollection().findOneAndUpdate({ _id: name }, { $inc: { current_value: 1 } }, { returnDocument: 'after', upsert: true });
-        return result?.current_value || 0;
+        return (result === null || result === void 0 ? void 0 : result.current_value) || 0;
     }
     /**
      * Insert transaction (equivalent to PostgreSQL INSERT INTO transactions)
@@ -210,7 +208,7 @@ class MongoService {
             upsert: true,
             returnDocument: 'before' // Return the document before update
         });
-        const balance_before = Math.round((result?.balance || 0) * 100) / 100;
+        const balance_before = Math.round(((result === null || result === void 0 ? void 0 : result.balance) || 0) * 100) / 100;
         const balance_after = Math.round((balance_before + amount) * 100) / 100;
         return { balance_before, balance_after };
     }

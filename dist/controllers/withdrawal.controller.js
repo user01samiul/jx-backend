@@ -16,6 +16,7 @@ class WithdrawalController {
      * POST /api/withdrawals
      */
     static async createWithdrawal(req, res) {
+        var _a, _b, _c, _d;
         const client = await postgres_1.default.connect();
         try {
             const userId = req.user.userId;
@@ -62,28 +63,28 @@ class WithdrawalController {
         catch (error) {
             console.error('Error creating withdrawal:', error);
             // Handle specific validation errors
-            if (error.message?.includes('KYC verification')) {
+            if ((_a = error.message) === null || _a === void 0 ? void 0 : _a.includes('KYC verification')) {
                 return res.status(403).json({
                     success: false,
                     message: error.message,
                     error: 'KYC_REQUIRED'
                 });
             }
-            if (error.message?.includes('Insufficient balance')) {
+            if ((_b = error.message) === null || _b === void 0 ? void 0 : _b.includes('Insufficient balance')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message,
                     error: 'INSUFFICIENT_BALANCE'
                 });
             }
-            if (error.message?.includes('minimum deposit')) {
+            if ((_c = error.message) === null || _c === void 0 ? void 0 : _c.includes('minimum deposit')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message,
                     error: 'MIN_DEPOSIT_REQUIRED'
                 });
             }
-            if (error.message?.includes('limit exceeded')) {
+            if ((_d = error.message) === null || _d === void 0 ? void 0 : _d.includes('limit exceeded')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message,
@@ -112,7 +113,7 @@ class WithdrawalController {
             if (status) {
                 filters.status = status;
             }
-            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit), offset: parseInt(offset) });
+            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals(Object.assign(Object.assign({}, filters), { limit: parseInt(limit), offset: parseInt(offset) }));
             return res.status(200).json({
                 success: true,
                 data: withdrawals
@@ -259,7 +260,7 @@ class WithdrawalController {
                 filters.fromDate = new Date(from_date);
             if (to_date)
                 filters.toDate = new Date(to_date);
-            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit), offset: parseInt(offset) });
+            const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals(Object.assign(Object.assign({}, filters), { limit: parseInt(limit), offset: parseInt(offset) }));
             return res.status(200).json({
                 success: true,
                 data: withdrawals,
@@ -284,6 +285,7 @@ class WithdrawalController {
      * POST /api/admin/withdrawals/:id/approve
      */
     static async approveWithdrawal(req, res) {
+        var _a, _b;
         try {
             const adminId = req.user.userId;
             const withdrawalId = parseInt(req.params.id);
@@ -307,13 +309,13 @@ class WithdrawalController {
         }
         catch (error) {
             console.error('Error approving withdrawal:', error);
-            if (error.message?.includes('not found')) {
+            if ((_a = error.message) === null || _a === void 0 ? void 0 : _a.includes('not found')) {
                 return res.status(404).json({
                     success: false,
                     message: error.message
                 });
             }
-            if (error.message?.includes('already processed')) {
+            if ((_b = error.message) === null || _b === void 0 ? void 0 : _b.includes('already processed')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message
@@ -331,6 +333,7 @@ class WithdrawalController {
      * POST /api/admin/withdrawals/:id/reject
      */
     static async rejectWithdrawal(req, res) {
+        var _a, _b;
         try {
             const adminId = req.user.userId;
             const withdrawalId = parseInt(req.params.id);
@@ -360,13 +363,13 @@ class WithdrawalController {
         }
         catch (error) {
             console.error('Error rejecting withdrawal:', error);
-            if (error.message?.includes('not found')) {
+            if ((_a = error.message) === null || _a === void 0 ? void 0 : _a.includes('not found')) {
                 return res.status(404).json({
                     success: false,
                     message: error.message
                 });
             }
-            if (error.message?.includes('already processed')) {
+            if ((_b = error.message) === null || _b === void 0 ? void 0 : _b.includes('already processed')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message

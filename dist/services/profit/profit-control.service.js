@@ -177,13 +177,7 @@ class ProfitControlService {
                 metrics.timestamp
             ]);
             // Update daily profit summary with validated metrics
-            await this.updateDailyProfitSummary({
-                ...metrics,
-                originalAmount: validatedMetrics.originalAmount,
-                adjustedAmount: validatedMetrics.adjustedAmount,
-                profitReduction: validatedMetrics.profitReduction,
-                effectiveRtp: validatedMetrics.effectiveRtp
-            });
+            await this.updateDailyProfitSummary(Object.assign(Object.assign({}, metrics), { originalAmount: validatedMetrics.originalAmount, adjustedAmount: validatedMetrics.adjustedAmount, profitReduction: validatedMetrics.profitReduction, effectiveRtp: validatedMetrics.effectiveRtp }));
         }
         catch (error) {
             console.error('[PROFIT_CONTROL] Error tracking profit metrics:', error);

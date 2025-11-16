@@ -7,8 +7,9 @@ const enhanced_affiliate_service_1 = require("../../services/affiliate/enhanced-
  * Get affiliate profile for current user
  */
 const getAffiliateProfile = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -32,8 +33,9 @@ exports.getAffiliateProfile = getAffiliateProfile;
  * Create affiliate profile for current user
  */
 const createAffiliateProfile = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -60,8 +62,9 @@ exports.createAffiliateProfile = createAffiliateProfile;
  * Get affiliate statistics
  */
 const getAffiliateStats = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -81,8 +84,9 @@ exports.getAffiliateStats = getAffiliateStats;
  * Get affiliate referrals
  */
 const getAffiliateReferrals = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -103,8 +107,9 @@ exports.getAffiliateReferrals = getAffiliateReferrals;
  * Get affiliate commissions
  */
 const getAffiliateCommissions = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -125,8 +130,9 @@ exports.getAffiliateCommissions = getAffiliateCommissions;
  * Get affiliate team structure
  */
 const getAffiliateTeam = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -147,8 +153,9 @@ exports.getAffiliateTeam = getAffiliateTeam;
  * Generate affiliate link
  */
 const generateAffiliateLink = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
@@ -169,8 +176,9 @@ exports.generateAffiliateLink = generateAffiliateLink;
  * Get affiliate dashboard data
  */
 const getAffiliateDashboard = async (req, res, next) => {
+    var _a;
     try {
-        const userId = req.user?.userId;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
         if (!userId) {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;

@@ -10,9 +10,10 @@ const postgres_1 = __importDefault(require("../../db/postgres"));
 // ENHANCED AFFILIATE PROFILE CONTROLLERS
 // =====================================================
 const createEnhancedAffiliateProfile = async (req, res) => {
+    var _a;
     try {
         const userId = req.user.id;
-        const { profileData, uplineReferralCode } = req.validated?.body;
+        const { profileData, uplineReferralCode } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const profile = await enhanced_affiliate_service_1.EnhancedAffiliateService.createEnhancedAffiliateProfile(userId, profileData, uplineReferralCode);
         res.status(201).json({
             success: true,
@@ -66,9 +67,10 @@ exports.getMLMStructure = getMLMStructure;
 // COMMISSION CALCULATION CONTROLLERS
 // =====================================================
 const calculateBetRevenueCommission = async (req, res) => {
+    var _a;
     try {
         const userId = req.user.id;
-        const { referredUserId, periodStart, periodEnd } = req.validated?.body;
+        const { referredUserId, periodStart, periodEnd } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const commission = await enhanced_affiliate_service_1.EnhancedAffiliateService.calculateBetRevenueCommission(userId, referredUserId, new Date(periodStart), new Date(periodEnd));
         res.json({
             success: true,
@@ -85,9 +87,10 @@ const calculateBetRevenueCommission = async (req, res) => {
 };
 exports.calculateBetRevenueCommission = calculateBetRevenueCommission;
 const calculateMLMCommissions = async (req, res) => {
+    var _a;
     try {
         const userId = req.user.id;
-        const { referredUserId, transactionId, amount, commissionType } = req.validated?.body;
+        const { referredUserId, transactionId, amount, commissionType } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const commissions = await enhanced_affiliate_service_1.EnhancedAffiliateService.calculateMLMCommissions(userId, referredUserId, transactionId, amount, commissionType);
         res.json({
             success: true,
@@ -194,9 +197,10 @@ const adminGetAllAffiliates = async (req, res) => {
 };
 exports.adminGetAllAffiliates = adminGetAllAffiliates;
 const adminUpdateAffiliate = async (req, res) => {
+    var _a;
     try {
         const { affiliateId } = req.params;
-        const updateData = req.validated?.body;
+        const updateData = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const client = await postgres_1.default.connect();
         try {
             const result = await client.query(`UPDATE affiliate_profiles 
@@ -390,8 +394,9 @@ exports.managerGetTeamAffiliates = managerGetTeamAffiliates;
 // REFERRAL TRACKING CONTROLLERS
 // =====================================================
 const trackReferral = async (req, res) => {
+    var _a;
     try {
-        const { referralCode, visitorIp, userAgent, landingPage, sessionId } = req.validated?.body;
+        const { referralCode, visitorIp, userAgent, landingPage, sessionId } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         // Find affiliate by referral code
         const client = await postgres_1.default.connect();
         try {
@@ -426,8 +431,9 @@ const trackReferral = async (req, res) => {
 };
 exports.trackReferral = trackReferral;
 const recordReferralConversion = async (req, res) => {
+    var _a;
     try {
-        const { referralCode, conversionType, convertedUserId, conversionAmount } = req.validated?.body;
+        const { referralCode, conversionType, convertedUserId, conversionAmount } = (_a = req.validated) === null || _a === void 0 ? void 0 : _a.body;
         const client = await postgres_1.default.connect();
         try {
             // Find affiliate by referral code

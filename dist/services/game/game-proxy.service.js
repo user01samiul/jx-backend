@@ -54,6 +54,7 @@ exports.generateProxySessionId = generateProxySessionId;
  * This wraps the original game URL in our proxy endpoint
  */
 const createProxyUrl = (originalUrl, userId, gameId) => {
+    var _a;
     const sessionId = (0, exports.generateProxySessionId)(userId, gameId);
     // Store session info
     proxySessionCache.set(sessionId, {
@@ -64,7 +65,7 @@ const createProxyUrl = (originalUrl, userId, gameId) => {
     });
     // Build proxy URL - use full absolute URL to avoid React Router conflicts
     // IMPORTANT: Must use backend URL, not frontend URL
-    const baseUrl = process.env.BACKEND_API_URL || process.env.SUPPLIER_CALLBACK_URL?.replace('/api/innova/', '') || 'https://backend.jackpotx.net';
+    const baseUrl = process.env.BACKEND_API_URL || ((_a = process.env.SUPPLIER_CALLBACK_URL) === null || _a === void 0 ? void 0 : _a.replace('/api/innova/', '')) || 'https://backend.jackpotx.net';
     const proxyUrl = `${baseUrl}/api/game/proxy/${sessionId}`;
     console.log('[GAME_PROXY] Generated proxy URL:', {
         baseUrl,
@@ -86,6 +87,7 @@ exports.createProxyUrl = createProxyUrl;
  * This fetches the game content and serves it with modified headers
  */
 const proxyGameContent = async (req, res) => {
+    var _a, _b, _c, _d;
     try {
         // When using regex route, params are in array format
         // Capture group 1: sessionId, Capture group 2: additional path
@@ -272,9 +274,9 @@ const proxyGameContent = async (req, res) => {
                 sessionId,
                 htmlLength: html.length,
                 sampleUrls: {
-                    absoluteUrl: html.match(/https:\/\/gamerun-eu\.gaminguniverse\.fun\/[^"'\s]+/)?.[0] || 'none',
-                    absolutePath: html.match(/src="\/[^"]+"/)?.[0] || 'none',
-                    relativeUrl: html.match(/src="[^"/:]+[^"]*\.(js|css|png)"/)?.[0] || 'none'
+                    absoluteUrl: ((_a = html.match(/https:\/\/gamerun-eu\.gaminguniverse\.fun\/[^"'\s]+/)) === null || _a === void 0 ? void 0 : _a[0]) || 'none',
+                    absolutePath: ((_b = html.match(/src="\/[^"]+"/)) === null || _b === void 0 ? void 0 : _b[0]) || 'none',
+                    relativeUrl: ((_c = html.match(/src="[^"/:]+[^"]*\.(js|css|png)"/)) === null || _c === void 0 ? void 0 : _c[0]) || 'none'
                 }
             });
             // Escape special regex characters in originalHost
@@ -296,7 +298,7 @@ const proxyGameContent = async (req, res) => {
             });
             console.log('[GAME_PROXY] Strategy 1 replacements:', {
                 count: (beforeStrategy1.match(new RegExp(escapedHost, 'g')) || []).length,
-                example: beforeStrategy1.match(new RegExp(`${escapedHost}[^"'\\s]+`))?.[0] || 'none'
+                example: ((_d = beforeStrategy1.match(new RegExp(`${escapedHost}[^"'\\s]+`))) === null || _d === void 0 ? void 0 : _d[0]) || 'none'
             });
             // Strategy 2A: Rewrite parent directory paths (../)
             // CRITICAL FIX: Provider uses ../file.js which goes UP one level!

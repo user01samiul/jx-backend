@@ -206,6 +206,7 @@ const updateUserStatusService = async (userId, statusData) => {
 };
 exports.updateUserStatusService = updateUserStatusService;
 const updateUserBalanceService = async (userId, balanceData) => {
+    var _a;
     const fields = [];
     const values = [];
     let paramCount = 1;
@@ -214,7 +215,7 @@ const updateUserBalanceService = async (userId, balanceData) => {
         await client.query('BEGIN');
         // Get current balance for logging
         const currentBalanceResult = await client.query('SELECT balance FROM user_balances WHERE user_id = $1', [userId]);
-        const currentBalance = currentBalanceResult.rows[0]?.balance || 0;
+        const currentBalance = ((_a = currentBalanceResult.rows[0]) === null || _a === void 0 ? void 0 : _a.balance) || 0;
         // Create transaction record with category metadata if specified
         const transactionMetadata = balanceData.category ? { category: balanceData.category } : null;
         const transactionQuery = `

@@ -78,10 +78,7 @@ const uploadToCDN = async (filePath, fileName) => {
         console.log(`Uploading to CDN: ${uploadFileName} (${fileStats.size} bytes)`);
         // Upload to CDN
         const response = await axios_1.default.post(CDN_CONFIG.uploadUrl, formData, {
-            headers: {
-                ...formData.getHeaders(),
-                'Authorization': `Bearer ${CDN_CONFIG.authToken}`,
-            },
+            headers: Object.assign(Object.assign({}, formData.getHeaders()), { 'Authorization': `Bearer ${CDN_CONFIG.authToken}` }),
             maxContentLength: Infinity,
             maxBodyLength: Infinity,
             timeout: 30000, // 30 second timeout
@@ -161,10 +158,7 @@ const uploadBufferToCDN = async (buffer, fileName, mimeType) => {
         });
         // Upload to CDN
         const response = await axios_1.default.post(CDN_CONFIG.uploadUrl, formData, {
-            headers: {
-                ...formData.getHeaders(),
-                'Authorization': `Bearer ${CDN_CONFIG.authToken}`,
-            },
+            headers: Object.assign(Object.assign({}, formData.getHeaders()), { 'Authorization': `Bearer ${CDN_CONFIG.authToken}` }),
             maxContentLength: Infinity,
             maxBodyLength: Infinity,
         });
