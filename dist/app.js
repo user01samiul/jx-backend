@@ -44,45 +44,23 @@ app.set("trust proxy", 1);
 // Start health monitoring
 health_monitor_service_1.HealthMonitorService.startMonitoring();
 // 1. CORS - allow jackpotx.net, admin.jackpotx.net, and localhost for development
-// app.use((0, cors_1.default)({
-//     origin: [
-//         "https://jackpotx.net",
-//         "https://admin.jackpotx.net",
-//         "http://localhost:3000",
-//         "http://localhost:3001",
-//         "http://localhost:3002",
-//         "http://localhost:5173",
-//         "http://127.0.0.1:3000",
-//         "http://127.0.0.1:3001",
-//         "http://127.0.0.1:5173"
-//     ],
-//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-//     allowedHeaders: ["Content-Type", "Authorization", "device-id", "Cache-Control", "Pragma", "X-Requested-With"],
-//     credentials: true,
-//     maxAge: 3600
-// }));
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      callback(null, true);  // allow all origins
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "device-id",
-      "Cache-Control",
-      "Pragma",
-      "X-Requested-With"
+app.use((0, cors_1.default)({
+    origin: [
+        "https://jackpotx.net",
+        "https://admin.jackpotx.net",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:5173"
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "device-id", "Cache-Control", "Pragma", "X-Requested-With"],
     credentials: true,
     maxAge: 3600
-  })
-);
-
-
-
+}));
 // 2. THEN all other middleware and routes
 // Use helmet with custom CSP for Swagger UI compatibility
 app.use((0, helmet_1.default)({
