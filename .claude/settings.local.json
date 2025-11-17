@@ -16,7 +16,8 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET is_active = false WHERE provider_name = ''igpixel_sportsbook''; SELECT provider_name, is_active FROM game_provider_configs ORDER BY provider_name;\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, api_key, base_url, metadata FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook''\")",
       "Bash(nslookup sp-int-9cr.6579883.com)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET is_active = true WHERE provider_name = ''igpixel_sportsbook''; SELECT provider_name, is_active FROM game_provider_configs ORDER BY provider_name;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET is_active = true WHERE provider_name = ''igpixel_sportsbook''; SELECT provider_name, is_active FROM game_provider_configs ORDER BY provider_name;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"ALTER TABLE games DROP CONSTRAINT IF EXISTS games_volatility_check;\")"
     ],
     "deny": [],
     "ask": []
