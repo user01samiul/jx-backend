@@ -83,8 +83,8 @@ class EnterpriseCronServiceClass {
                         published_at = NOW(),
                         updated_at = NOW()
                     WHERE status = 'SCHEDULED'
-                    AND publish_at IS NOT NULL
-                    AND publish_at <= NOW()
+                    AND scheduled_publish_at IS NOT NULL
+                    AND scheduled_publish_at <= NOW()
                     RETURNING id, title
                 `);
 
@@ -107,8 +107,8 @@ class EnterpriseCronServiceClass {
                     SET status = 'ARCHIVED',
                         updated_at = NOW()
                     WHERE status = 'PUBLISHED'
-                    AND unpublish_at IS NOT NULL
-                    AND unpublish_at <= NOW()
+                    AND expires_at IS NOT NULL
+                    AND expires_at <= NOW()
                     RETURNING id, title
                 `);
 
@@ -152,12 +152,17 @@ class EnterpriseCronServiceClass {
                         SELECT
                             u.id as user_id,
                             u.status_id as current_status_id,
-                            psh.previous_status_id
+                            psh.old_status_id as previous_status_id
                         FROM users u
                         JOIN player_status_history psh ON psh.user_id = u.id
-                        WHERE psh.expires_at IS NOT NULL
-                        AND psh.expires_at <= NOW()
-                        AND psh.is_current = TRUE
+                        WHERE psh.auto_expires_at IS NOT NULL
+                        AND psh.auto_expires_at <= NOW()
+                        AND psh.new_status_id = u.status_id
+                        AND NOT EXISTS (
+                            SELECT 1 FROM player_status_history psh2
+                            WHERE psh2.user_id = u.id
+                            AND psh2.created_at > psh.created_at
+                        )
                     )
                     UPDATE users
                     SET status_id = es.previous_status_id,
@@ -168,15 +173,6 @@ class EnterpriseCronServiceClass {
                 `);
 
                 if (result.rowCount > 0) {
-                    // Mark history as not current
-                    await pool.query(`
-                        UPDATE player_status_history
-                        SET is_current = FALSE
-                        WHERE expires_at IS NOT NULL
-                        AND expires_at <= NOW()
-                        AND is_current = TRUE
-                    `);
-
                     console.log(`[CRON] ✅ Restored ${result.rowCount} player statuses to normal:`,
                         result.rows.map(r => r.username).join(', '));
                 }

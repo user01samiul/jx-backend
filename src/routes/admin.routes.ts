@@ -3246,6 +3246,154 @@ router.post(
   }
 );
 
+/**
+ * @openapi
+ * /api/admin/sync-all-providers:
+ *   post:
+ *     summary: Sync all games from all active providers
+ *     tags: [Admin Game Import]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               force_update:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Update existing games
+ *     responses:
+ *       200:
+ *         description: Successfully synced providers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 providers_synced:
+ *                   type: number
+ *                 total_games:
+ *                   type: number
+ *                 imported_count:
+ *                   type: number
+ *                 updated_count:
+ *                   type: number
+ *                 failed_count:
+ *                   type: number
+ *                 providers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
+router.post(
+  "/sync-all-providers",
+  authenticate,
+  adminAuth,
+  async (req, res) => {
+    try {
+      const { force_update = true } = req.body;
+      const result = await new AdminGameImportService().syncAllProviders(force_update);
+      res.json(result);
+    } catch (error) {
+      console.error('[RouteError] sync-all-providers:', error);
+      res.status(500).json({ success: false, message: error && error.message ? error.message : 'Route error' });
+    }
+  }
+);
+
+/**
+ * @openapi
+ * /api/admin/all-games-synced:
+ *   get:
+ *     summary: Get all synced games with filtering
+ *     tags: [Admin Game Import]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: provider
+ *         schema:
+ *           type: string
+ *         description: Filter by provider (e.g., pgsoft, pragmatic)
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category (e.g., slots, tablegames)
+ *       - in: query
+ *         name: is_active
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *           default: 1000
+ *         description: Number of games to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: number
+ *           default: 0
+ *         description: Pagination offset
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved games
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 total:
+ *                   type: number
+ *                 count:
+ *                   type: number
+ *                 limit:
+ *                   type: number
+ *                 offset:
+ *                   type: number
+ *                 games:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+  "/all-games-synced",
+  authenticate,
+  adminAuth,
+  async (req, res) => {
+    try {
+      const filters = {
+        provider: req.query.provider as string | undefined,
+        category: req.query.category as string | undefined,
+        is_active: req.query.is_active ? req.query.is_active === 'true' : undefined,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 1000,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : 0
+      };
+
+      const result = await new AdminGameImportService().getAllGamesSynced(filters);
+      res.json(result);
+    } catch (error) {
+      console.error('[RouteError] all-games-synced:', error);
+      res.status(500).json({ success: false, message: error && error.message ? error.message : 'Route error' });
+    }
+  }
+);
+
 // =====================================================
 // PAYMENT GATEWAY MANAGEMENT ROUTES
 // =====================================================

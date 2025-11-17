@@ -6,20 +6,26 @@ const zod_1 = require("zod");
 exports.CreateGameCategorySchema = zod_1.z.object({
     name: zod_1.z.string().min(1, "Category name is required").max(50, "Category name must be less than 50 characters"),
     display_name: zod_1.z.string().min(1, "Display name is required").max(100, "Display name must be less than 100 characters"),
-    description: zod_1.z.string().optional(),
-    icon_url: zod_1.z.string().url("Valid icon URL is required").optional(),
-    color: zod_1.z.string().regex(/^#[0-9A-F]{6}$/i, "Color must be a valid hex color").optional(),
+    description: zod_1.z.string().optional().default(""),
+    icon_url: zod_1.z.string().optional().default(""),
+    color: zod_1.z.string().regex(/^#[0-9A-F]{6}$/i, "Color must be a valid hex color").optional().default("#3B82F6"),
     display_order: zod_1.z.number().int().min(0, "Display order must be a non-negative integer").default(0),
     is_active: zod_1.z.boolean().default(true),
-    parent_category_id: zod_1.z.number().int().positive().optional(),
-    metadata: zod_1.z.record(zod_1.z.any()).optional()
+    parent_category_id: zod_1.z.number().int().positive().nullable().optional().default(null),
+    metadata: zod_1.z.any().optional().default({})
 });
 // Schema for updating a game category
 exports.UpdateGameCategorySchema = exports.CreateGameCategorySchema.partial();
 // Schema for category filters
 exports.CategoryFiltersSchema = zod_1.z.object({
     search: zod_1.z.string().optional(),
-    is_active: zod_1.z.coerce.boolean().optional(),
+    is_active: zod_1.z.string().optional().transform(val => {
+        if (val === "true")
+            return true;
+        if (val === "false")
+            return false;
+        return undefined;
+    }),
     parent_category_id: zod_1.z.coerce.number().int().positive().optional(),
     page: zod_1.z.coerce.number().int().min(1).default(1),
     limit: zod_1.z.coerce.number().int().min(1).max(100).default(20)
@@ -34,5 +40,5 @@ exports.BulkCategoryOperationSchema = zod_1.z.object({
 exports.CategoryStatsFiltersSchema = zod_1.z.object({
     start_date: zod_1.z.string().optional(),
     end_date: zod_1.z.string().optional(),
-    include_inactive: zod_1.z.boolean().default(false)
+    include_inactive: zod_1.z.string().optional().transform(val => val === "true").default("false")
 });

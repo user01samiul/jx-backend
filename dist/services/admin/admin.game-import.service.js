@@ -491,5 +491,184 @@ class AdminGameImportService {
             games_by_category: gamesByCategory.rows
         };
     }
+    // Sync all games from all active providers
+    async syncAllProviders(forceUpdate = true) {
+        try {
+            // Get all active provider configurations
+            const activeProviders = await postgres_1.default.query(`
+        SELECT * FROM game_provider_configs
+        WHERE is_active = true
+        ORDER BY provider_name
+      `);
+            if (activeProviders.rows.length === 0) {
+                return {
+                    success: false,
+                    message: 'No active providers found',
+                    providers_synced: 0,
+                    total_games: 0,
+                    imported_count: 0,
+                    updated_count: 0,
+                    failed_count: 0,
+                    providers: []
+                };
+            }
+            let totalImported = 0;
+            let totalUpdated = 0;
+            let totalFailed = 0;
+            let totalGames = 0;
+            const providerResults = [];
+            for (const provider of activeProviders.rows) {
+                try {
+                    console.log(`[SYNC] Syncing provider: ${provider.provider_name}`);
+                    const headers = await this.getProviderHeaders(provider);
+                    const response = await axios_1.default.get(provider.base_url, {
+                        headers,
+                        timeout: 60000
+                    });
+                    const games = response.data.games || response.data;
+                    if (!Array.isArray(games)) {
+                        console.error(`[SYNC] Invalid response from ${provider.provider_name}: not an array`);
+                        providerResults.push({
+                            provider_name: provider.provider_name,
+                            success: false,
+                            games_count: 0,
+                            imported: 0,
+                            updated: 0,
+                            failed: 0,
+                            error: 'Invalid response format from provider'
+                        });
+                        continue;
+                    }
+                    const transformedGames = this.transformProviderResponse(games, provider.provider_name);
+                    const importResult = await this.importGamesToDatabase(transformedGames, forceUpdate);
+                    totalImported += importResult.imported_count;
+                    totalUpdated += importResult.updated_count;
+                    totalFailed += importResult.failed_count;
+                    totalGames += games.length;
+                    providerResults.push({
+                        provider_name: provider.provider_name,
+                        success: true,
+                        games_count: games.length,
+                        imported: importResult.imported_count,
+                        updated: importResult.updated_count,
+                        failed: importResult.failed_count
+                    });
+                    console.log(`[SYNC] ✅ ${provider.provider_name}: ${games.length} games (imported: ${importResult.imported_count}, updated: ${importResult.updated_count})`);
+                }
+                catch (error) {
+                    console.error(`[SYNC] Error syncing ${provider.provider_name}:`, error.message);
+                    providerResults.push({
+                        provider_name: provider.provider_name,
+                        success: false,
+                        games_count: 0,
+                        imported: 0,
+                        updated: 0,
+                        failed: 0,
+                        error: getErrorMessage(error)
+                    });
+                }
+            }
+            return {
+                success: true,
+                message: `Successfully synced ${providerResults.filter(p => p.success).length} providers`,
+                providers_synced: providerResults.filter(p => p.success).length,
+                total_games: totalGames,
+                imported_count: totalImported,
+                updated_count: totalUpdated,
+                failed_count: totalFailed,
+                providers: providerResults
+            };
+        }
+        catch (error) {
+            console.error('[SYNC] Error syncing all providers:', error);
+            return {
+                success: false,
+                message: getErrorMessage(error),
+                providers_synced: 0,
+                total_games: 0,
+                imported_count: 0,
+                updated_count: 0,
+                failed_count: 0,
+                providers: []
+            };
+        }
+    }
+    // Get all synced games with filters
+    async getAllGamesSynced(filters) {
+        try {
+            const limit = filters.limit || 1000;
+            const offset = filters.offset || 0;
+            const conditions = [];
+            const values = [];
+            let paramCount = 1;
+            if (filters.provider) {
+                conditions.push(`provider = $${paramCount++}`);
+                values.push(filters.provider);
+            }
+            if (filters.category) {
+                conditions.push(`category = $${paramCount++}`);
+                values.push(filters.category);
+            }
+            if (filters.is_active !== undefined) {
+                conditions.push(`is_active = $${paramCount++}`);
+                values.push(filters.is_active);
+            }
+            const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+            // Get total count
+            const countQuery = `SELECT COUNT(*) as total FROM games ${whereClause}`;
+            const countResult = await postgres_1.default.query(countQuery, values);
+            const total = parseInt(countResult.rows[0].total);
+            // Get games with pagination
+            values.push(limit);
+            values.push(offset);
+            const gamesQuery = `
+        SELECT
+          id,
+          name,
+          game_code,
+          provider,
+          vendor,
+          category,
+          subcategory,
+          thumbnail_url,
+          image_url,
+          rtp_percentage,
+          volatility,
+          min_bet,
+          max_bet,
+          max_win,
+          is_active,
+          is_featured,
+          is_new,
+          is_hot,
+          created_at,
+          updated_at
+        FROM games
+        ${whereClause}
+        ORDER BY id DESC
+        LIMIT $${paramCount++} OFFSET $${paramCount++}
+      `;
+            const gamesResult = await postgres_1.default.query(gamesQuery, values);
+            return {
+                success: true,
+                total,
+                count: gamesResult.rows.length,
+                limit,
+                offset,
+                games: gamesResult.rows
+            };
+        }
+        catch (error) {
+            console.error('[GET_GAMES_SYNCED] Error:', error);
+            return {
+                success: false,
+                total: 0,
+                count: 0,
+                limit: filters.limit || 1000,
+                offset: filters.offset || 0,
+                games: []
+            };
+        }
+    }
 }
 exports.AdminGameImportService = AdminGameImportService;

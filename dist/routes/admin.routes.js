@@ -952,6 +952,113 @@ router.post("/categories", authenticate_1.authenticate, (0, authorize_1.authoriz
 router.get("/categories", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ query: admin_category_schema_1.CategoryFiltersSchema }), admin_category_controller_1.getCategories);
 /**
  * @openapi
+ * /api/admin/categories/stats:
+ *   get:
+ *     summary: Get category statistics
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: start_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for statistics
+ *       - in: query
+ *         name: end_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for statistics
+ *       - in: query
+ *         name: include_inactive
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Include inactive categories
+ *     responses:
+ *       200:
+ *         description: Category statistics retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/categories/stats", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ query: admin_category_schema_1.CategoryStatsFiltersSchema }), admin_category_controller_1.getCategoryStats);
+/**
+ * @openapi
+ * /api/admin/categories/bulk:
+ *   post:
+ *     summary: Bulk operations on categories
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - category_ids
+ *               - action
+ *             properties:
+ *               category_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 minItems: 1
+ *                 description: Array of category IDs
+ *                 example: [1, 2, 3]
+ *               action:
+ *                 type: string
+ *                 enum: [activate, deactivate, delete]
+ *                 description: Operation to perform
+ *                 example: "activate"
+ *               reason:
+ *                 type: string
+ *                 description: Reason for the operation
+ *                 example: "Bulk activation"
+ *     responses:
+ *       200:
+ *         description: Bulk operation completed
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/categories/bulk", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_category_schema_1.BulkCategoryOperationSchema }), admin_category_controller_1.bulkCategoryOperation);
+/**
+ * @openapi
+ * /api/admin/categories/hierarchy:
+ *   get:
+ *     summary: Get category hierarchy
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Category hierarchy retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/categories/hierarchy", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.getCategoryHierarchy);
+/**
+ * @openapi
+ * /api/admin/categories/migrate:
+ *   post:
+ *     summary: Migrate existing game categories to new structure
+ *     tags: [Admin Categories]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Migration completed successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/categories/migrate", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.migrateExistingCategories);
+/**
+ * @openapi
  * /api/admin/categories/{id}:
  *   get:
  *     summary: Get category by ID
@@ -1032,113 +1139,6 @@ router.put("/categories/:id", authenticate_1.authenticate, (0, authorize_1.autho
  *         description: Unauthorized
  */
 router.delete("/categories/:id", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.deleteCategory);
-/**
- * @openapi
- * /api/admin/categories/bulk:
- *   post:
- *     summary: Bulk operations on categories
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - category_ids
- *               - operation
- *             properties:
- *               category_ids:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 minItems: 1
- *                 description: Array of category IDs
- *                 example: [1, 2, 3]
- *               operation:
- *                 type: string
- *                 enum: [activate, deactivate, delete]
- *                 description: Operation to perform
- *                 example: "activate"
- *               reason:
- *                 type: string
- *                 description: Reason for the operation
- *                 example: "Bulk activation"
- *     responses:
- *       200:
- *         description: Bulk operation completed
- *       400:
- *         description: Invalid input data
- *       401:
- *         description: Unauthorized
- */
-router.post("/categories/bulk", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ body: admin_category_schema_1.BulkCategoryOperationSchema }), admin_category_controller_1.bulkCategoryOperation);
-/**
- * @openapi
- * /api/admin/categories/stats:
- *   get:
- *     summary: Get category statistics
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: start_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Start date for statistics
- *       - in: query
- *         name: end_date
- *         schema:
- *           type: string
- *           format: date
- *         description: End date for statistics
- *       - in: query
- *         name: include_inactive
- *         schema:
- *           type: boolean
- *           default: false
- *         description: Include inactive categories
- *     responses:
- *       200:
- *         description: Category statistics retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get("/categories/stats", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), (0, validate_1.validate)({ query: admin_category_schema_1.CategoryStatsFiltersSchema }), admin_category_controller_1.getCategoryStats);
-/**
- * @openapi
- * /api/admin/categories/hierarchy:
- *   get:
- *     summary: Get category hierarchy
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Category hierarchy retrieved successfully
- *       401:
- *         description: Unauthorized
- */
-router.get("/categories/hierarchy", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.getCategoryHierarchy);
-/**
- * @openapi
- * /api/admin/categories/migrate:
- *   post:
- *     summary: Migrate existing game categories to new structure
- *     tags: [Admin Categories]
- *     security:
- *       - BearerAuth: []
- *     responses:
- *       200:
- *         description: Migration completed successfully
- *       401:
- *         description: Unauthorized
- */
-router.post("/categories/migrate", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), admin_category_controller_1.migrateExistingCategories);
 /**
  * @openapi
  * /api/admin/categories/{id}/games:
@@ -2919,6 +2919,143 @@ router.post("/import-all-games", authenticate_1.authenticate, adminAuth, async (
     }
     catch (error) {
         console.error('[RouteError]', typeof error, error && error.message, error);
+        res.status(500).json({ success: false, message: error && error.message ? error.message : 'Route error' });
+    }
+});
+/**
+ * @openapi
+ * /api/admin/sync-all-providers:
+ *   post:
+ *     summary: Sync all games from all active providers
+ *     tags: [Admin Game Import]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               force_update:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Update existing games
+ *     responses:
+ *       200:
+ *         description: Successfully synced providers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 providers_synced:
+ *                   type: number
+ *                 total_games:
+ *                   type: number
+ *                 imported_count:
+ *                   type: number
+ *                 updated_count:
+ *                   type: number
+ *                 failed_count:
+ *                   type: number
+ *                 providers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/sync-all-providers", authenticate_1.authenticate, adminAuth, async (req, res) => {
+    try {
+        const { force_update = true } = req.body;
+        const result = await new admin_game_import_service_1.AdminGameImportService().syncAllProviders(force_update);
+        res.json(result);
+    }
+    catch (error) {
+        console.error('[RouteError] sync-all-providers:', error);
+        res.status(500).json({ success: false, message: error && error.message ? error.message : 'Route error' });
+    }
+});
+/**
+ * @openapi
+ * /api/admin/all-games-synced:
+ *   get:
+ *     summary: Get all synced games with filtering
+ *     tags: [Admin Game Import]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: provider
+ *         schema:
+ *           type: string
+ *         description: Filter by provider (e.g., pgsoft, pragmatic)
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category (e.g., slots, tablegames)
+ *       - in: query
+ *         name: is_active
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *           default: 1000
+ *         description: Number of games to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: number
+ *           default: 0
+ *         description: Pagination offset
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved games
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 total:
+ *                   type: number
+ *                 count:
+ *                   type: number
+ *                 limit:
+ *                   type: number
+ *                 offset:
+ *                   type: number
+ *                 games:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/all-games-synced", authenticate_1.authenticate, adminAuth, async (req, res) => {
+    try {
+        const filters = {
+            provider: req.query.provider,
+            category: req.query.category,
+            is_active: req.query.is_active ? req.query.is_active === 'true' : undefined,
+            limit: req.query.limit ? parseInt(req.query.limit) : 1000,
+            offset: req.query.offset ? parseInt(req.query.offset) : 0
+        };
+        const result = await new admin_game_import_service_1.AdminGameImportService().getAllGamesSynced(filters);
+        res.json(result);
+    }
+    catch (error) {
+        console.error('[RouteError] all-games-synced:', error);
         res.status(500).json({ success: false, message: error && error.message ? error.message : 'Route error' });
     }
 });

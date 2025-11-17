@@ -304,11 +304,16 @@ export class AdminGameImportService {
   // IGPX-specific authentication method
   private async getIgpxAuthToken(providerConfig: ProviderConfig): Promise<string | null> {
     try {
-      const authUrl = `${providerConfig.base_url}/auth`;
+      // Get auth endpoint from metadata or use default
+      const authEndpoint = providerConfig.metadata?.auth_endpoint || '/auth';
+      const authUrl = `${providerConfig.base_url}${authEndpoint}`;
+
       const authData = {
         username: providerConfig.api_key,
         password: providerConfig.api_secret
       };
+
+      console.log(`[IGPX_AUTH] Attempting authentication to: ${authUrl}`);
 
       const response = await axios.post(authUrl, authData, {
         headers: {
@@ -318,11 +323,13 @@ export class AdminGameImportService {
       });
 
       if (response.data && response.data.token) {
+        console.log('[IGPX_AUTH] Authentication successful');
         return response.data.token;
       }
+      console.error('[IGPX_AUTH] No token in response:', response.data);
       return null;
-    } catch (error) {
-      console.error('IGPX authentication failed:', error);
+    } catch (error: any) {
+      console.error('[IGPX_AUTH] Authentication failed:', error.response?.status, error.response?.data || error.message);
       return null;
     }
   }
@@ -330,7 +337,7 @@ export class AdminGameImportService {
   // Helper method to get appropriate headers for any provider
   private async getProviderHeaders(providerConfig: ProviderConfig): Promise<any> {
     // IGPX-specific authentication
-    if (providerConfig.provider_name.toLowerCase() === 'igpixel') {
+    if (providerConfig.provider_name.toLowerCase().includes('igpx') || providerConfig.provider_name.toLowerCase().includes('igpixel')) {
       const authToken = await this.getIgpxAuthToken(providerConfig);
       if (!authToken) {
         throw new Error('Failed to authenticate with IGPX');
@@ -340,11 +347,13 @@ export class AdminGameImportService {
         'Content-Type': 'application/json'
       };
     } else {
-      // Default authentication method
-      const xAuth = AdminGameImportService.getGameListAuthorization(providerConfig.provider_name, providerConfig.api_secret);
+      // Default authentication method (ThinkCode/Innova)
+      // Get operator_id from metadata, fallback to api_key
+      const operatorId = providerConfig.metadata?.operator_id || providerConfig.api_key;
+      const xAuth = AdminGameImportService.getGameListAuthorization(operatorId, providerConfig.api_secret);
       return {
         'X-Authorization': xAuth,
-        'X-Operator-Id': providerConfig.provider_name
+        'X-Operator-Id': operatorId
       };
     }
   }
@@ -575,5 +584,240 @@ export class AdminGameImportService {
       games_by_provider: gamesByProvider.rows,
       games_by_category: gamesByCategory.rows
     };
+  }
+
+  // Sync all games from all active providers
+  async syncAllProviders(forceUpdate: boolean = true): Promise<{
+    success: boolean;
+    message: string;
+    providers_synced: number;
+    total_games: number;
+    imported_count: number;
+    updated_count: number;
+    failed_count: number;
+    providers: Array<{
+      provider_name: string;
+      success: boolean;
+      games_count: number;
+      imported: number;
+      updated: number;
+      failed: number;
+      error?: string;
+    }>;
+  }> {
+    try {
+      // Get all active provider configurations
+      const activeProviders = await pool.query(`
+        SELECT * FROM game_provider_configs
+        WHERE is_active = true
+        ORDER BY provider_name
+      `);
+
+      if (activeProviders.rows.length === 0) {
+        return {
+          success: false,
+          message: 'No active providers found',
+          providers_synced: 0,
+          total_games: 0,
+          imported_count: 0,
+          updated_count: 0,
+          failed_count: 0,
+          providers: []
+        };
+      }
+
+      let totalImported = 0;
+      let totalUpdated = 0;
+      let totalFailed = 0;
+      let totalGames = 0;
+      const providerResults = [];
+
+      for (const provider of activeProviders.rows) {
+        try {
+          console.log(`[SYNC] Syncing provider: ${provider.provider_name}`);
+          console.log(`[SYNC] API URL: ${provider.base_url}`);
+
+          const headers = await this.getProviderHeaders(provider);
+          console.log(`[SYNC] Request headers:`, { ...headers, 'X-Authorization': headers['X-Authorization'] ? 'SHA1_HASH' : undefined });
+
+          const response = await axios.get(provider.base_url, {
+            headers,
+            timeout: 60000
+          });
+
+          console.log(`[SYNC] Response status: ${response.status}`);
+
+          const games = response.data.games || response.data;
+
+          if (!Array.isArray(games)) {
+            console.error(`[SYNC] Invalid response from ${provider.provider_name}: not an array`);
+            providerResults.push({
+              provider_name: provider.provider_name,
+              success: false,
+              games_count: 0,
+              imported: 0,
+              updated: 0,
+              failed: 0,
+              error: 'Invalid response format from provider'
+            });
+            continue;
+          }
+
+          const transformedGames = this.transformProviderResponse(games, provider.provider_name);
+          const importResult = await this.importGamesToDatabase(transformedGames, forceUpdate);
+
+          totalImported += importResult.imported_count;
+          totalUpdated += importResult.updated_count;
+          totalFailed += importResult.failed_count;
+          totalGames += games.length;
+
+          providerResults.push({
+            provider_name: provider.provider_name,
+            success: true,
+            games_count: games.length,
+            imported: importResult.imported_count,
+            updated: importResult.updated_count,
+            failed: importResult.failed_count
+          });
+
+          console.log(`[SYNC] ✅ ${provider.provider_name}: ${games.length} games (imported: ${importResult.imported_count}, updated: ${importResult.updated_count})`);
+
+        } catch (error: any) {
+          console.error(`[SYNC] Error syncing ${provider.provider_name}:`, error.message);
+          providerResults.push({
+            provider_name: provider.provider_name,
+            success: false,
+            games_count: 0,
+            imported: 0,
+            updated: 0,
+            failed: 0,
+            error: getErrorMessage(error)
+          });
+        }
+      }
+
+      return {
+        success: true,
+        message: `Successfully synced ${providerResults.filter(p => p.success).length} providers`,
+        providers_synced: providerResults.filter(p => p.success).length,
+        total_games: totalGames,
+        imported_count: totalImported,
+        updated_count: totalUpdated,
+        failed_count: totalFailed,
+        providers: providerResults
+      };
+
+    } catch (error: any) {
+      console.error('[SYNC] Error syncing all providers:', error);
+      return {
+        success: false,
+        message: getErrorMessage(error),
+        providers_synced: 0,
+        total_games: 0,
+        imported_count: 0,
+        updated_count: 0,
+        failed_count: 0,
+        providers: []
+      };
+    }
+  }
+
+  // Get all synced games with filters
+  async getAllGamesSynced(filters: {
+    provider?: string;
+    category?: string;
+    is_active?: boolean;
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    success: boolean;
+    total: number;
+    count: number;
+    limit: number;
+    offset: number;
+    games: any[];
+  }> {
+    try {
+      const limit = filters.limit || 1000;
+      const offset = filters.offset || 0;
+      const conditions = [];
+      const values = [];
+      let paramCount = 1;
+
+      if (filters.provider) {
+        conditions.push(`provider = $${paramCount++}`);
+        values.push(filters.provider);
+      }
+
+      if (filters.category) {
+        conditions.push(`category = $${paramCount++}`);
+        values.push(filters.category);
+      }
+
+      if (filters.is_active !== undefined) {
+        conditions.push(`is_active = $${paramCount++}`);
+        values.push(filters.is_active);
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      // Get total count
+      const countQuery = `SELECT COUNT(*) as total FROM games ${whereClause}`;
+      const countResult = await pool.query(countQuery, values);
+      const total = parseInt(countResult.rows[0].total);
+
+      // Get games with pagination
+      values.push(limit);
+      values.push(offset);
+      const gamesQuery = `
+        SELECT
+          id,
+          name,
+          game_code,
+          provider,
+          vendor,
+          category,
+          subcategory,
+          thumbnail_url,
+          image_url,
+          rtp_percentage,
+          volatility,
+          min_bet,
+          max_bet,
+          max_win,
+          is_active,
+          is_featured,
+          is_new,
+          is_hot,
+          created_at,
+          updated_at
+        FROM games
+        ${whereClause}
+        ORDER BY id DESC
+        LIMIT $${paramCount++} OFFSET $${paramCount++}
+      `;
+
+      const gamesResult = await pool.query(gamesQuery, values);
+
+      return {
+        success: true,
+        total,
+        count: gamesResult.rows.length,
+        limit,
+        offset,
+        games: gamesResult.rows
+      };
+
+    } catch (error: any) {
+      console.error('[GET_GAMES_SYNCED] Error:', error);
+      return {
+        success: false,
+        total: 0,
+        count: 0,
+        limit: filters.limit || 1000,
+        offset: filters.offset || 0,
+        games: []
+      };
+    }
   }
 } 
