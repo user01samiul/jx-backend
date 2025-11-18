@@ -119,7 +119,7 @@ export const getAvailableGamesService = async (filters: {
 
   if (search) {
     paramCount++;
-    query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount})`;
+    query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
     params.push(`%${search}%`);
   }
 

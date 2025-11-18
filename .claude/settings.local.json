@@ -18,7 +18,8 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT provider_name, api_key, api_secret, metadata->>''operator_id'' as operator_id\nFROM game_provider_configs \nWHERE is_active = true;\n\")",
       "Bash(node run-sync-proper-auth.js:*)",
       "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, game_code, provider, category FROM games WHERE is_active = TRUE AND (name ILIKE ''%jack%'' OR provider ILIKE ''%jack%'' OR game_code ILIKE ''%jack%'') LIMIT 5;\")"
     ],
     "deny": [],
     "ask": []

@@ -553,19 +553,35 @@ class AdminGameImportService {
                     const importResult = await this.importGamesToDatabase(transformedGames, forceUpdate);
                     // Deactivate games that are no longer in the provider's response
                     // Provider only returns enabled games, so games not in the list should be marked inactive
-                    let deactivatedCount = 0;
+                    let totalDeactivatedCount = 0;
                     if (transformedGames.length > 0) {
-                        const activeGameCodes = transformedGames.map(g => g.game_code);
-                        const deactivateResult = await postgres_1.default.query(`
-              UPDATE games
-              SET is_active = false, updated_at = CURRENT_TIMESTAMP
-              WHERE provider = $1
-                AND is_active = true
-                AND game_code NOT IN (${activeGameCodes.map((_, i) => `$${i + 2}`).join(', ')})
-            `, [provider.provider_name, ...activeGameCodes]);
-                        deactivatedCount = deactivateResult.rowCount || 0;
-                        if (deactivatedCount > 0) {
-                            console.log(`[SYNC] 🔴 ${provider.provider_name}: Deactivated ${deactivatedCount} games no longer in provider's list`);
+                        // Group games by vendor/provider since ThinkCode returns games from multiple vendors
+                        const gamesByVendor = transformedGames.reduce((acc, game) => {
+                            const vendorName = game.provider;
+                            if (!acc[vendorName]) {
+                                acc[vendorName] = [];
+                            }
+                            acc[vendorName].push(game.game_code);
+                            return acc;
+                        }, {});
+                        // Deactivate games for each vendor separately
+                        for (const [vendorName, gameCodes] of Object.entries(gamesByVendor)) {
+                            const placeholders = gameCodes.map((_, i) => `$${i + 2}`).join(', ');
+                            const deactivateResult = await postgres_1.default.query(`
+                UPDATE games
+                SET is_active = false, updated_at = CURRENT_TIMESTAMP
+                WHERE provider = $1
+                  AND is_active = true
+                  AND game_code NOT IN (${placeholders})
+              `, [vendorName, ...gameCodes]);
+                            const deactivatedCount = deactivateResult.rowCount || 0;
+                            totalDeactivatedCount += deactivatedCount;
+                            if (deactivatedCount > 0) {
+                                console.log(`[SYNC] 🔴 ${vendorName}: Deactivated ${deactivatedCount} games no longer in provider's list`);
+                            }
+                        }
+                        if (totalDeactivatedCount > 0) {
+                            console.log(`[SYNC] 🔴 Total deactivated: ${totalDeactivatedCount} games`);
                         }
                     }
                     totalImported += importResult.imported_count;
@@ -580,7 +596,7 @@ class AdminGameImportService {
                         updated: importResult.updated_count,
                         failed: importResult.failed_count
                     });
-                    console.log(`[SYNC] ✅ ${provider.provider_name}: ${games.length} games (imported: ${importResult.imported_count}, updated: ${importResult.updated_count}, deactivated: ${deactivatedCount})`);
+                    console.log(`[SYNC] ✅ ${provider.provider_name}: ${games.length} games (imported: ${importResult.imported_count}, updated: ${importResult.updated_count}, deactivated: ${totalDeactivatedCount})`);
                 }
                 catch (error) {
                     console.error(`[SYNC] Error syncing ${provider.provider_name}:`, error.message);

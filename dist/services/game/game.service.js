@@ -122,7 +122,7 @@ const getAvailableGamesService = async (filters) => {
     }
     if (search) {
         paramCount++;
-        query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount})`;
+        query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
         params.push(`%${search}%`);
     }
     query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
