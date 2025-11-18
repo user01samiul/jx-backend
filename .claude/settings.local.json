@@ -1,23 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(psql:*)",
-      "Bash(ping:*)",
-      "Bash(npm run build:*)",
       "Bash(PGPASSWORD='12358Voot#' psql:*)",
-      "Bash(curl -X POST http://localhost:3004/api/admin/categories/migrate -H 'Content-Type: application/json' -H 'Authorization: Bearer $(curl -s -X POST http://localhost:3004/api/auth/login -H Content-Type:' \"application/json -d ''''{username:admin,password:admin123}'''' | grep -o ''''accessToken:[^]* | cut -d'''' -f4)\")",
-      "Bash(python:*)",
-      "Bash(curl:*)",
-      "Bash(node:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT column_name FROM information_schema.columns WHERE table_name = ''cms_pages'' ORDER BY ordinal_position\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT column_name FROM information_schema.columns WHERE table_name = ''player_status_history'' ORDER BY ordinal_position\")",
-      "Bash(find:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcxLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjMzOTI1OTQsImV4cCI6MTc2MzQ3ODk5NH0.siQKuyPiauz7PDzGM4Zl1_S__CSEV3tJclqrBuOMG6c\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET is_active = false WHERE provider_name = ''igpixel_sportsbook''; SELECT provider_name, is_active FROM game_provider_configs ORDER BY provider_name;\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, api_key, base_url, metadata FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook''\")",
-      "Bash(nslookup sp-int-9cr.6579883.com)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET is_active = true WHERE provider_name = ''igpixel_sportsbook''; SELECT provider_name, is_active FROM game_provider_configs ORDER BY provider_name;\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"ALTER TABLE games DROP CONSTRAINT IF EXISTS games_volatility_check;\")"
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

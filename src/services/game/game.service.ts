@@ -1082,15 +1082,25 @@ export const getGamePlayInfoService = async (gameIdOrCode: number, userId: numbe
 
   const user = userResult.rows[0];
 
-  // 3. Get category-specific balance
+  // 3. Get category-specific balance, fallback to main balance if not found
   const category = game.category?.toLowerCase().trim() || 'slots';
-  const balanceResult = await pool.query(
+  let balanceResult = await pool.query(
     `SELECT balance FROM user_category_balances
      WHERE user_id = $1 AND LOWER(TRIM(category)) = $2`,
     [userId, category]
   );
 
-  const userBalance = balanceResult.rows.length ? balanceResult.rows[0].balance : 0;
+  let userBalance = 0;
+  if (balanceResult.rows.length > 0) {
+    userBalance = balanceResult.rows[0].balance;
+  } else {
+    // Fallback to main balance if category balance not found
+    const mainBalanceResult = await pool.query(
+      `SELECT balance FROM user_balances WHERE user_id = $1`,
+      [userId]
+    );
+    userBalance = mainBalanceResult.rows.length > 0 ? mainBalanceResult.rows[0].balance : 0;
+  }
 
   // 3.5 Check if this is an IGPX game (provider: IGPixel or category: sportsbook)
   if (game.provider?.toLowerCase() === 'igpixel' || game.category?.toLowerCase() === 'sportsbook') {
