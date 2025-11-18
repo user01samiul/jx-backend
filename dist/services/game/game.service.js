@@ -36,12 +36,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelGameService = exports.getGamesByCategoryService = exports.getBetResultsService = exports.getGamePlayInfoService = exports.getPopularGamesService = exports.getGameStatisticsService = exports.processBetResultService = exports.placeBetService = exports.recordGamePlayService = exports.toggleGameFavoriteService = exports.getHotGamesService = exports.getNewGamesService = exports.getFeaturedGamesService = exports.getGameProvidersService = exports.getGameCategoriesService = exports.getGameByIdService = exports.getAvailableGamesService = void 0;
+exports.cancelGameService = exports.getGamesByCategoryService = exports.getBetResultsService = exports.getGamePlayInfoService = exports.getPopularGamesService = exports.getGameStatisticsService = exports.processBetResultService = exports.placeBetService = exports.recordGamePlayService = exports.toggleGameFavoriteService = exports.getHotGamesService = exports.getNewGamesService = exports.getFeaturedGamesService = exports.getGameProvidersService = exports.getGameCategoriesService = exports.getGameByIdService = exports.getAvailableGamesService = exports.resolveGameId = void 0;
 const postgres_1 = __importDefault(require("../../db/postgres"));
 const apiError_1 = require("../../utils/apiError");
 const currency_utils_1 = require("../../utils/currency.utils");
 const crypto_1 = __importDefault(require("crypto"));
 // import { playGame } from "../api/game/game.controller";
+/**
+ * Helper function to resolve game_code or ID to actual database ID
+ * Prioritizes game_code lookup since it's more user-facing
+ * @param gameIdOrCode - Can be either database id or game_code (as number)
+ * @returns The actual database ID
+ * @throws ApiError if game not found
+ */
+const resolveGameId = async (gameIdOrCode) => {
+    // First try to find by game_code (convert number to string)
+    let result = await postgres_1.default.query(`SELECT id FROM games WHERE game_code = $1`, [gameIdOrCode.toString()]);
+    // If not found by game_code, try to find by database ID
+    if (result.rows.length === 0) {
+        result = await postgres_1.default.query(`SELECT id FROM games WHERE id = $1`, [gameIdOrCode]);
+    }
+    if (result.rows.length === 0) {
+        throw new apiError_1.ApiError("Game not found", 404);
+    }
+    return result.rows[0].id;
+};
+exports.resolveGameId = resolveGameId;
 // Get all available games with filtering
 const getAvailableGamesService = async (filters) => {
     const { category, provider, is_featured, is_new, is_hot, search, limit = 50, offset = 0 } = filters;
@@ -274,37 +294,39 @@ const getHotGamesService = async (limit = 10) => {
     return result.rows;
 };
 exports.getHotGamesService = getHotGamesService;
-// Toggle game favorite status
-const toggleGameFavoriteService = async (userId, gameId) => {
-    // Check if game exists
-    const gameExists = await postgres_1.default.query("SELECT id, name FROM games WHERE id = $1 AND is_active = TRUE", [gameId]);
+// Toggle game favorite status (supports game_code or ID)
+const toggleGameFavoriteService = async (userId, gameIdOrCode) => {
+    // Resolve game_code or ID to actual database ID
+    const actualGameId = await (0, exports.resolveGameId)(gameIdOrCode);
+    // Check if game exists and get name
+    const gameExists = await postgres_1.default.query("SELECT id, name FROM games WHERE id = $1 AND is_active = TRUE", [actualGameId]);
     if (gameExists.rows.length === 0) {
         throw new apiError_1.ApiError("Game not found", 404);
     }
     const gameName = gameExists.rows[0].name;
     // Check if preference exists
-    const existingPreference = await postgres_1.default.query("SELECT id, is_favorite FROM user_game_preferences WHERE user_id = $1 AND game_id = $2", [userId, gameId]);
+    const existingPreference = await postgres_1.default.query("SELECT id, is_favorite FROM user_game_preferences WHERE user_id = $1 AND game_id = $2", [userId, actualGameId]);
     if (existingPreference.rows.length > 0) {
         // Toggle existing preference
         const newFavoriteStatus = !existingPreference.rows[0].is_favorite;
         await postgres_1.default.query(`
-      UPDATE user_game_preferences 
+      UPDATE user_game_preferences
       SET is_favorite = $1, updated_at = CURRENT_TIMESTAMP
       WHERE user_id = $2 AND game_id = $3
-      `, [newFavoriteStatus, userId, gameId]);
+      `, [newFavoriteStatus, userId, actualGameId]);
         // Log favorite toggle activity
         await postgres_1.default.query(`
-      INSERT INTO user_activity_logs 
+      INSERT INTO user_activity_logs
       (user_id, action, category, description, metadata)
       VALUES ($1, $2, 'gaming', $3, $4)
       `, [
             userId,
             newFavoriteStatus ? 'add_favorite' : 'remove_favorite',
             `${newFavoriteStatus ? 'Added' : 'Removed'} ${gameName} to favorites`,
-            JSON.stringify({ game_id: gameId, game_name: gameName, is_favorite: newFavoriteStatus })
+            JSON.stringify({ game_id: actualGameId, game_name: gameName, is_favorite: newFavoriteStatus })
         ]);
         return {
-            game_id: gameId,
+            game_id: actualGameId,
             is_favorite: newFavoriteStatus,
             message: `${gameName} ${newFavoriteStatus ? 'added to' : 'removed from'} favorites`
         };
@@ -312,67 +334,69 @@ const toggleGameFavoriteService = async (userId, gameId) => {
     else {
         // Create new preference as favorite
         await postgres_1.default.query(`
-      INSERT INTO user_game_preferences 
-      (user_id, game_id, is_favorite, play_count, total_time_played) 
+      INSERT INTO user_game_preferences
+      (user_id, game_id, is_favorite, play_count, total_time_played)
       VALUES ($1, $2, TRUE, 0, 0)
-      `, [userId, gameId]);
+      `, [userId, actualGameId]);
         // Log favorite add activity
         await postgres_1.default.query(`
-      INSERT INTO user_activity_logs 
+      INSERT INTO user_activity_logs
       (user_id, action, category, description, metadata)
       VALUES ($1, 'add_favorite', 'gaming', $2, $3)
       `, [
             userId,
             `Added ${gameName} to favorites`,
-            JSON.stringify({ game_id: gameId, game_name: gameName, is_favorite: true })
+            JSON.stringify({ game_id: actualGameId, game_name: gameName, is_favorite: true })
         ]);
         return {
-            game_id: gameId,
+            game_id: actualGameId,
             is_favorite: true,
             message: `${gameName} added to favorites`
         };
     }
 };
 exports.toggleGameFavoriteService = toggleGameFavoriteService;
-// Record game play (increment play count and update last played)
-const recordGamePlayService = async (userId, gameId, playTimeSeconds = 0) => {
-    // Check if game exists
-    const gameExists = await postgres_1.default.query("SELECT id, name FROM games WHERE id = $1 AND is_active = TRUE", [gameId]);
+// Record game play (supports game_code or ID)
+const recordGamePlayService = async (userId, gameIdOrCode, playTimeSeconds = 0) => {
+    // Resolve game_code or ID to actual database ID
+    const actualGameId = await (0, exports.resolveGameId)(gameIdOrCode);
+    // Check if game exists and get name
+    const gameExists = await postgres_1.default.query("SELECT id, name FROM games WHERE id = $1 AND is_active = TRUE", [actualGameId]);
     if (gameExists.rows.length === 0) {
         throw new apiError_1.ApiError("Game not found", 404);
     }
     const gameName = gameExists.rows[0].name;
     // Update or create game preference
-    const existingPreference = await postgres_1.default.query("SELECT id FROM user_game_preferences WHERE user_id = $1 AND game_id = $2", [userId, gameId]);
+    const existingPreference = await postgres_1.default.query("SELECT id FROM user_game_preferences WHERE user_id = $1 AND game_id = $2", [userId, actualGameId]);
     if (existingPreference.rows.length > 0) {
         // Update existing preference
         await postgres_1.default.query(`
-      UPDATE user_game_preferences 
-      SET play_count = play_count + 1, 
+      UPDATE user_game_preferences
+      SET play_count = play_count + 1,
           total_time_played = total_time_played + $1,
           last_played_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
       WHERE user_id = $2 AND game_id = $3
-      `, [playTimeSeconds, userId, gameId]);
+      `, [playTimeSeconds, userId, actualGameId]);
     }
     else {
         // Create new preference
         await postgres_1.default.query(`
-      INSERT INTO user_game_preferences 
-      (user_id, game_id, play_count, total_time_played, last_played_at) 
+      INSERT INTO user_game_preferences
+      (user_id, game_id, play_count, total_time_played, last_played_at)
       VALUES ($1, $2, 1, $3, CURRENT_TIMESTAMP)
-      `, [userId, gameId, playTimeSeconds]);
+      `, [userId, actualGameId, playTimeSeconds]);
     }
     // Log game play activity
     await postgres_1.default.query(`
-    INSERT INTO user_activity_logs 
+    INSERT INTO user_activity_logs
     (user_id, action, category, description, metadata)
     VALUES ($1, 'play_game', 'gaming', $2, $3)
     `, [
         userId,
         `Played ${gameName}`,
         JSON.stringify({
-            game_id: gameId,
+            game_id: actualGameId,
             game_name: gameName,
             play_time_seconds: playTimeSeconds
         })
@@ -381,22 +405,24 @@ const recordGamePlayService = async (userId, gameId, playTimeSeconds = 0) => {
 exports.recordGamePlayService = recordGamePlayService;
 const balance_service_1 = require("../user/balance.service");
 const promotion_service_1 = require("../promotion/promotion.service");
-// Place a bet on a game
-const placeBetService = async (userId, gameId, betAmount, betType, gameData) => {
-    console.log('[DEBUG] START placeBetService', { userId, gameId, betAmount, betType });
+// Place a bet on a game (supports game_code or ID)
+const placeBetService = async (userId, gameIdOrCode, betAmount, betType, gameData) => {
+    // Resolve game_code or ID to actual database ID
+    const actualGameId = await (0, exports.resolveGameId)(gameIdOrCode);
+    console.log('[DEBUG] START placeBetService', { userId, gameId: actualGameId, betAmount, betType });
     const client = await postgres_1.default.connect();
     try {
         await client.query('BEGIN');
         console.log('[DEBUG] Began DB transaction');
         // Get game data
-        const gameResult = await client.query("SELECT name, category, provider FROM games WHERE id = $1 AND is_active = true", [gameId]);
+        const gameResult = await client.query("SELECT name, category, provider FROM games WHERE id = $1 AND is_active = true", [actualGameId]);
         if (gameResult.rows.length === 0) {
             console.log('[DEBUG] Game not found or inactive');
             throw new apiError_1.ApiError("Game not found or inactive", 404);
         }
-        const gameData = gameResult.rows[0];
-        const category = gameData.category?.toLowerCase().trim() || 'slots';
-        console.log('[AUDIT] Placing bet:', { userId, gameId, gameName: gameData.name, category });
+        const gameDataFromDB = gameResult.rows[0];
+        const category = gameDataFromDB.category?.toLowerCase().trim() || 'slots';
+        console.log('[AUDIT] Placing bet:', { userId, gameId: actualGameId, gameName: gameDataFromDB.name, category });
         // --- AUTO-GENERATE SESSION_ID FOR ROULETTE ---
         if (gameData.category === 'tablegame' &&
             gameData.name && gameData.name.toLowerCase().includes('roulette') &&
@@ -466,8 +492,8 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
             type: 'bet',
             amount: betAmount,
             currency: currency,
-            description: `Bet placed on game ${gameId} (category: ${category})`,
-            metadata: { game_id: gameId, game_data: gameData, category },
+            description: `Bet placed on game ${actualGameId} (category: ${category})`,
+            metadata: { game_id: actualGameId, game_data: gameData, category },
             balance_before: balanceUpdate.balance_before,
             balance_after: balanceUpdate.balance_after
         }, client);
@@ -481,10 +507,10 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
             balance_after: balanceUpdate.balance_after,
             currency: currency,
             status: 'completed',
-            description: `Bet placed on game ${gameId} (category: ${category})`,
+            description: `Bet placed on game ${actualGameId} (category: ${category})`,
             external_reference: `bet_${transactionResult.transaction_id}`,
             metadata: {
-                game_id: gameId,
+                game_id: actualGameId,
                 game_data: gameData,
                 category,
                 transaction_id: transactionResult.transaction_id
@@ -495,16 +521,16 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
         // Create bet record
         console.log('[DEBUG] Inserting bet record');
         const betResult = await client.query(`
-      INSERT INTO bets 
+      INSERT INTO bets
       (user_id, game_id, transaction_id, bet_amount, outcome, game_data, placed_at)
       VALUES ($1, $2, $3, $4, 'pending', $5, CURRENT_TIMESTAMP)
       RETURNING id
-      `, [userId, gameId, transactionResult.transaction_id, betAmount, gameData ? JSON.stringify(gameData) : null]);
+      `, [userId, actualGameId, transactionResult.transaction_id, betAmount, gameData ? JSON.stringify(gameData) : null]);
         console.log('[DEBUG] Bet insert result', betResult.rows);
         // Create MongoDB bet record
         const mongoBetResult = await MongoService.insertBet({
             user_id: userId,
-            game_id: gameId,
+            game_id: actualGameId,
             bet_amount: betAmount,
             outcome: 'pending',
             game_data: gameData,
@@ -520,14 +546,14 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
        VALUES ($1, $2, $3, 0, 0, CURRENT_TIMESTAMP)
        ON CONFLICT (user_id, game_id) DO UPDATE SET
          total_bet = user_game_bets.total_bet + $3,
-         last_bet_at = CURRENT_TIMESTAMP`, [userId, gameId, betAmount]);
+         last_bet_at = CURRENT_TIMESTAMP`, [userId, actualGameId, betAmount]);
         // Record activity
         console.log('[DEBUG] Inserting user activity log');
         await client.query(`
-      INSERT INTO user_activity_logs 
+      INSERT INTO user_activity_logs
       (user_id, action, category, description, metadata)
       VALUES ($1, 'place_bet', 'gaming', 'Placed bet on game', $2)
-      `, [userId, JSON.stringify({ game_id: gameId, bet_amount: betAmount, bet_id: betResult.rows[0].id, category })]);
+      `, [userId, JSON.stringify({ game_id: actualGameId, bet_amount: betAmount, bet_id: betResult.rows[0].id, category })]);
         console.log('[DEBUG] User activity log inserted');
         // Calculate affiliate commission for bet
         try {
@@ -546,7 +572,7 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
             // Don't fail bet if commission calculation fails
         }
         await client.query('COMMIT');
-        console.log('[AUDIT] Bet placed:', { userId, gameId, betAmount, betId: betResult.rows[0].id, category });
+        console.log('[AUDIT] Bet placed:', { userId, gameId: actualGameId, betAmount, betId: betResult.rows[0].id, category });
         // --- PROVIDER CALLBACK TRIGGER (optional, controlled by env) ---
         if (process.env.TRIGGER_PROVIDER_CALLBACK === 'true') {
             try {
@@ -564,8 +590,8 @@ const placeBetService = async (userId, gameId, betAmount, betType, gameData) => 
                         token: (typeof gameData === 'object' && gameData.token) ? gameData.token : '',
                         user_id: userId,
                         amount: -betAmount,
-                        transaction_id: `bet_${userId}_${gameId}_${Date.now()}`,
-                        game_id: gameId,
+                        transaction_id: `bet_${userId}_${actualGameId}_${Date.now()}`,
+                        game_id: actualGameId,
                         session_id: gameData?.session_id || '',
                         currency_code: currency
                     }
@@ -749,10 +775,12 @@ const processBetResultService = async (betId, outcome, winAmount = 0, gameResult
     }
 };
 exports.processBetResultService = processBetResultService;
-// Get game statistics
-const getGameStatisticsService = async (gameId) => {
+// Get game statistics (supports game_code or ID)
+const getGameStatisticsService = async (gameIdOrCode) => {
+    // Resolve game_code or ID to actual database ID
+    const actualGameId = await (0, exports.resolveGameId)(gameIdOrCode);
     const result = await postgres_1.default.query(`
-    SELECT 
+    SELECT
       g.id,
       g.name,
       g.provider,
@@ -769,7 +797,7 @@ const getGameStatisticsService = async (gameId) => {
     LEFT JOIN bets b ON g.id = b.game_id
     WHERE g.id = $1
     GROUP BY g.id, g.name, g.provider, g.category
-    `, [gameId]);
+    `, [actualGameId]);
     if (result.rows.length === 0) {
         throw new apiError_1.ApiError("Game not found", 404);
     }
@@ -808,16 +836,16 @@ const generateGameSessionToken = (userId, gameId) => {
     const hash = crypto_1.default.createHash('sha1').update(baseString).digest('hex');
     return hash.substring(0, 32);
 };
-// Get play URL and related info from provider
-const getGamePlayInfoService = async (gameId, userId) => {
-    // 1. Fetch game info
-    const game = await (0, exports.getGameByIdService)(gameId);
+// Get play URL and related info from provider (supports game_code or ID)
+const getGamePlayInfoService = async (gameIdOrCode, userId) => {
+    // 1. Fetch game info (getGameByIdService already supports game_code lookup)
+    const game = await (0, exports.getGameByIdService)(gameIdOrCode);
     // 1.5 Check if this is a JxOriginals game and route through GameRouterService
     if (game.provider === 'JxOriginals') {
         console.log('[GAME_SERVICE] Detected JxOriginals game, routing through GameRouterService');
         const { GameRouterService } = require("./game-router.service");
         const launchResponse = await GameRouterService.launchGame({
-            gameId,
+            gameId: game.id, // Use the resolved database ID
             userId,
             currency: undefined, // Will be fetched from user profile
             language: 'en',
@@ -839,11 +867,19 @@ const getGamePlayInfoService = async (gameId, userId) => {
         throw new apiError_1.ApiError("User not found", 404);
     }
     const user = userResult.rows[0];
-    // 3. Get category-specific balance
+    // 3. Get category-specific balance, fallback to main balance if not found
     const category = game.category?.toLowerCase().trim() || 'slots';
-    const balanceResult = await postgres_1.default.query(`SELECT balance FROM user_category_balances
+    let balanceResult = await postgres_1.default.query(`SELECT balance FROM user_category_balances
      WHERE user_id = $1 AND LOWER(TRIM(category)) = $2`, [userId, category]);
-    const userBalance = balanceResult.rows.length ? balanceResult.rows[0].balance : 0;
+    let userBalance = 0;
+    if (balanceResult.rows.length > 0) {
+        userBalance = balanceResult.rows[0].balance;
+    }
+    else {
+        // Fallback to main balance if category balance not found
+        const mainBalanceResult = await postgres_1.default.query(`SELECT balance FROM user_balances WHERE user_id = $1`, [userId]);
+        userBalance = mainBalanceResult.rows.length > 0 ? mainBalanceResult.rows[0].balance : 0;
+    }
     // 3.5 Check if this is an IGPX game (provider: IGPixel or category: sportsbook)
     if (game.provider?.toLowerCase() === 'igpixel' || game.category?.toLowerCase() === 'sportsbook') {
         // Use IGPX payment gateway to create session
@@ -885,7 +921,7 @@ const getGamePlayInfoService = async (gameId, userId) => {
             userId,
             `Launched ${game.name}`,
             JSON.stringify({
-                game_id: gameId,
+                game_id: game.id,
                 game_name: game.name,
                 provider: game.provider,
                 session_url: sessionResult.payment_url,
@@ -927,7 +963,7 @@ const getGamePlayInfoService = async (gameId, userId) => {
         throw new apiError_1.ApiError("Supplier operator ID not configured", 500);
     }
     // 6. Generate unique token (20-50 alphanumeric characters)
-    const token = generateGameSessionToken(userId, gameId);
+    const token = generateGameSessionToken(userId, game.id);
     // 7. Insert or upsert the token into the tokens table for this user
     const tokenExpiry = new Date();
     tokenExpiry.setDate(tokenExpiry.getDate() + 30); // 30 days expiry
@@ -940,7 +976,7 @@ const getGamePlayInfoService = async (gameId, userId) => {
          expired_at = EXCLUDED.expired_at,
          is_active = EXCLUDED.is_active,
          game_id = EXCLUDED.game_id,
-         category = EXCLUDED.category`, [userId, token, 'refresh_token_for_' + token, tokenExpiry, true, gameId, game.category]);
+         category = EXCLUDED.category`, [userId, token, 'refresh_token_for_' + token, tokenExpiry, true, game.id, game.category]);
         console.log('[DEBUG][TOKEN_TRACE] Token inserted/updated in DB:', token);
     }
     catch (err) {
@@ -948,7 +984,7 @@ const getGamePlayInfoService = async (gameId, userId) => {
         throw err;
     }
     // 8. Generate session ID once to ensure consistency
-    const sessionId = `${userId}_${gameId}_${Date.now()}`;
+    const sessionId = `${userId}_${game.id}_${Date.now()}`;
     // 9. Build URL according to provider documentation with all required parameters
     const params = new URLSearchParams({
         mode: 'real',
@@ -970,14 +1006,14 @@ const getGamePlayInfoService = async (gameId, userId) => {
     const proxyEnabled = process.env.USE_ROTATING_PROXY === 'true' || process.env.VPS_PROXY_ENABLED === 'true';
     if (proxyEnabled) {
         const { createProxyUrl } = require('./game-proxy.service');
-        const proxyResult = createProxyUrl(originalPlayUrl, userId, gameId);
+        const proxyResult = createProxyUrl(originalPlayUrl, userId, game.id);
         playUrl = proxyResult.proxyUrl;
         proxySessionId = proxyResult.sessionId;
     }
     // --- EXTRA LOGGING FOR DEBUGGING TOKEN/SESSION ISSUES ---
     console.log('[DEBUG][GAME PLAY URL]', {
         userId,
-        gameId,
+        gameId: game.id,
         token,
         tokenExpiry: tokenExpiry.toISOString(),
         originalPlayUrl,
@@ -994,7 +1030,7 @@ const getGamePlayInfoService = async (gameId, userId) => {
         userId,
         `Launched ${game.name}`,
         JSON.stringify({
-            game_id: gameId,
+            game_id: game.id,
             game_name: game.name,
             game_code: game.game_code,
             provider: game.provider,
