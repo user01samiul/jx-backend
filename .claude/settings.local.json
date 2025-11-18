@@ -19,7 +19,9 @@
       "Bash(node run-sync-proper-auth.js:*)",
       "Bash(curl:*)",
       "Bash(node:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, game_code, provider, category FROM games WHERE is_active = TRUE AND (name ILIKE ''%jack%'' OR provider ILIKE ''%jack%'' OR game_code ILIKE ''%jack%'') LIMIT 5;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, game_code, provider, category FROM games WHERE is_active = TRUE AND (name ILIKE ''%jack%'' OR provider ILIKE ''%jack%'' OR game_code ILIKE ''%jack%'') LIMIT 5;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, is_active FROM payment_gateways WHERE code ILIKE ''%igpx%'' OR name ILIKE ''%igpx%'' OR name ILIKE ''%sportsbook%'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT COUNT(*) as igpx_transactions FROM transactions WHERE description ILIKE ''%igpx%'' OR description ILIKE ''%sportsbook%'';\")"
     ],
     "deny": [],
     "ask": []
