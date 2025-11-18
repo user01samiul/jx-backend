@@ -11,7 +11,14 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, game_code, provider, is_active FROM games WHERE game_code = ''64032'' OR id = 64032;\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT COUNT(*) as active_games FROM games WHERE provider = ''play-son'' AND is_active = true;\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Check all providers in game_provider_configs\nSELECT provider_name, is_active FROM game_provider_configs ORDER BY provider_name;\n\")",
-      "Bash(node test-sync-deactivation.js:*)"
+      "Bash(node test-sync-deactivation.js:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Check if game 64032 (from your error) is still active\nSELECT id, name, game_code, provider, is_active, updated_at \nFROM games \nWHERE game_code = ''64032'';\n\")",
+      "Bash(node run-sync-now.js:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT provider_name, metadata \nFROM game_provider_configs \nWHERE provider_name = ''thinkcode_prod'';\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT provider_name, api_key, api_secret, metadata->>''operator_id'' as operator_id\nFROM game_provider_configs \nWHERE is_active = true;\n\")",
+      "Bash(node run-sync-proper-auth.js:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

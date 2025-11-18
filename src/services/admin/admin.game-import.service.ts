@@ -668,24 +668,40 @@ export class AdminGameImportService {
 
           // Deactivate games that are no longer in the provider's response
           // Provider only returns enabled games, so games not in the list should be marked inactive
-          let deactivatedCount = 0;
+          let totalDeactivatedCount = 0;
           if (transformedGames.length > 0) {
-            const activeGameCodes = transformedGames.map(g => g.game_code);
-            // Use the actual provider value from transformed games (could be item.vendor or providerName)
-            const actualProviderName = transformedGames[0].provider;
+            // Group games by vendor/provider since ThinkCode returns games from multiple vendors
+            const gamesByVendor = transformedGames.reduce((acc, game) => {
+              const vendorName = game.provider;
+              if (!acc[vendorName]) {
+                acc[vendorName] = [];
+              }
+              acc[vendorName].push(game.game_code);
+              return acc;
+            }, {} as Record<string, string[]>);
 
-            const deactivateResult = await pool.query(`
-              UPDATE games
-              SET is_active = false, updated_at = CURRENT_TIMESTAMP
-              WHERE provider = $1
-                AND is_active = true
-                AND game_code NOT IN (${activeGameCodes.map((_, i) => `$${i + 2}`).join(', ')})
-            `, [actualProviderName, ...activeGameCodes]);
+            // Deactivate games for each vendor separately
+            for (const [vendorName, gameCodes] of Object.entries(gamesByVendor)) {
+              const placeholders = gameCodes.map((_, i) => `$${i + 2}`).join(', ');
 
-            deactivatedCount = deactivateResult.rowCount || 0;
+              const deactivateResult = await pool.query(`
+                UPDATE games
+                SET is_active = false, updated_at = CURRENT_TIMESTAMP
+                WHERE provider = $1
+                  AND is_active = true
+                  AND game_code NOT IN (${placeholders})
+              `, [vendorName, ...gameCodes]);
 
-            if (deactivatedCount > 0) {
-              console.log(`[SYNC] 🔴 ${provider.provider_name}: Deactivated ${deactivatedCount} games no longer in provider's list`);
+              const deactivatedCount = deactivateResult.rowCount || 0;
+              totalDeactivatedCount += deactivatedCount;
+
+              if (deactivatedCount > 0) {
+                console.log(`[SYNC] 🔴 ${vendorName}: Deactivated ${deactivatedCount} games no longer in provider's list`);
+              }
+            }
+
+            if (totalDeactivatedCount > 0) {
+              console.log(`[SYNC] 🔴 Total deactivated: ${totalDeactivatedCount} games`);
             }
           }
 
