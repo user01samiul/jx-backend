@@ -719,7 +719,7 @@ export class AdminGameImportService {
             failed: importResult.failed_count
           });
 
-          console.log(`[SYNC] ✅ ${provider.provider_name}: ${games.length} games (imported: ${importResult.imported_count}, updated: ${importResult.updated_count}, deactivated: ${deactivatedCount})`);
+          console.log(`[SYNC] ✅ ${provider.provider_name}: ${games.length} games (imported: ${importResult.imported_count}, updated: ${importResult.updated_count}, deactivated: ${totalDeactivatedCount})`);
 
         } catch (error: any) {
           console.error(`[SYNC] Error syncing ${provider.provider_name}:`, error.message);
