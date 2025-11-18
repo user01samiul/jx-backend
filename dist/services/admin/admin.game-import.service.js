@@ -248,11 +248,14 @@ class AdminGameImportService {
     // IGPX-specific authentication method
     async getIgpxAuthToken(providerConfig) {
         try {
-            const authUrl = `${providerConfig.base_url}/auth`;
+            // Get auth endpoint from metadata or use default
+            const authEndpoint = providerConfig.metadata?.auth_endpoint || '/auth';
+            const authUrl = `${providerConfig.base_url}${authEndpoint}`;
             const authData = {
                 username: providerConfig.api_key,
                 password: providerConfig.api_secret
             };
+            console.log(`[IGPX_AUTH] Attempting authentication to: ${authUrl}`);
             const response = await axios_1.default.post(authUrl, authData, {
                 headers: {
                     'Content-Type': 'application/json'
@@ -260,19 +263,21 @@ class AdminGameImportService {
                 timeout: 30000
             });
             if (response.data && response.data.token) {
+                console.log('[IGPX_AUTH] Authentication successful');
                 return response.data.token;
             }
+            console.error('[IGPX_AUTH] No token in response:', response.data);
             return null;
         }
         catch (error) {
-            console.error('IGPX authentication failed:', error);
+            console.error('[IGPX_AUTH] Authentication failed:', error.response?.status, error.response?.data || error.message);
             return null;
         }
     }
     // Helper method to get appropriate headers for any provider
     async getProviderHeaders(providerConfig) {
         // IGPX-specific authentication
-        if (providerConfig.provider_name.toLowerCase() === 'igpixel') {
+        if (providerConfig.provider_name.toLowerCase().includes('igpx') || providerConfig.provider_name.toLowerCase().includes('igpixel')) {
             const authToken = await this.getIgpxAuthToken(providerConfig);
             if (!authToken) {
                 throw new Error('Failed to authenticate with IGPX');
@@ -283,11 +288,13 @@ class AdminGameImportService {
             };
         }
         else {
-            // Default authentication method
-            const xAuth = AdminGameImportService.getGameListAuthorization(providerConfig.provider_name, providerConfig.api_secret);
+            // Default authentication method (ThinkCode/Innova)
+            // Get operator_id from metadata, fallback to api_key
+            const operatorId = providerConfig.metadata?.operator_id || providerConfig.api_key;
+            const xAuth = AdminGameImportService.getGameListAuthorization(operatorId, providerConfig.api_secret);
             return {
                 'X-Authorization': xAuth,
-                'X-Operator-Id': providerConfig.provider_name
+                'X-Operator-Id': operatorId
             };
         }
     }
@@ -520,11 +527,14 @@ class AdminGameImportService {
             for (const provider of activeProviders.rows) {
                 try {
                     console.log(`[SYNC] Syncing provider: ${provider.provider_name}`);
+                    console.log(`[SYNC] API URL: ${provider.base_url}`);
                     const headers = await this.getProviderHeaders(provider);
+                    console.log(`[SYNC] Request headers:`, { ...headers, 'X-Authorization': headers['X-Authorization'] ? 'SHA1_HASH' : undefined });
                     const response = await axios_1.default.get(provider.base_url, {
                         headers,
                         timeout: 60000
                     });
+                    console.log(`[SYNC] Response status: ${response.status}`);
                     const games = response.data.games || response.data;
                     if (!Array.isArray(games)) {
                         console.error(`[SYNC] Invalid response from ${provider.provider_name}: not an array`);

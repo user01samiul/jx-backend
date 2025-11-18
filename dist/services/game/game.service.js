@@ -112,10 +112,15 @@ const getAvailableGamesService = async (filters) => {
     return result.rows;
 };
 exports.getAvailableGamesService = getAvailableGamesService;
-// Get game by ID with detailed information
+// Get game by game_code or ID with detailed information
+// Prioritizes game_code lookup since it's more user-facing
 const getGameByIdService = async (gameId) => {
-    // First check if game exists (regardless of status)
-    const gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active FROM games WHERE id = $1`, [gameId]);
+    // First try to find by game_code (convert number to string)
+    let gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active FROM games WHERE game_code = $1`, [gameId.toString()]);
+    // If not found by game_code, try to find by database ID
+    if (gameExistsResult.rows.length === 0) {
+        gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active FROM games WHERE id = $1`, [gameId]);
+    }
     if (gameExistsResult.rows.length === 0) {
         throw new apiError_1.ApiError("Game not found", 404);
     }
@@ -124,9 +129,9 @@ const getGameByIdService = async (gameId) => {
     if (!game.is_active) {
         throw new apiError_1.ApiError(`Game "${game.name}" is currently disabled. Please try another game.`, 403);
     }
-    // Get full game details for active games
+    // Get full game details for active games using the actual database ID
     const result = await postgres_1.default.query(`
-    SELECT 
+    SELECT
       id,
       name,
       provider,
@@ -151,9 +156,9 @@ const getGameByIdService = async (gameId) => {
       popularity,
       description,
       last_win
-    FROM games 
+    FROM games
     WHERE id = $1 AND is_active = TRUE
-    `, [gameId]);
+    `, [game.id]);
     return result.rows[0];
 };
 exports.getGameByIdService = getGameByIdService;
