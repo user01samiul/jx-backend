@@ -1,0 +1,857 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AdminKYCService = void 0;
+const postgres_1 = __importDefault(require("../../db/postgres"));
+class AdminKYCService {
+    // Get pending KYC requests
+    static async getPendingKYC(filters) {
+        const { page, limit, search, status, document_type, user_id, start_date, end_date, compliance_level, risk_score_min, risk_score_max } = filters;
+        const offset = (page - 1) * limit;
+        let whereConditions = ['1=1'];
+        let values = [];
+        let valueIndex = 1;
+        if (search) {
+            whereConditions.push(`(u.username ILIKE $${valueIndex} OR u.email ILIKE $${valueIndex} OR up.first_name ILIKE $${valueIndex} OR up.last_name ILIKE $${valueIndex})`);
+            values.push(`%${search}%`);
+            valueIndex++;
+        }
+        if (status) {
+            whereConditions.push(`k.status = $${valueIndex}`);
+            values.push(status);
+            valueIndex++;
+        }
+        if (document_type) {
+            whereConditions.push(`kd.document_type = $${valueIndex}`);
+            values.push(document_type);
+            valueIndex++;
+        }
+        if (user_id) {
+            whereConditions.push(`k.user_id = $${valueIndex}`);
+            values.push(user_id);
+            valueIndex++;
+        }
+        if (start_date) {
+            whereConditions.push(`k.created_at >= $${valueIndex}`);
+            values.push(start_date);
+            valueIndex++;
+        }
+        if (end_date) {
+            whereConditions.push(`k.created_at <= $${valueIndex}`);
+            values.push(end_date);
+            valueIndex++;
+        }
+        if (compliance_level) {
+            whereConditions.push(`k.compliance_level = $${valueIndex}`);
+            values.push(compliance_level);
+            valueIndex++;
+        }
+        if (risk_score_min !== undefined) {
+            whereConditions.push(`k.risk_score >= $${valueIndex}`);
+            values.push(risk_score_min);
+            valueIndex++;
+        }
+        if (risk_score_max !== undefined) {
+            whereConditions.push(`k.risk_score <= $${valueIndex}`);
+            values.push(risk_score_max);
+            valueIndex++;
+        }
+        const whereClause = whereConditions.join(' AND ');
+        // Count query
+        const countQuery = `
+      SELECT COUNT(DISTINCT k.id) as total
+      FROM kyc_verifications k
+      JOIN users u ON k.user_id = u.id
+      LEFT JOIN kyc_documents kd ON k.user_id = kd.user_id
+      WHERE ${whereClause}
+    `;
+        const countResult = await postgres_1.default.query(countQuery, values);
+        const total = parseInt(countResult.rows[0].total);
+        // Data query
+        const dataQuery = `
+      SELECT
+        k.*,
+        u.username,
+        u.email,
+        up.first_name,
+        up.last_name,
+        up.phone_number,
+        up.country,
+        up.date_of_birth,
+        COUNT(kd.id) as document_count,
+        COUNT(CASE WHEN kd.status = 'approved' THEN 1 END) as approved_documents,
+        COUNT(CASE WHEN kd.status = 'pending' THEN 1 END) as pending_documents,
+        COUNT(CASE WHEN kd.status = 'rejected' THEN 1 END) as rejected_documents
+      FROM kyc_verifications k
+      JOIN users u ON k.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      LEFT JOIN kyc_documents kd ON k.user_id = kd.user_id
+      WHERE ${whereClause}
+      GROUP BY k.id, u.id, up.first_name, up.last_name, up.phone_number, up.country, up.date_of_birth
+      ORDER BY k.created_at DESC
+      LIMIT $${valueIndex} OFFSET $${valueIndex + 1}
+    `;
+        values.push(limit, offset);
+        const dataResult = await postgres_1.default.query(dataQuery, values);
+        return {
+            kyc_requests: dataResult.rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+    }
+    // Get KYC by user ID
+    static async getKYCByUserId(userId) {
+        const query = `
+      SELECT
+        k.*,
+        u.username,
+        u.email,
+        up.first_name,
+        up.last_name,
+        up.phone_number,
+        up.country,
+        up.date_of_birth,
+        u.created_at as user_created_at,
+        u.status_id as user_status
+      FROM kyc_verifications k
+      JOIN users u ON k.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      WHERE k.user_id = $1
+    `;
+        const result = await postgres_1.default.query(query, [userId]);
+        return result.rows[0] || null;
+    }
+    // Approve KYC
+    static async approveKYC(userId, data) {
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+        UPDATE kyc_verifications
+        SET
+          status = $1,
+          reason = $2,
+          admin_notes = $3,
+          verification_date = COALESCE($4, NOW()),
+          expiry_date = $5,
+          risk_score = $6,
+          compliance_level = $7,
+          updated_at = NOW()
+        WHERE user_id = $8
+        RETURNING *
+      `;
+            const values = [
+                data.status,
+                data.reason,
+                data.admin_notes,
+                data.verification_date,
+                data.expiry_date,
+                data.risk_score,
+                data.compliance_level,
+                userId
+            ];
+            const result = await client.query(query, values);
+            // Update user status if KYC is approved
+            if (data.status === 'approved') {
+                await client.query('UPDATE users SET kyc_verified = true, kyc_verified_at = NOW() WHERE id = $1', [userId]);
+                // Also update all pending/under_review documents to approved
+                await client.query(`UPDATE kyc_documents
+           SET status = 'approved',
+               reason = $2,
+               admin_notes = $3,
+               verification_date = NOW(),
+               updated_at = NOW()
+           WHERE user_id = $1 AND status IN ('pending', 'under_review')`, [userId, data.reason || 'Document verified successfully', data.admin_notes || '']);
+            }
+            await client.query('COMMIT');
+            return result.rows[0];
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    // Reject KYC
+    static async rejectKYC(userId, data) {
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+        UPDATE kyc_verifications
+        SET
+          status = $1,
+          reason = $2,
+          admin_notes = $3,
+          verification_date = COALESCE($4, NOW()),
+          updated_at = NOW()
+        WHERE user_id = $5
+        RETURNING *
+      `;
+            const values = [
+                data.status,
+                data.reason,
+                data.admin_notes,
+                data.verification_date,
+                userId
+            ];
+            const result = await client.query(query, values);
+            // Update user status if KYC is rejected
+            if (data.status === 'rejected') {
+                await client.query('UPDATE users SET kyc_verified = false, kyc_verified_at = NULL WHERE id = $1', [userId]);
+                // Also update all pending/under_review documents to rejected
+                await client.query(`UPDATE kyc_documents
+           SET status = 'rejected',
+               reason = $2,
+               admin_notes = $3,
+               verification_date = NOW(),
+               updated_at = NOW()
+           WHERE user_id = $1 AND status IN ('pending', 'under_review')`, [userId, data.reason || 'Document rejected', data.admin_notes || '']);
+            }
+            await client.query('COMMIT');
+            return result.rows[0];
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    // Get KYC documents
+    static async getKYCDocuments(userId, filters) {
+        let whereConditions = ['1=1'];
+        let values = [];
+        let valueIndex = 1;
+        if (userId) {
+            whereConditions.push(`kd.user_id = $${valueIndex}`);
+            values.push(userId);
+            valueIndex++;
+        }
+        if (filters) {
+            const { document_type, status, start_date, end_date } = filters;
+            if (document_type) {
+                whereConditions.push(`kd.document_type = $${valueIndex}`);
+                values.push(document_type);
+                valueIndex++;
+            }
+            if (status) {
+                whereConditions.push(`kd.status = $${valueIndex}`);
+                values.push(status);
+                valueIndex++;
+            }
+            if (start_date) {
+                whereConditions.push(`kd.created_at >= $${valueIndex}`);
+                values.push(start_date);
+                valueIndex++;
+            }
+            if (end_date) {
+                whereConditions.push(`kd.created_at <= $${valueIndex}`);
+                values.push(end_date);
+                valueIndex++;
+            }
+        }
+        const whereClause = whereConditions.join(' AND ');
+        const query = `
+      SELECT
+        kd.*,
+        u.username,
+        u.email,
+        up.first_name,
+        up.last_name
+      FROM kyc_documents kd
+      JOIN users u ON kd.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      WHERE ${whereClause}
+      ORDER BY kd.created_at DESC
+    `;
+        const result = await postgres_1.default.query(query, values);
+        return result.rows;
+    }
+    // Verify KYC document
+    static async verifyKYCDocument(data) {
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+        UPDATE kyc_documents 
+        SET 
+          status = $1,
+          reason = $2,
+          admin_notes = $3,
+          verification_method = $4,
+          verified_by = $5,
+          verification_date = COALESCE($6, NOW()),
+          updated_at = NOW()
+        WHERE id = $7
+        RETURNING *
+      `;
+            const values = [
+                data.status,
+                data.reason,
+                data.admin_notes,
+                data.verification_method,
+                data.verified_by,
+                data.verification_date,
+                data.document_id
+            ];
+            const result = await client.query(query, values);
+            // Check if all documents for this user are approved
+            if (data.status === 'approved') {
+                const allDocumentsQuery = `
+          SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'approved' THEN 1 END) as approved
+          FROM kyc_documents 
+          WHERE user_id = (SELECT user_id FROM kyc_documents WHERE id = $1)
+        `;
+                const docResult = await client.query(allDocumentsQuery, [data.document_id]);
+                const { total, approved } = docResult.rows[0];
+                // If all documents are approved, update KYC verification status
+                if (parseInt(total) === parseInt(approved)) {
+                    await client.query(`UPDATE kyc_verifications 
+             SET status = 'approved', verification_date = NOW(), updated_at = NOW()
+             WHERE user_id = (SELECT user_id FROM kyc_documents WHERE id = $1)`, [data.document_id]);
+                }
+            }
+            await client.query('COMMIT');
+            return result.rows[0];
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    // Create risk assessment
+    static async createRiskAssessment(data) {
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+        INSERT INTO kyc_risk_assessments (
+          user_id, risk_factors, risk_score, risk_level, 
+          assessment_notes, recommended_actions, assessment_date, created_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, NOW()), NOW())
+        RETURNING *
+      `;
+            const values = [
+                data.user_id,
+                data.risk_factors,
+                data.risk_score,
+                data.risk_level,
+                data.assessment_notes,
+                data.recommended_actions,
+                data.assessment_date
+            ];
+            const result = await client.query(query, values);
+            // Update KYC verification with risk score
+            await client.query(`UPDATE kyc_verifications 
+         SET risk_score = $1, updated_at = NOW()
+         WHERE user_id = $2`, [data.risk_score, data.user_id]);
+            await client.query('COMMIT');
+            return result.rows[0];
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    // Get KYC reports
+    static async getKYCReports(filters) {
+        const { start_date, end_date, report_type, include_details } = filters;
+        let groupByClause = '';
+        let dateFormat = '';
+        switch (report_type) {
+            case 'daily':
+                groupByClause = 'DATE(k.created_at)';
+                dateFormat = 'YYYY-MM-DD';
+                break;
+            case 'weekly':
+                groupByClause = 'DATE_TRUNC(\'week\', k.created_at)';
+                dateFormat = 'YYYY-"W"WW';
+                break;
+            case 'monthly':
+                groupByClause = 'DATE_TRUNC(\'month\', k.created_at)';
+                dateFormat = 'YYYY-MM';
+                break;
+            case 'quarterly':
+                groupByClause = 'DATE_TRUNC(\'quarter\', k.created_at)';
+                dateFormat = 'YYYY-Q';
+                break;
+            case 'annual':
+                groupByClause = 'DATE_TRUNC(\'year\', k.created_at)';
+                dateFormat = 'YYYY';
+                break;
+        }
+        const query = `
+      SELECT 
+        ${groupByClause} as period,
+        COUNT(k.id) as total_requests,
+        COUNT(CASE WHEN k.status = 'pending' THEN 1 END) as pending_requests,
+        COUNT(CASE WHEN k.status = 'approved' THEN 1 END) as approved_requests,
+        COUNT(CASE WHEN k.status = 'rejected' THEN 1 END) as rejected_requests,
+        COUNT(CASE WHEN k.status = 'under_review' THEN 1 END) as under_review_requests,
+        AVG(k.risk_score) as avg_risk_score,
+        COUNT(CASE WHEN k.compliance_level = 'low' THEN 1 END) as low_compliance,
+        COUNT(CASE WHEN k.compliance_level = 'medium' THEN 1 END) as medium_compliance,
+        COUNT(CASE WHEN k.compliance_level = 'high' THEN 1 END) as high_compliance,
+        AVG(EXTRACT(EPOCH FROM (k.verification_date - k.created_at))/86400) as avg_processing_days
+      FROM kyc_verifications k
+      WHERE k.created_at >= $1 AND k.created_at <= $2
+      GROUP BY ${groupByClause}
+      ORDER BY period DESC
+    `;
+        const result = await postgres_1.default.query(query, [start_date, end_date]);
+        if (include_details) {
+            // Get detailed breakdown
+            const detailsQuery = `
+        SELECT
+          k.status,
+          k.compliance_level,
+          k.risk_score,
+          up.country,
+          COUNT(*) as count
+        FROM kyc_verifications k
+        JOIN users u ON k.user_id = u.id
+        LEFT JOIN user_profiles up ON u.id = up.user_id
+        WHERE k.created_at >= $1 AND k.created_at <= $2
+        GROUP BY k.status, k.compliance_level, k.risk_score, up.country
+        ORDER BY count DESC
+      `;
+            const detailsResult = await postgres_1.default.query(detailsQuery, [start_date, end_date]);
+            return {
+                summary: result.rows,
+                details: detailsResult.rows
+            };
+        }
+        return {
+            summary: result.rows
+        };
+    }
+    // Get KYC audit logs
+    static async getKYCAuditLogs(userId, page = 1, limit = 20) {
+        const offset = (page - 1) * limit;
+        let whereConditions = ['1=1'];
+        let values = [];
+        let valueIndex = 1;
+        if (userId) {
+            whereConditions.push(`kal.user_id = $${valueIndex}`);
+            values.push(userId);
+            valueIndex++;
+        }
+        const whereClause = whereConditions.join(' AND ');
+        // Count query
+        const countQuery = `
+      SELECT COUNT(*) as total
+      FROM kyc_audit_logs kal
+      WHERE ${whereClause}
+    `;
+        const countResult = await postgres_1.default.query(countQuery, values);
+        const total = parseInt(countResult.rows[0].total);
+        // Data query
+        const dataQuery = `
+      SELECT
+        kal.*,
+        u.username,
+        u.email,
+        a.username as admin_username
+      FROM kyc_audit_logs kal
+      JOIN users u ON kal.user_id = u.id
+      LEFT JOIN users a ON kal.admin_id = a.id
+      WHERE ${whereClause}
+      ORDER BY kal.created_at DESC
+      LIMIT $${valueIndex} OFFSET $${valueIndex + 1}
+    `;
+        values.push(limit, offset);
+        const dataResult = await postgres_1.default.query(dataQuery, values);
+        return {
+            audit_logs: dataResult.rows,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
+    }
+    // Unapprove KYC - revert approved status to pending
+    static async unapproveKYC(userId, reason, adminNotes) {
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            const query = `
+        UPDATE kyc_verifications
+        SET
+          status = 'pending',
+          reason = $1,
+          admin_notes = $2,
+          verification_date = NULL,
+          updated_at = NOW()
+        WHERE user_id = $3
+        RETURNING *
+      `;
+            const result = await client.query(query, [reason, adminNotes, userId]);
+            if (result.rows.length === 0) {
+                throw new Error('KYC verification not found for this user');
+            }
+            // Update user status - remove verified flag
+            await client.query('UPDATE users SET kyc_verified = false, kyc_verified_at = NULL, kyc_status = $1 WHERE id = $2', ['pending', userId]);
+            // Also reset all approved documents back to pending
+            await client.query(`UPDATE kyc_documents
+         SET status = 'pending',
+             reason = $1,
+             admin_notes = $2,
+             verification_date = NULL,
+             updated_at = NOW()
+         WHERE user_id = $3 AND status = 'approved'`, [reason, adminNotes, userId]);
+            // Log the action in audit logs
+            await client.query(`INSERT INTO kyc_audit_logs (user_id, action, entity_type, entity_id, new_values)
+         VALUES ($1, 'kyc_unapproved', 'verification', $2, $3)`, [userId, result.rows[0].id, JSON.stringify({ reason, admin_notes: adminNotes })]);
+            await client.query('COMMIT');
+            return result.rows[0];
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    // Send KYC message to user
+    static async sendKYCMessage(userId, messageData) {
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            // Check if user exists
+            const userCheck = await client.query('SELECT id FROM users WHERE id = $1', [userId]);
+            if (userCheck.rows.length === 0) {
+                throw new Error('User not found');
+            }
+            // Map priority to is_important
+            const isImportant = messageData.priority === 'high';
+            // Map type to valid notification type
+            // Valid types: info, success, warning, error, promotion
+            const validTypes = ['info', 'success', 'warning', 'error', 'promotion'];
+            const notificationType = validTypes.includes(messageData.type) ? messageData.type : 'info';
+            // Insert notification/message
+            const query = `
+        INSERT INTO notifications (
+          user_id,
+          title,
+          message,
+          type,
+          category,
+          is_read,
+          is_important,
+          metadata,
+          created_at,
+          updated_at
+        ) VALUES ($1, $2, $3, $4, $5, false, $6, $7, NOW(), NOW())
+        RETURNING id, created_at
+      `;
+            const metadata = {
+                priority: messageData.priority,
+                sent_via: 'admin_kyc_panel',
+                original_type: messageData.type // Store original type for reference
+            };
+            const result = await client.query(query, [
+                userId,
+                messageData.subject,
+                messageData.message,
+                notificationType, // Use validated type
+                'security', // category - KYC messages are security-related
+                isImportant,
+                JSON.stringify(metadata)
+            ]);
+            // Log in KYC audit
+            await client.query(`INSERT INTO kyc_audit_logs (user_id, action, entity_type, entity_id, new_values)
+         VALUES ($1, 'kyc_message_sent', 'notification', $2, $3)`, [userId, result.rows[0].id, JSON.stringify(messageData)]);
+            await client.query('COMMIT');
+            return {
+                message_id: result.rows[0].id,
+                user_id: userId,
+                sent_at: result.rows[0].created_at,
+                delivered: true
+            };
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    // Get user's KYC documents (admin view with all details)
+    static async getUserKYCDocuments(userId) {
+        const query = `
+      SELECT
+        id,
+        user_id,
+        document_type,
+        COALESCE(document_url, file_url) as document_url,
+        front_image_url,
+        back_image_url,
+        selfie_image_url,
+        status,
+        COALESCE(rejection_reason, reason) as rejection_reason,
+        created_at,
+        file_name,
+        file_size,
+        file_url,
+        mime_type,
+        description,
+        admin_notes,
+        verification_method,
+        verified_by,
+        verification_date
+      FROM kyc_documents
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `;
+        const result = await postgres_1.default.query(query, [userId]);
+        return result.rows;
+    }
+    // Get all KYC submissions with pagination
+    static async getAllKYCSubmissions(filters) {
+        const page = filters.page || 1;
+        const limit = Math.min(filters.limit || 20, 100);
+        const offset = (page - 1) * limit;
+        const search = filters.search?.trim() || '';
+        let whereConditions = [];
+        let queryParams = [];
+        let paramIndex = 1;
+        // Add search filter
+        if (search) {
+            const searchPattern = `%${search}%`;
+            whereConditions.push(`(
+        up.first_name ILIKE $${paramIndex} OR
+        up.last_name ILIKE $${paramIndex} OR
+        u.email ILIKE $${paramIndex} OR
+        u.username ILIKE $${paramIndex} OR
+        CONCAT(up.first_name, ' ', up.last_name) ILIKE $${paramIndex}
+      )`);
+            queryParams.push(searchPattern);
+            paramIndex++;
+        }
+        // Add date filters
+        if (filters.start_date) {
+            whereConditions.push(`kd.created_at >= $${paramIndex}`);
+            queryParams.push(filters.start_date);
+            paramIndex++;
+        }
+        if (filters.end_date) {
+            whereConditions.push(`kd.created_at <= $${paramIndex}`);
+            queryParams.push(filters.end_date);
+            paramIndex++;
+        }
+        // Add document type filter
+        if (filters.document_type) {
+            whereConditions.push(`kd.document_type = $${paramIndex}`);
+            queryParams.push(filters.document_type);
+            paramIndex++;
+        }
+        // Add user_id filter
+        if (filters.user_id) {
+            whereConditions.push(`kd.user_id = $${paramIndex}`);
+            queryParams.push(filters.user_id);
+            paramIndex++;
+        }
+        const whereClause = whereConditions.length > 0
+            ? `WHERE ${whereConditions.join(' AND ')}`
+            : '';
+        // Count total items
+        const countQuery = `
+      SELECT COUNT(DISTINCT kd.id) as total
+      FROM kyc_documents kd
+      LEFT JOIN users u ON kd.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      ${whereClause}
+    `;
+        const countResult = await postgres_1.default.query(countQuery, queryParams);
+        const totalItems = parseInt(countResult.rows[0].total) || 0;
+        const totalPages = Math.ceil(totalItems / limit) || 1;
+        // Fetch paginated data
+        const dataQuery = `
+      SELECT
+        kd.id,
+        kd.user_id,
+        kd.document_type,
+        kd.file_url,
+        kd.file_name,
+        kd.file_size,
+        kd.mime_type,
+        kd.status,
+        kd.created_at,
+        kd.updated_at,
+        kd.reason as rejection_reason,
+        u.username,
+        u.email,
+        up.first_name,
+        up.last_name
+      FROM kyc_documents kd
+      LEFT JOIN users u ON kd.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      ${whereClause}
+      ORDER BY kd.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+        queryParams.push(limit, offset);
+        const dataResult = await postgres_1.default.query(dataQuery, queryParams);
+        return {
+            submissions: dataResult.rows,
+            pagination: {
+                current_page: page,
+                total_pages: totalPages,
+                total_items: totalItems,
+                items_per_page: limit,
+                has_next: page < totalPages,
+                has_prev: page > 1
+            }
+        };
+    }
+    // Get KYC submissions by status with pagination
+    static async getKYCByStatus(status, filters) {
+        const page = filters.page || 1;
+        const limit = Math.min(filters.limit || 20, 100);
+        const offset = (page - 1) * limit;
+        const search = filters.search?.trim() || '';
+        let whereConditions = [`kd.status = $1`];
+        let queryParams = [status];
+        let paramIndex = 2;
+        // Add search filter
+        if (search) {
+            const searchPattern = `%${search}%`;
+            whereConditions.push(`(
+        up.first_name ILIKE $${paramIndex} OR
+        up.last_name ILIKE $${paramIndex} OR
+        u.email ILIKE $${paramIndex} OR
+        u.username ILIKE $${paramIndex} OR
+        CONCAT(up.first_name, ' ', up.last_name) ILIKE $${paramIndex}
+      )`);
+            queryParams.push(searchPattern);
+            paramIndex++;
+        }
+        // Add date filters
+        if (filters.start_date) {
+            whereConditions.push(`kd.created_at >= $${paramIndex}`);
+            queryParams.push(filters.start_date);
+            paramIndex++;
+        }
+        if (filters.end_date) {
+            whereConditions.push(`kd.created_at <= $${paramIndex}`);
+            queryParams.push(filters.end_date);
+            paramIndex++;
+        }
+        // Add document type filter
+        if (filters.document_type) {
+            whereConditions.push(`kd.document_type = $${paramIndex}`);
+            queryParams.push(filters.document_type);
+            paramIndex++;
+        }
+        // Add user_id filter
+        if (filters.user_id) {
+            whereConditions.push(`kd.user_id = $${paramIndex}`);
+            queryParams.push(filters.user_id);
+            paramIndex++;
+        }
+        const whereClause = `WHERE ${whereConditions.join(' AND ')}`;
+        // Count total items
+        const countQuery = `
+      SELECT COUNT(DISTINCT kd.id) as total
+      FROM kyc_documents kd
+      LEFT JOIN users u ON kd.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      ${whereClause}
+    `;
+        const countResult = await postgres_1.default.query(countQuery, queryParams);
+        const totalItems = parseInt(countResult.rows[0].total) || 0;
+        const totalPages = Math.ceil(totalItems / limit) || 1;
+        // Fetch paginated data
+        const dataQuery = `
+      SELECT
+        kd.id,
+        kd.user_id,
+        kd.document_type,
+        kd.file_url,
+        kd.file_name,
+        kd.file_size,
+        kd.mime_type,
+        kd.status,
+        kd.created_at,
+        kd.updated_at,
+        kd.reason as rejection_reason,
+        kd.admin_notes,
+        kd.verified_by,
+        kd.verification_date,
+        u.username,
+        u.email,
+        up.first_name,
+        up.last_name
+      FROM kyc_documents kd
+      LEFT JOIN users u ON kd.user_id = u.id
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      ${whereClause}
+      ORDER BY kd.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+        queryParams.push(limit, offset);
+        const dataResult = await postgres_1.default.query(dataQuery, queryParams);
+        return {
+            submissions: dataResult.rows,
+            pagination: {
+                current_page: page,
+                total_pages: totalPages,
+                total_items: totalItems,
+                items_per_page: limit,
+                has_next: page < totalPages,
+                has_prev: page > 1
+            }
+        };
+    }
+    // Get user info by ID
+    static async getUserInfo(userId) {
+        const query = `
+      SELECT
+        u.id,
+        u.username,
+        u.email,
+        up.first_name,
+        up.last_name,
+        u.kyc_status as status
+      FROM users u
+      LEFT JOIN user_profiles up ON u.id = up.user_id
+      WHERE u.id = $1
+      LIMIT 1
+    `;
+        const result = await postgres_1.default.query(query, [userId]);
+        if (result.rows.length === 0) {
+            return null;
+        }
+        const user = result.rows[0];
+        return {
+            id: user.id,
+            user_id: user.id,
+            username: user.username || 'Unknown',
+            email: user.email || 'No email',
+            first_name: user.first_name || 'Unknown',
+            last_name: user.last_name || 'User',
+            status: user.status || 'pending'
+        };
+    }
+}
+exports.AdminKYCService = AdminKYCService;

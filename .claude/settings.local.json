@@ -30,7 +30,13 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, base_url, api_key, metadata FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, base_url, metadata FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
       "Bash(npx tsc:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, metadata->>''provider_type'' as provider_type, is_active FROM game_provider_configs ORDER BY provider_name;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, metadata->>''provider_type'' as provider_type, is_active FROM game_provider_configs ORDER BY provider_name;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, api_endpoint FROM payment_gateways WHERE code = ''''igpx'''';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT api_secret, webhook_secret FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE payment_gateways SET api_endpoint = ''https://sp-int-9cr.6579883.com/1.0.0'' WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, code, api_endpoint, api_key FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE payment_gateways SET min_amount = 0.00 WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, api_key, api_secret, is_active, supported_currencies, min_amount, max_amount FROM payment_gateways WHERE code = ''igpx'';\")"
     ],
     "deny": [],
     "ask": []

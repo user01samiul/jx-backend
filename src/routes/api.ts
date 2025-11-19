@@ -2021,8 +2021,8 @@ router.post("/payment/create", authenticate, async (req, res) => {
 
     const { gateway_id, amount, currency, type, description, return_url, cancel_url, metadata } = req.body;
 
-    if (!gateway_id || !amount || !currency || !type) {
-      res.status(400).json({ success: false, message: "Missing required fields" });
+    if (!gateway_id || amount === undefined || amount === null || !currency || !type) {
+      res.status(400).json({ success: false, message: "Missing required fields: gateway_id, amount, currency, and type are required" });
       return;
     }
 
