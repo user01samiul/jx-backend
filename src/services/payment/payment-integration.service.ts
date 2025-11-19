@@ -1150,18 +1150,8 @@ export class PaymentIntegrationService {
   // IGPX Webhook Handler
   private async handleIgpxWebhook(config: PaymentGatewayConfig, data: any, signature?: string): Promise<WebhookData> {
     try {
-      // Verify security hash
-      if (signature && config.webhook_secret) {
-        const crypto = require('crypto');
-        const expectedHash = crypto
-          .createHmac('sha256', config.webhook_secret)
-          .update(JSON.stringify(data))
-          .digest('hex');
-        
-        if (signature !== expectedHash) {
-          throw new Error('Invalid security hash');
-        }
-      }
+      // Note: Signature verification is done in the route handler using raw body
+      // This handler processes the already-verified webhook data
 
       const { transaction_id, action, user_id, currency, amount } = data;
 

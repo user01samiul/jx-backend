@@ -66,6 +66,13 @@ app.use((0, helmet_1.default)({
     },
 }));
 app.use((0, compression_1.default)());
+// Middleware to capture raw body for IGPX webhook signature verification
+app.use('/api/payment/webhook/igpx', express_1.default.json({
+    verify: (req, res, buf, encoding) => {
+        req.rawBody = buf.toString(encoding || 'utf8');
+    }
+}));
+// Regular JSON parser for all other routes
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());

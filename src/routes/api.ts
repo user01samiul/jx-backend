@@ -2539,20 +2539,42 @@ router.post("/payment/webhook/igpx", async (req, res) => {
     const webhookData = req.body;
     const securityHash = req.headers['x-security-hash'] as string;
 
+    // Get raw body for HMAC verification (IGPX requires raw body, not parsed JSON)
+    const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+
     // Get IGPX gateway configuration
     const { getPaymentGatewayByCodeService } = require("../services/admin/payment-gateway.service");
     const gateway = await getPaymentGatewayByCodeService('igpx');
-    
+
     if (!gateway || !gateway.is_active) {
       console.error('IGPX gateway not found or inactive');
       res.status(400).json({ error: "IGPX gateway not available" });
       return;
     }
 
+    // Verify HMAC signature using raw body
+    if (securityHash && gateway.webhook_secret) {
+      const crypto = require('crypto');
+      const expectedHash = crypto
+        .createHmac('sha256', gateway.webhook_secret)
+        .update(rawBody)
+        .digest('hex');
+
+      if (securityHash !== expectedHash) {
+        console.error('IGPX webhook: Invalid security hash', {
+          received: securityHash,
+          expected: expectedHash,
+          rawBody: rawBody
+        });
+        res.status(400).json({ error: "Invalid security hash" });
+        return;
+      }
+    }
+
     // Process webhook using integration service
     const { PaymentIntegrationService } = require("../services/payment/payment-integration.service");
     const paymentService = PaymentIntegrationService.getInstance();
-    
+
     const config = {
       api_key: gateway.api_key,
       api_secret: gateway.api_secret,
@@ -2564,7 +2586,8 @@ router.post("/payment/webhook/igpx", async (req, res) => {
       config: gateway.config,
     };
 
-    const webhookResult = await paymentService.processWebhook('igpx', config, webhookData, securityHash);
+    // Pass webhook data without signature (already verified above)
+    const webhookResult = await paymentService.processWebhook('igpx', config, webhookData, undefined);
 
     if (!webhookResult.success) {
       console.error('IGPX webhook processing failed:', webhookResult.message);

@@ -80,6 +80,15 @@ app.use(
   })
 );
 app.use(compression());
+
+// Middleware to capture raw body for IGPX webhook signature verification
+app.use('/api/payment/webhook/igpx', express.json({
+  verify: (req: any, res, buf, encoding) => {
+    req.rawBody = buf.toString(encoding || 'utf8');
+  }
+}));
+
+// Regular JSON parser for all other routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
