@@ -26,7 +26,11 @@
       "Bash(pm2 list:*)",
       "Bash(nslookup:*)",
       "Bash(host:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, api_endpoint, config FROM payment_gateways WHERE code = ''igpx'';\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, api_endpoint, config FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, base_url, api_key, metadata FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, base_url, metadata FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
+      "Bash(npx tsc:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, metadata->>''provider_type'' as provider_type, is_active FROM game_provider_configs ORDER BY provider_name;\")"
     ],
     "deny": [],
     "ask": []

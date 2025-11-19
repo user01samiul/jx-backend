@@ -637,6 +637,21 @@ export class AdminGameImportService {
           console.log(`[SYNC] Syncing provider: ${provider.provider_name}`);
           console.log(`[SYNC] API URL: ${provider.base_url}`);
 
+          // Skip sportsbook providers - they don't have games to sync
+          if (provider.metadata && provider.metadata.provider_type === 'sportsbook') {
+            console.log(`[SYNC] ⏭️  Skipping ${provider.provider_name}: Sportsbook provider (no games to sync)`);
+            providerResults.push({
+              provider_name: provider.provider_name,
+              success: true,
+              games_count: 0,
+              imported: 0,
+              updated: 0,
+              failed: 0,
+              error: 'Skipped - Sportsbook provider'
+            });
+            continue;
+          }
+
           const headers = await this.getProviderHeaders(provider);
           console.log(`[SYNC] Request headers:`, { ...headers, 'X-Authorization': headers['X-Authorization'] ? 'SHA1_HASH' : undefined });
 
