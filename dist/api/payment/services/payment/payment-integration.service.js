@@ -406,12 +406,10 @@ class PaymentIntegrationService {
             const token = authResponse.data.token;
             const expiresIn = authResponse.data.expires_in;
             // Step 2: Start session to get play URL
-            // Note: Callback URL is configured once on IGPX's side, not passed per session
             const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, {
                 user_id: request.metadata?.user_id?.toString() || request.order_id,
                 currency: request.currency,
-                lang: request.metadata?.language || 'en',
-                mode: 'real' // Force real money mode (not demo)
+                lang: request.metadata?.language || 'en'
             }, {
                 headers: {
                     'Authorization': `Bearer ${token}`
