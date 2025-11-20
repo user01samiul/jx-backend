@@ -2536,10 +2536,18 @@ router.get("/payment/status/:transaction_id", authenticate, async (req, res) => 
  */
 router.post("/payment/webhook/igpx", async (req, res) => {
   try {
-    const webhookData = req.body;
+    const callbackData = req.body;
     const securityHash = req.headers['x-security-hash'] as string;
 
-    // Get raw body for HMAC verification (IGPX requires raw body, not parsed JSON)
+    console.log('[IGPX] OLD endpoint callback received:', {
+      action: callbackData.action,
+      user_id: callbackData.user_id,
+      amount: callbackData.amount,
+      transaction_id: callbackData.transaction_id,
+      hasSignature: !!securityHash
+    });
+
+    // Get raw body for HMAC verification
     const rawBody = (req as any).rawBody || JSON.stringify(req.body);
 
     // Get IGPX gateway configuration
@@ -2547,88 +2555,138 @@ router.post("/payment/webhook/igpx", async (req, res) => {
     const gateway = await getPaymentGatewayByCodeService('igpx');
 
     if (!gateway || !gateway.is_active) {
-      console.error('IGPX gateway not found or inactive');
+      console.error('[IGPX] Gateway not found or inactive');
       res.status(400).json({ error: "IGPX gateway not available" });
       return;
     }
 
-    // Verify HMAC signature using raw body
-    if (securityHash && gateway.webhook_secret) {
-      const crypto = require('crypto');
-      const expectedHash = crypto
-        .createHmac('sha256', gateway.webhook_secret)
-        .update(rawBody)
-        .digest('hex');
+    // Use IgpxCallbackService for proper callback handling (same as new endpoint)
+    const { IgpxCallbackService } = require("../services/payment/igpx-callback.service");
+    const igpxService = IgpxCallbackService.getInstance();
 
-      if (securityHash !== expectedHash) {
-        console.error('IGPX webhook: Invalid security hash', {
-          received: securityHash,
-          expected: expectedHash,
-          rawBody: rawBody
-        });
-        res.status(400).json({ error: "Invalid security hash" });
-        return;
-      }
-    }
+    // Process callback using the callback service
+    const response = await igpxService.processCallback(
+      callbackData,
+      securityHash || '',
+      gateway.webhook_secret || ''
+    );
 
-    // Process webhook using integration service
-    const { PaymentIntegrationService } = require("../services/payment/payment-integration.service");
-    const paymentService = PaymentIntegrationService.getInstance();
+    console.log('[IGPX] OLD endpoint callback processed:', response);
 
-    const config = {
-      api_key: gateway.api_key,
-      api_secret: gateway.api_secret,
-      api_endpoint: gateway.api_endpoint,
-      merchant_id: gateway.merchant_id,
-      payout_api_key: gateway.payout_api_key,
-      webhook_url: gateway.webhook_url,
-      webhook_secret: gateway.webhook_secret,
-      config: gateway.config,
-    };
+    // Return response in IGPX format
+    res.status(200).json(response);
+  } catch (error: any) {
+    console.error('[IGPX] OLD endpoint callback error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
 
-    // Pass webhook data without signature (already verified above)
-    const webhookResult = await paymentService.processWebhook('igpx', config, webhookData, undefined);
+/**
+ * @openapi
+ * /igpx:
+ *   post:
+ *     summary: IGPX Sportsbook callback endpoint (new URL)
+ *     tags:
+ *       - Payment
+ *     description: |
+ *       New callback endpoint for IGPX Sportsbook provider.
+ *       Handles transaction callbacks including getBalance, bet, result, and rollback actions.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transaction_id:
+ *                 type: string
+ *                 description: IGPX transaction ID
+ *               action:
+ *                 type: string
+ *                 enum: [getBalance, bet, result, rollback]
+ *                 description: Transaction action type
+ *               user_id:
+ *                 type: string
+ *                 description: User ID from start-session
+ *               currency:
+ *                 type: string
+ *                 description: Currency code
+ *               amount:
+ *                 type: number
+ *                 description: Transaction amount
+ *               rollback_transaction_id:
+ *                 type: string
+ *                 description: Original transaction ID for rollbacks
+ *     responses:
+ *       200:
+ *         description: Callback processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   nullable: true
+ *                   description: Error message if any, null if successful
+ *                 balance:
+ *                   type: number
+ *                   description: User balance after operation
+ *                 currency:
+ *                   type: string
+ *                   description: Currency code
+ *                 transaction_id:
+ *                   type: string
+ *                   description: Transaction ID
+ *       400:
+ *         description: Invalid callback data
+ *       401:
+ *         description: Invalid security hash
+ */
+router.post("/igpx", async (req, res) => {
+  try {
+    const callbackData = req.body;
+    const securityHash = req.headers['x-security-hash'] as string;
 
-    if (!webhookResult.success) {
-      console.error('IGPX webhook processing failed:', webhookResult.message);
-      res.status(400).json({ error: webhookResult.message });
+    console.log('[IGPX] Callback received:', {
+      action: callbackData.action,
+      user_id: callbackData.user_id,
+      amount: callbackData.amount,
+      transaction_id: callbackData.transaction_id,
+      hasSignature: !!securityHash
+    });
+
+    // Get raw body for HMAC verification
+    const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+
+    // Get IGPX gateway configuration
+    const { getPaymentGatewayByCodeService } = require("../services/admin/payment-gateway.service");
+    const gateway = await getPaymentGatewayByCodeService('igpx');
+
+    if (!gateway || !gateway.is_active) {
+      console.error('[IGPX] Gateway not found or inactive');
+      res.status(400).json({ error: "IGPX gateway not available" });
       return;
     }
 
-    // Handle the transaction based on the webhook result
-    const { BalanceService } = require("../services/user/balance.service");
-    const userId = parseInt(webhookResult.user_id || '0');
-    
-    if (userId > 0) {
-      if (webhookResult.type === 'withdrawal') {
-        // Bet placed - deduct from balance
-        await BalanceService.deductBalance(userId, webhookResult.amount || 0, 'IGPX Sportsbook Bet', {
-          igpx_transaction_id: webhookResult.transaction_id,
-          igpx_action: webhookResult.metadata?.igpx_action
-        });
-      } else if (webhookResult.type === 'deposit') {
-        // Result/win - add to balance
-        await BalanceService.addBalance(userId, webhookResult.amount || 0, 'IGPX Sportsbook Result', {
-          igpx_transaction_id: webhookResult.transaction_id,
-          igpx_action: webhookResult.metadata?.igpx_action
-        });
-      }
-    }
+    // Use IgpxCallbackService for proper callback handling
+    const { IgpxCallbackService } = require("../services/payment/igpx-callback.service");
+    const igpxService = IgpxCallbackService.getInstance();
 
-    // Log the webhook
-    console.log('IGPX webhook processed successfully:', {
-      transaction_id: webhookResult.transaction_id,
-      action: webhookResult.metadata?.igpx_action,
-      user_id: userId,
-      amount: webhookResult.amount,
-      type: webhookResult.type
-    });
+    // Process callback using the callback service
+    const response = await igpxService.processCallback(
+      callbackData,
+      securityHash || '',
+      gateway.webhook_secret || ''
+    );
 
-    // Return success response as per IGPX API spec
-    res.status(200).json({ error: null });
+    console.log('[IGPX] Callback processed:', response);
+
+    // Return response in IGPX format
+    res.status(200).json(response);
   } catch (error: any) {
-    console.error('IGPX webhook error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('[IGPX] Callback error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 

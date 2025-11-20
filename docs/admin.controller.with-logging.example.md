@@ -1,6 +1,6 @@
 /**
  * EXAMPLE: How to integrate Activity Logging in Admin Controllers
- * 
+ *
  * Add these imports at the top of admin.controller.ts:
  * import ActivityLoggerService from '../../services/activity/activity-logger.service';
  *

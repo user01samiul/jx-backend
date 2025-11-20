@@ -1,0 +1,104 @@
+====================================================================
+IGPX CALLBACK CONFIGURATION - PLEASE UPDATE
+====================================================================
+
+Dear IGPX Support,
+
+Please update our callback URL configuration in your system:
+
+-------------------------------------------------------------------
+CALLBACK CONFIGURATION
+-------------------------------------------------------------------
+Client Username: jackpotx
+New Callback URL: https://backend.jackpotx.net/igpx
+Old Callback URL: https://backend.jackpotx.net/api/payment/webhook/igpx (REMOVE)
+
+-------------------------------------------------------------------
+CALLBACK ACTIONS TO IMPLEMENT
+-------------------------------------------------------------------
+The callback endpoint supports these actions:
+1. getBalance - Fetch user balance
+2. bet - Deduct bet amount from balance
+3. result - Credit winnings to balance
+4. rollback - Refund bet amount
+
+-------------------------------------------------------------------
+CALLBACK REQUEST FORMAT
+-------------------------------------------------------------------
+Method: POST
+Content-Type: application/json
+Headers:
+  - X-Security-Hash: <HMAC-SHA256 signature of request body>
+
+Request Body:
+{
+  "action": "getBalance|bet|result|rollback",
+  "user_id": "string",
+  "currency": "string",
+  "amount": number (optional for getBalance),
+  "transaction_id": "string" (required for bet/result/rollback),
+  "rollback_transaction_id": "string" (only for rollback)
+}
+
+-------------------------------------------------------------------
+CALLBACK RESPONSE FORMAT
+-------------------------------------------------------------------
+Success Response:
+{
+  "error": null,
+  "balance": 40000.00,
+  "currency": "USD",
+  "transaction_id": "txn_123" (for bet/result/rollback)
+}
+
+Error Response:
+{
+  "error": "Error message here"
+}
+
+-------------------------------------------------------------------
+TESTING INFORMATION
+-------------------------------------------------------------------
+You can test the callback endpoint is accessible:
+
+curl -X POST https://backend.jackpotx.net/igpx \
+  -H "Content-Type: application/json" \
+  -d '{"action":"getBalance","user_id":"56","currency":"USD"}'
+
+Expected response: {"error":"Invalid security hash"}
+(This confirms endpoint is accessible and validating signatures)
+
+-------------------------------------------------------------------
+CURRENT ISSUE
+-------------------------------------------------------------------
+PROBLEM:
+- Sportsbook iframe loads successfully
+- User balance is not being fetched
+- Bet placement fails with "amount: invalid value" error
+- Server logs show NO incoming requests from IGPX servers
+
+EVIDENCE:
+- Session creation (authentication) works ✓
+- Callback endpoint is accessible ✓
+- No requests from IGPX to our callback URL ✗
+
+CONCLUSION:
+IGPX is still using the old callback URL or no callback URL is configured.
+
+-------------------------------------------------------------------
+REQUIRED ACTION FROM IGPX
+-------------------------------------------------------------------
+1. Update callback URL to: https://backend.jackpotx.net/igpx
+2. Confirm the update has been applied
+3. Clear any caching on your side
+4. Test with a live session to verify callbacks are working
+
+-------------------------------------------------------------------
+CONTACT INFORMATION
+-------------------------------------------------------------------
+If you need any additional information or have questions about
+the callback implementation, please let us know.
+
+Thank you for your assistance!
+
+====================================================================
