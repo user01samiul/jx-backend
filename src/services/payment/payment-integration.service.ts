@@ -509,11 +509,11 @@ export class PaymentIntegrationService {
       const expiresIn = authResponse.data.expires_in;
 
       // Step 2: Start session to get play URL
+      // Note: Callback URL is configured once on IGPX's side, not passed per session
       const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, {
         user_id: request.metadata?.user_id?.toString() || request.order_id,
         currency: request.currency,
-        lang: request.metadata?.language || 'en',
-        callback_url: config.webhook_url || 'https://backend.jackpotx.net/api/payment/webhook/igpx'
+        lang: request.metadata?.language || 'en'
       }, {
         headers: {
           'Authorization': `Bearer ${token}`
