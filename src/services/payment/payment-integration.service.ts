@@ -512,7 +512,8 @@ export class PaymentIntegrationService {
       const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, {
         user_id: request.metadata?.user_id?.toString() || request.order_id,
         currency: request.currency,
-        lang: request.metadata?.language || 'en'
+        lang: request.metadata?.language || 'en',
+        callback_url: config.webhook_url || 'https://backend.jackpotx.net/api/payment/webhook/igpx'
       }, {
         headers: {
           'Authorization': `Bearer ${token}`
