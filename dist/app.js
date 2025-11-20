@@ -72,6 +72,22 @@ app.use('/api/payment/webhook/igpx', express_1.default.json({
         req.rawBody = buf.toString(encoding || 'utf8');
     }
 }));
+// Middleware to capture raw body for IGPX callback endpoints
+app.use('/igpx', express_1.default.json({
+    verify: (req, res, buf, encoding) => {
+        req.rawBody = buf.toString(encoding || 'utf8');
+    }
+}));
+app.use('/igpx/transaction', express_1.default.json({
+    verify: (req, res, buf, encoding) => {
+        req.rawBody = buf.toString(encoding || 'utf8');
+    }
+}));
+app.use('/igpx/transaction-rollback', express_1.default.json({
+    verify: (req, res, buf, encoding) => {
+        req.rawBody = buf.toString(encoding || 'utf8');
+    }
+}));
 // Regular JSON parser for all other routes
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -107,6 +123,46 @@ else {
 // Serve static files for uploads (avatars, banners, etc.)
 app.use('/user/avatar', express_1.default.static(path_1.default.join(process.cwd(), 'uploads/avatars')));
 app.use('/uploads', express_1.default.static(path_1.default.join(process.cwd(), 'uploads')));
+// IGPX callback handler (reusable for all endpoints)
+const handleIgpxCallback = async (req, res, endpointName) => {
+    try {
+        const callbackData = req.body;
+        const securityHash = req.headers['x-security-hash'];
+        console.log(`[IGPX] Callback received at ${endpointName}:`, {
+            action: callbackData.action,
+            user_id: callbackData.user_id,
+            amount: callbackData.amount,
+            transaction_id: callbackData.transaction_id,
+            hasSignature: !!securityHash
+        });
+        // Get raw body for HMAC verification
+        const rawBody = req.rawBody || JSON.stringify(req.body);
+        // Get IGPX gateway configuration
+        const { getPaymentGatewayByCodeService } = require("./services/admin/payment-gateway.service");
+        const gateway = await getPaymentGatewayByCodeService('igpx');
+        if (!gateway || !gateway.is_active) {
+            console.error('[IGPX] Gateway not found or inactive');
+            res.status(400).json({ error: "IGPX gateway not available" });
+            return;
+        }
+        // Use IgpxCallbackService for proper callback handling
+        const { IgpxCallbackService } = require("./services/payment/igpx-callback.service");
+        const igpxService = IgpxCallbackService.getInstance();
+        // Process callback using the callback service
+        const response = await igpxService.processCallback(callbackData, securityHash || '', gateway.webhook_secret || '');
+        console.log(`[IGPX] Callback processed at ${endpointName}:`, response);
+        // Return response in IGPX format
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error(`[IGPX] Callback error at ${endpointName}:`, error);
+        res.status(500).json({ error: error.message || 'Internal server error' });
+    }
+};
+// IGPX callback endpoints at root level (before /api routes)
+app.post('/igpx', (req, res) => handleIgpxCallback(req, res, '/igpx'));
+app.post('/igpx/transaction', (req, res) => handleIgpxCallback(req, res, '/igpx/transaction'));
+app.post('/igpx/transaction-rollback', (req, res) => handleIgpxCallback(req, res, '/igpx/transaction-rollback'));
 // 3. ROUTES AFTER CORS
 app.use("/api", api_1.default);
 // Apply rate limiter to auth routes

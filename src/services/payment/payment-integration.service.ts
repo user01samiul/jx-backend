@@ -494,7 +494,14 @@ export class PaymentIntegrationService {
   private async handleIgpxPayment(config: PaymentGatewayConfig, request: PaymentRequest): Promise<PaymentResponse> {
     try {
       const axios = require('axios');
-      
+
+      console.log('[IGPX] Creating session with request:', {
+        user_id: request.metadata?.user_id,
+        currency: request.currency,
+        language: request.metadata?.language,
+        order_id: request.order_id
+      });
+
       // Step 1: Authenticate to get token
       const authResponse = await axios.post(`${config.api_endpoint}/auth`, {
         username: config.api_key, // CLIENT_USERNAME
@@ -508,18 +515,25 @@ export class PaymentIntegrationService {
       const token = authResponse.data.token;
       const expiresIn = authResponse.data.expires_in;
 
+      console.log('[IGPX] Authentication successful');
+
       // Step 2: Start session to get play URL
       // Note: Callback URL is configured once on IGPX's side, not passed per session
-      const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, {
+      const sessionData = {
         user_id: request.metadata?.user_id?.toString() || request.order_id,
         currency: request.currency,
-        lang: request.metadata?.language || 'en',
-        mode: 'real'  // Force real money mode (not demo)
-      }, {
+        lang: request.metadata?.language || 'en'
+      };
+
+      console.log('[IGPX] Starting session with data:', sessionData);
+
+      const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, sessionData, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      console.log('[IGPX] Session response:', sessionResponse.data);
 
       if (!sessionResponse.data.url) {
         throw new Error('Failed to create IGPX session');

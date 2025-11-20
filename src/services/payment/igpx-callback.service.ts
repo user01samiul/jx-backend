@@ -52,7 +52,7 @@ export class IgpxCallbackService {
    */
   private async getUserBalance(userId: number, currency: string): Promise<number> {
     const result = await pool.query(
-      `SELECT balance FROM user_profiles WHERE user_id = $1`,
+      `SELECT balance FROM user_balances WHERE user_id = $1`,
       [userId]
     );
 
@@ -126,7 +126,7 @@ export class IgpxCallbackService {
 
       // Verify user exists
       const userResult = await client.query(
-        `SELECT balance FROM user_profiles WHERE user_id = $1 FOR UPDATE`,
+        `SELECT balance FROM user_balances WHERE user_id = $1 FOR UPDATE`,
         [userId]
       );
 
@@ -145,7 +145,7 @@ export class IgpxCallbackService {
 
       // Update balance
       await client.query(
-        `UPDATE user_profiles SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
+        `UPDATE user_balances SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
         [newBalance, userId]
       );
 
@@ -220,7 +220,7 @@ export class IgpxCallbackService {
 
       // Verify user exists and lock the row
       const userResult = await client.query(
-        `SELECT balance FROM user_profiles WHERE user_id = $1 FOR UPDATE`,
+        `SELECT balance FROM user_balances WHERE user_id = $1 FOR UPDATE`,
         [userId]
       );
 
@@ -233,7 +233,7 @@ export class IgpxCallbackService {
 
       // Update balance
       await client.query(
-        `UPDATE user_profiles SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
+        `UPDATE user_balances SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
         [newBalance, userId]
       );
 
@@ -320,7 +320,7 @@ export class IgpxCallbackService {
 
       // Verify user exists and lock the row
       const userResult = await client.query(
-        `SELECT balance FROM user_profiles WHERE user_id = $1 FOR UPDATE`,
+        `SELECT balance FROM user_balances WHERE user_id = $1 FOR UPDATE`,
         [userId]
       );
 
@@ -333,7 +333,7 @@ export class IgpxCallbackService {
 
       // Update balance (rollback adds the amount back)
       await client.query(
-        `UPDATE user_profiles SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
+        `UPDATE user_balances SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`,
         [newBalance, userId]
       );
 

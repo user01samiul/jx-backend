@@ -45,8 +45,18 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, code, api_key, webhook_secret FROM payment_gateways WHERE code = ''igpx'';\")",
       "Bash(pm2 restart:*)",
       "Bash(npx pm2:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, code, api_endpoint, webhook_url, is_active FROM payment_gateways WHERE code = ''igpx'';\")",
-      "Bash(npm run dev:*)"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE payment_gateways SET webhook_url = ''https://backend.jackpotx.net/igpx'' WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET metadata = jsonb_set(metadata, ''{callback_url}'', ''\"\"https://backend.jackpotx.net/igpx\"\"'') WHERE provider_name = ''igpixel_sportsbook'';\")",
+      "Bash(pm2 logs:*)",
+      "Bash(netstat:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT u.id, u.username, up.balance, up.currency \nFROM users u \nJOIN user_profiles up ON u.id = up.user_id \nWHERE up.balance > 0 \nORDER BY u.id \nLIMIT 5;\")",
+      "Bash(chmod:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT \n  code,\n  api_key,\n  webhook_url,\n  is_active\nFROM payment_gateways \nWHERE code = ''igpx'';\")",
+      "Bash(timeout 30 pm2 logs:*)",
+      "Bash(./test-igpx-quick.sh:*)",
+      "Bash(./test-igpx-callback.sh:*)",
+      "Bash(./test-old-endpoint.sh:*)",
+      "Bash(./test-new-endpoints.sh:*)"
     ],
     "deny": [],
     "ask": []

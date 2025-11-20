@@ -36,7 +36,7 @@ class IgpxCallbackService {
      * Get user's current balance
      */
     async getUserBalance(userId, currency) {
-        const result = await postgres_1.default.query(`SELECT balance FROM user_profiles WHERE user_id = $1`, [userId]);
+        const result = await postgres_1.default.query(`SELECT balance FROM user_balances WHERE user_id = $1`, [userId]);
         if (result.rows.length === 0) {
             throw new Error(`User ${userId} not found`);
         }
@@ -92,7 +92,7 @@ class IgpxCallbackService {
                 };
             }
             // Verify user exists
-            const userResult = await client.query(`SELECT balance FROM user_profiles WHERE user_id = $1 FOR UPDATE`, [userId]);
+            const userResult = await client.query(`SELECT balance FROM user_balances WHERE user_id = $1 FOR UPDATE`, [userId]);
             if (userResult.rows.length === 0) {
                 throw new Error(`User ${userId} not found`);
             }
@@ -103,7 +103,7 @@ class IgpxCallbackService {
             }
             const newBalance = currentBalance - request.amount;
             // Update balance
-            await client.query(`UPDATE user_profiles SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`, [newBalance, userId]);
+            await client.query(`UPDATE user_balances SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`, [newBalance, userId]);
             // Create transaction record
             await client.query(`INSERT INTO transactions
          (user_id, type, amount, currency, status, description, external_reference, metadata, created_at)
@@ -164,14 +164,14 @@ class IgpxCallbackService {
                 };
             }
             // Verify user exists and lock the row
-            const userResult = await client.query(`SELECT balance FROM user_profiles WHERE user_id = $1 FOR UPDATE`, [userId]);
+            const userResult = await client.query(`SELECT balance FROM user_balances WHERE user_id = $1 FOR UPDATE`, [userId]);
             if (userResult.rows.length === 0) {
                 throw new Error(`User ${userId} not found`);
             }
             const currentBalance = parseFloat(userResult.rows[0].balance);
             const newBalance = currentBalance + request.amount;
             // Update balance
-            await client.query(`UPDATE user_profiles SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`, [newBalance, userId]);
+            await client.query(`UPDATE user_balances SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`, [newBalance, userId]);
             // Create transaction record
             await client.query(`INSERT INTO transactions
          (user_id, type, amount, currency, status, description, external_reference, metadata, created_at)
@@ -239,14 +239,14 @@ class IgpxCallbackService {
                 }
             }
             // Verify user exists and lock the row
-            const userResult = await client.query(`SELECT balance FROM user_profiles WHERE user_id = $1 FOR UPDATE`, [userId]);
+            const userResult = await client.query(`SELECT balance FROM user_balances WHERE user_id = $1 FOR UPDATE`, [userId]);
             if (userResult.rows.length === 0) {
                 throw new Error(`User ${userId} not found`);
             }
             const currentBalance = parseFloat(userResult.rows[0].balance);
             const newBalance = currentBalance + request.amount;
             // Update balance (rollback adds the amount back)
-            await client.query(`UPDATE user_profiles SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`, [newBalance, userId]);
+            await client.query(`UPDATE user_balances SET balance = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2`, [newBalance, userId]);
             // Create transaction record
             await client.query(`INSERT INTO transactions
          (user_id, type, amount, currency, status, description, external_reference, metadata, created_at)
