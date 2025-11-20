@@ -292,7 +292,7 @@ export const handleWebhook = async (
   try {
     const { gateway_code } = req.params;
     const webhookData = req.body;
-    const signature = req.headers['x-signature'] || req.headers['authorization'];
+    const signature = req.headers['x-signature'] || req.headers['x-security-hash'] || req.headers['authorization'];
 
     console.log(`[WEBHOOK] Received webhook for gateway: ${gateway_code}`);
     console.log(`[WEBHOOK] Headers:`, req.headers);
@@ -302,6 +302,22 @@ export const handleWebhook = async (
     const gatewayConfig = await getPaymentGatewayByCodeService(gateway_code);
     if (!gatewayConfig) {
       res.status(400).json({ success: false, message: "Invalid gateway" });
+      return;
+    }
+
+    // Handle IGPX sportsbook callbacks separately (bet/result/rollback)
+    if (gateway_code.toLowerCase() === 'igpx') {
+      const { IgpxCallbackService } = require('../../services/payment/igpx-callback.service');
+      const igpxService = IgpxCallbackService.getInstance();
+
+      const result = await igpxService.processCallback(
+        webhookData,
+        signature as string,
+        gatewayConfig.webhook_secret || gatewayConfig.api_secret
+      );
+
+      // Return IGPX-specific response format
+      res.status(result.error ? 400 : 200).json(result);
       return;
     }
 

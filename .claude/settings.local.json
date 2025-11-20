@@ -38,7 +38,13 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE payment_gateways SET min_amount = 0.00 WHERE code = ''igpx'';\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, api_key, api_secret, is_active, supported_currencies, min_amount, max_amount FROM payment_gateways WHERE code = ''igpx'';\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT metadata->>''callback_url'' as callback_url FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET metadata = jsonb_set(metadata, ''{callback_url}'', ''\"\"https://backend.jackpotx.net/api/payment/webhook/igpx\"\"'') WHERE provider_name = ''igpixel_sportsbook'';\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET metadata = jsonb_set(metadata, ''{callback_url}'', ''\"\"https://backend.jackpotx.net/api/payment/webhook/igpx\"\"'') WHERE provider_name = ''igpixel_sportsbook'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, webhook_url, is_active FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, metadata-&gt;&gt;''callback_url'' as callback_url FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name, metadata->>''callback_url'' as callback_url FROM game_provider_configs WHERE provider_name = ''igpixel_sportsbook'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, code, api_key, webhook_secret FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(pm2 restart:*)",
+      "Bash(npx pm2:*)"
     ],
     "deny": [],
     "ask": []
