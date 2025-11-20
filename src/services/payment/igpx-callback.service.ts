@@ -2,11 +2,11 @@ import pool from "../../db/postgres";
 import crypto from "crypto";
 
 export interface IgpxCallbackRequest {
-  transaction_id: string;
-  action: 'bet' | 'result' | 'rollback';
+  transaction_id?: string;
+  action: 'getBalance' | 'bet' | 'result' | 'rollback';
   user_id: string;
   currency: string;
-  amount: number;
+  amount?: number;
   rollback_transaction_id?: string;
 }
 
@@ -61,6 +61,31 @@ export class IgpxCallbackService {
     }
 
     return parseFloat(result.rows[0].balance) || 0;
+  }
+
+  /**
+   * Get balance (for IGPX balance check)
+   */
+  async getBalance(request: IgpxCallbackRequest): Promise<IgpxCallbackResponse> {
+    try {
+      const userId = parseInt(request.user_id);
+
+      // Get user's current balance
+      const balance = await this.getUserBalance(userId, request.currency);
+
+      console.log(`[IGPX] Balance check: User ${userId}, Balance: ${balance} ${request.currency}`);
+
+      return {
+        error: null,
+        balance: balance,
+        currency: request.currency
+      };
+    } catch (error: any) {
+      console.error('[IGPX] Balance check error:', error);
+      return {
+        error: error.message || 'Failed to get balance'
+      };
+    }
   }
 
   /**
@@ -372,10 +397,18 @@ export class IgpxCallbackService {
       return { error: 'Invalid security hash' };
     }
 
-    // Validate required fields
-    if (!request.transaction_id || !request.action || !request.user_id || !request.currency || request.amount === undefined) {
+    // Validate required fields (transaction_id not required for getBalance)
+    if (!request.action || !request.user_id || !request.currency) {
       console.error('[IGPX] Missing required fields:', request);
       return { error: 'Missing required fields in IGPX webhook' };
+    }
+
+    // For non-getBalance actions, validate transaction_id and amount
+    if (request.action !== 'getBalance') {
+      if (!request.transaction_id || request.amount === undefined) {
+        console.error('[IGPX] Missing transaction_id or amount for action:', request.action);
+        return { error: 'Missing required fields in IGPX webhook' };
+      }
     }
 
     // Process based on action type
@@ -387,6 +420,9 @@ export class IgpxCallbackService {
     });
 
     switch (request.action) {
+      case 'getBalance':
+        return await this.getBalance(request);
+
       case 'bet':
         return await this.processBet(request);
 
