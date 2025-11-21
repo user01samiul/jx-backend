@@ -10,6 +10,164 @@ const postgres_1 = __importDefault(require("../db/postgres"));
  * Withdrawal Controller
  * Handles all withdrawal-related API endpoints for users and admins
  */
+// Network-specific address validation patterns
+const ADDRESS_PATTERNS = {
+    TRC20: {
+        pattern: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
+        length: 34,
+        prefix: 'T',
+        example: 'TYDzsYUEpvnYmQk4zGP9sWWcTEd2MiAtW6'
+    },
+    ERC20: {
+        pattern: /^0x[a-fA-F0-9]{40}$/,
+        length: 42,
+        prefix: '0x',
+        example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+    },
+    BEP20: {
+        pattern: /^0x[a-fA-F0-9]{40}$/,
+        length: 42,
+        prefix: '0x',
+        example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+    },
+    Polygon: {
+        pattern: /^0x[a-fA-F0-9]{40}$/,
+        length: 42,
+        prefix: '0x',
+        example: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+    },
+    BTC: {
+        pattern: /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/,
+        length: null,
+        prefix: null,
+        example: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+    },
+    LTC: {
+        pattern: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/,
+        length: null,
+        prefix: null,
+        example: 'LTC1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+    },
+    DOGE: {
+        pattern: /^D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}$/,
+        length: 34,
+        prefix: 'D',
+        example: 'D7Y55r7P9p69v5K3h7CJpW2Y9S8M6h7Q9q'
+    },
+    SOL: {
+        pattern: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+        length: null,
+        prefix: null,
+        example: '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV'
+    },
+    TON: {
+        pattern: /^(EQ|UQ)[a-zA-Z0-9_-]{46}$/,
+        length: 48,
+        prefix: null,
+        example: 'EQDtFpEwcFAEcRe5mLVh2N6C0x-_hJEM7W61_JLnSF74p4q2'
+    },
+    XRP: {
+        pattern: /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/,
+        length: null,
+        prefix: 'r',
+        example: 'rN7n3473SaZBCG4dFL83w7a1RXtXtbk2D9'
+    },
+    XMR: {
+        pattern: /^[48][0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/,
+        length: 95,
+        prefix: null,
+        example: '48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRgJKy3dQNcBQ...'
+    },
+    BCH: {
+        pattern: /^(bitcoincash:)?[qp][a-z0-9]{41}$/,
+        length: null,
+        prefix: null,
+        example: 'qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a'
+    }
+};
+// All supported currencies with their compatible networks (based on Oxapay)
+const CURRENCY_NETWORK_COMPATIBILITY = {
+    // Stablecoins - multiple networks
+    'USDT': ['TRC20', 'ERC20', 'BEP20', 'Polygon', 'SOL', 'TON'],
+    'USDC': ['TRC20', 'ERC20', 'BEP20', 'Polygon', 'SOL'],
+    'DAI': ['ERC20', 'BEP20', 'Polygon'],
+    // Native coins - single network
+    'BTC': ['BTC'],
+    'ETH': ['ERC20'],
+    'BNB': ['BEP20'],
+    'TRX': ['TRC20'],
+    'LTC': ['LTC'],
+    'DOGE': ['DOGE'],
+    'SOL': ['SOL'],
+    'TON': ['TON'],
+    'XRP': ['XRP'],
+    'XMR': ['XMR'],
+    'BCH': ['BCH'],
+    'POL': ['Polygon'],
+    'MATIC': ['Polygon'],
+    // Tokens - ERC20/BEP20
+    'SHIB': ['ERC20', 'BEP20'],
+    'NOT': ['TON'],
+    'DOGS': ['TON'],
+    // Generic crypto (fallback)
+    'crypto': ['TRC20', 'ERC20', 'BEP20', 'BTC', 'LTC', 'DOGE', 'SOL', 'TON', 'Polygon']
+};
+// All valid networks
+const VALID_NETWORKS = ['TRC20', 'ERC20', 'BEP20', 'BTC', 'LTC', 'DOGE', 'SOL', 'TON', 'Polygon', 'XRP', 'XMR', 'BCH'];
+// All valid currencies
+const VALID_CURRENCIES = [
+    'BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'DOGE', 'POL', 'MATIC', 'LTC', 'SOL',
+    'TRX', 'SHIB', 'TON', 'XMR', 'DAI', 'BCH', 'NOT', 'DOGS', 'XRP'
+];
+// Validate wallet address format based on network
+function validateWalletAddress(address, network) {
+    if (!address || typeof address !== 'string') {
+        return { valid: false, error: 'Wallet address is required' };
+    }
+    const trimmedAddress = address.trim();
+    if (trimmedAddress.length === 0) {
+        return { valid: false, error: 'Wallet address cannot be empty' };
+    }
+    const networkConfig = ADDRESS_PATTERNS[network];
+    if (!networkConfig) {
+        // Unknown network - allow but warn
+        console.warn(`Unknown network ${network}, skipping address format validation`);
+        return { valid: true };
+    }
+    // Check prefix
+    if (networkConfig.prefix && !trimmedAddress.startsWith(networkConfig.prefix)) {
+        return {
+            valid: false,
+            error: `Invalid ${network} address: must start with "${networkConfig.prefix}". Example: ${networkConfig.example}`
+        };
+    }
+    // Check length (if fixed)
+    if (networkConfig.length && trimmedAddress.length !== networkConfig.length) {
+        return {
+            valid: false,
+            error: `Invalid ${network} address: must be exactly ${networkConfig.length} characters. Got ${trimmedAddress.length} characters.`
+        };
+    }
+    // Check pattern
+    if (!networkConfig.pattern.test(trimmedAddress)) {
+        return {
+            valid: false,
+            error: `Invalid ${network} address format. Example: ${networkConfig.example}`
+        };
+    }
+    return { valid: true };
+}
+// Validate currency and network compatibility
+function validateCurrencyNetworkCompatibility(currency, network) {
+    const supportedNetworks = CURRENCY_NETWORK_COMPATIBILITY[currency] || CURRENCY_NETWORK_COMPATIBILITY['crypto'];
+    if (!supportedNetworks.includes(network)) {
+        return {
+            valid: false,
+            error: `${currency} is not supported on ${network} network. Supported networks: ${supportedNetworks.join(', ')}`
+        };
+    }
+    return { valid: true };
+}
 class WithdrawalController {
     /**
      * User: Create a new withdrawal request
@@ -19,35 +177,120 @@ class WithdrawalController {
         const client = await postgres_1.default.connect();
         try {
             const userId = req.user.userId;
-            const { amount, payment_method, crypto_address, crypto_network, bank_details } = req.body;
-            // Validate required fields
-            if (!amount || amount <= 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Invalid withdrawal amount'
-                });
+            const { amount, payment_method, crypto_address, crypto_network, currency, memo } = req.body;
+            const errors = [];
+            // ============================================
+            // 1. AMOUNT VALIDATION
+            // ============================================
+            // Check if amount is present
+            if (amount === undefined || amount === null || amount === '') {
+                errors.push('Amount is required');
             }
+            else {
+                const numAmount = parseFloat(amount);
+                // Check if amount is a valid number
+                if (isNaN(numAmount)) {
+                    errors.push('Amount must be a valid number');
+                }
+                else {
+                    // Check if amount is positive
+                    if (numAmount <= 0) {
+                        errors.push('Amount must be greater than 0');
+                    }
+                    // Check decimal places (max 8)
+                    const decimalPlaces = (amount.toString().split('.')[1] || '').length;
+                    if (decimalPlaces > 8) {
+                        errors.push('Amount cannot have more than 8 decimal places');
+                    }
+                    // Min/Max validation (will be checked again in service with settings)
+                    if (numAmount < 1) {
+                        errors.push('Minimum withdrawal amount is $1');
+                    }
+                    if (numAmount > 100000) {
+                        errors.push('Maximum withdrawal amount is $100,000');
+                    }
+                }
+            }
+            // ============================================
+            // 2. PAYMENT METHOD VALIDATION
+            // ============================================
             if (!payment_method) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Payment method is required'
-                });
+                errors.push('Payment method is required');
             }
-            // Validate crypto details if crypto payment
-            if (payment_method === 'crypto' && (!crypto_address || !crypto_network)) {
+            else if (!['crypto', 'bank'].includes(payment_method)) {
+                errors.push('Invalid payment method. Allowed: crypto, bank');
+            }
+            // ============================================
+            // 3. CRYPTO-SPECIFIC VALIDATION
+            // ============================================
+            if (payment_method === 'crypto') {
+                // Currency validation (if provided)
+                const currencyToValidate = currency || 'USDT';
+                if (currency && !VALID_CURRENCIES.includes(currency) && currency !== 'crypto') {
+                    errors.push(`Invalid currency. Supported: ${VALID_CURRENCIES.join(', ')}`);
+                }
+                // Network validation
+                if (!crypto_network) {
+                    errors.push('Crypto network is required for crypto withdrawals');
+                }
+                else if (!VALID_NETWORKS.includes(crypto_network)) {
+                    errors.push(`Invalid network. Allowed: ${VALID_NETWORKS.join(', ')}`);
+                }
+                // Address validation
+                if (!crypto_address) {
+                    errors.push('Crypto address is required for crypto withdrawals');
+                }
+                else if (crypto_network && VALID_NETWORKS.includes(crypto_network)) {
+                    const addressValidation = validateWalletAddress(crypto_address, crypto_network);
+                    if (!addressValidation.valid) {
+                        errors.push(addressValidation.error);
+                    }
+                }
+                // Currency & Network compatibility
+                if (crypto_network && VALID_NETWORKS.includes(crypto_network)) {
+                    const compatibilityCheck = validateCurrencyNetworkCompatibility(currencyToValidate, crypto_network);
+                    if (!compatibilityCheck.valid) {
+                        errors.push(compatibilityCheck.error);
+                    }
+                }
+            }
+            // ============================================
+            // 4. MEMO VALIDATION (if applicable)
+            // ============================================
+            if (memo) {
+                if (typeof memo !== 'string') {
+                    errors.push('Memo must be a string');
+                }
+                else if (memo.length > 100) {
+                    errors.push('Memo cannot exceed 100 characters');
+                }
+                // XRP/XLM specific memo validation
+                if (currency === 'XRP' || currency === 'XLM') {
+                    if (memo.length > 28) {
+                        errors.push(`${currency} memo cannot exceed 28 characters`);
+                    }
+                }
+            }
+            // ============================================
+            // RETURN VALIDATION ERRORS
+            // ============================================
+            if (errors.length > 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Crypto address and network are required for crypto withdrawals'
+                    message: 'Validation failed',
+                    errors: errors
                 });
             }
             // Get user IP
             const ipAddress = req.ip || req.headers['x-forwarded-for'] || 'unknown';
             const withdrawalRequest = {
                 user_id: userId,
-                amount,
+                amount: parseFloat(amount),
+                currency: currency || 'USD',
                 crypto_currency: payment_method,
-                crypto_address: crypto_address,
+                crypto_address: crypto_address?.trim(),
                 crypto_network: crypto_network,
+                crypto_memo: memo,
                 ip_address: ipAddress
             };
             const result = await withdrawal_service_1.WithdrawalService.createWithdrawalRequest(withdrawalRequest);
@@ -55,45 +298,52 @@ class WithdrawalController {
                 success: true,
                 message: result.autoApproved
                     ? 'Withdrawal request created and approved automatically'
-                    : 'Withdrawal request created successfully',
+                    : 'Withdrawal request submitted successfully',
                 data: result
             });
         }
         catch (error) {
             console.error('Error creating withdrawal:', error);
-            // Handle specific validation errors
+            // Handle specific validation errors from service
             if (error.message?.includes('KYC verification')) {
                 return res.status(403).json({
                     success: false,
                     message: error.message,
-                    error: 'KYC_REQUIRED'
+                    errors: ['KYC verification required']
                 });
             }
             if (error.message?.includes('Insufficient balance')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message,
-                    error: 'INSUFFICIENT_BALANCE'
+                    errors: ['Insufficient balance for this withdrawal']
                 });
             }
             if (error.message?.includes('minimum deposit')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message,
-                    error: 'MIN_DEPOSIT_REQUIRED'
+                    errors: ['Minimum deposit requirement not met']
                 });
             }
-            if (error.message?.includes('limit exceeded')) {
+            if (error.message?.includes('limit')) {
                 return res.status(400).json({
                     success: false,
                     message: error.message,
-                    error: 'LIMIT_EXCEEDED'
+                    errors: [error.message]
+                });
+            }
+            if (error.message?.includes('Account')) {
+                return res.status(400).json({
+                    success: false,
+                    message: error.message,
+                    errors: [error.message]
                 });
             }
             return res.status(500).json({
                 success: false,
                 message: 'Failed to create withdrawal request',
-                error: error.message
+                errors: [error.message || 'An unexpected error occurred']
             });
         }
         finally {
