@@ -36,8 +36,8 @@ exports.GameFiltersInput = zod_1.z.object({
     is_new: zod_1.z.boolean().optional(),
     is_hot: zod_1.z.boolean().optional(),
     search: zod_1.z.string().optional(),
-    page: zod_1.z.number().min(1).optional(),
-    limit: zod_1.z.number().min(1).max(100).optional()
+    page: zod_1.z.coerce.number().min(1).optional(),
+    limit: zod_1.z.coerce.number().min(1).max(100).optional()
 });
 // =====================================================
 // PROVIDER MANAGEMENT SCHEMAS
@@ -68,11 +68,11 @@ exports.UpdateProviderInput = exports.CreateProviderInput.partial();
 exports.UserFiltersInput = zod_1.z.object({
     status: zod_1.z.string().optional(),
     role: zod_1.z.string().optional(),
-    verification_level: zod_1.z.number().min(0).max(2).optional(),
+    verification_level: zod_1.z.coerce.number().min(0).max(2).optional(),
     country: zod_1.z.string().optional(),
     search: zod_1.z.string().optional(),
-    page: zod_1.z.number().min(1).optional(),
-    limit: zod_1.z.number().min(1).max(100).optional()
+    page: zod_1.z.coerce.number().min(1).optional(),
+    limit: zod_1.z.coerce.number().min(1).max(100).optional()
 });
 exports.UpdateUserStatusInput = zod_1.z.object({
     status: zod_1.z.enum(["Active", "Inactive", "Suspended", "Banned"]),
@@ -140,23 +140,23 @@ exports.PaymentGatewayFiltersInput = zod_1.z.object({
     is_active: zod_1.z.boolean().optional(),
     supported_currency: zod_1.z.string().optional(),
     search: zod_1.z.string().optional(),
-    page: zod_1.z.number().min(1).optional(),
-    limit: zod_1.z.number().min(1).max(100).optional()
+    page: zod_1.z.coerce.number().min(1).optional(),
+    limit: zod_1.z.coerce.number().min(1).max(100).optional()
 });
 // =====================================================
 // TRANSACTION MANAGEMENT SCHEMAS
 // =====================================================
 exports.TransactionFiltersInput = zod_1.z.object({
-    user_id: zod_1.z.number().positive().optional(),
+    user_id: zod_1.z.coerce.number().positive().optional(),
     type: zod_1.z.enum(["deposit", "withdrawal", "bet", "win", "bonus", "cashback", "refund", "adjustment"]).optional(),
     status: zod_1.z.enum(["pending", "completed", "failed", "cancelled"]).optional(),
     payment_gateway: zod_1.z.string().optional(),
     start_date: zod_1.z.string().optional(),
     end_date: zod_1.z.string().optional(),
-    min_amount: zod_1.z.number().optional(),
-    max_amount: zod_1.z.number().optional(),
-    page: zod_1.z.number().min(1).optional(),
-    limit: zod_1.z.number().min(1).max(100).optional()
+    min_amount: zod_1.z.coerce.number().optional(),
+    max_amount: zod_1.z.coerce.number().optional(),
+    page: zod_1.z.coerce.number().min(1).optional(),
+    limit: zod_1.z.coerce.number().min(1).max(100).optional()
 });
 exports.ApproveTransactionInput = zod_1.z.object({
     transaction_id: zod_1.z.number().positive(),
@@ -254,7 +254,7 @@ exports.UpdateRTPSettingsInput = zod_1.z.object({
 exports.RTPAnalyticsFiltersInput = zod_1.z.object({
     start_date: zod_1.z.string().optional(),
     end_date: zod_1.z.string().optional(),
-    game_id: zod_1.z.number().positive().optional(),
+    game_id: zod_1.z.coerce.number().positive().optional(),
     provider: zod_1.z.string().optional(),
     category: zod_1.z.string().optional()
 });
@@ -318,8 +318,8 @@ exports.AnalyticsFiltersInput = zod_1.z.object({
     start_date: zod_1.z.string().optional(),
     end_date: zod_1.z.string().optional(),
     group_by: zod_1.z.enum(["day", "week", "month", "year"]).optional(),
-    user_id: zod_1.z.number().positive().optional(),
-    game_id: zod_1.z.number().positive().optional(),
+    user_id: zod_1.z.coerce.number().positive().optional(),
+    game_id: zod_1.z.coerce.number().positive().optional(),
     provider: zod_1.z.string().optional()
 });
 exports.ReportFiltersInput = zod_1.z.object({

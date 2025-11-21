@@ -37,8 +37,8 @@ export const GameFiltersInput = z.object({
   is_new: z.boolean().optional(),
   is_hot: z.boolean().optional(),
   search: z.string().optional(),
-  page: z.number().min(1).optional(),
-  limit: z.number().min(1).max(100).optional()
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(100).optional()
 });
 
 // =====================================================
@@ -74,11 +74,11 @@ export const UpdateProviderInput = CreateProviderInput.partial();
 export const UserFiltersInput = z.object({
   status: z.string().optional(),
   role: z.string().optional(),
-  verification_level: z.number().min(0).max(2).optional(),
+  verification_level: z.coerce.number().min(0).max(2).optional(),
   country: z.string().optional(),
   search: z.string().optional(),
-  page: z.number().min(1).optional(),
-  limit: z.number().min(1).max(100).optional()
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(100).optional()
 });
 
 export const UpdateUserStatusInput = z.object({
@@ -155,8 +155,8 @@ export const PaymentGatewayFiltersInput = z.object({
   is_active: z.boolean().optional(),
   supported_currency: z.string().optional(),
   search: z.string().optional(),
-  page: z.number().min(1).optional(),
-  limit: z.number().min(1).max(100).optional()
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(100).optional()
 });
 
 // =====================================================
@@ -164,16 +164,16 @@ export const PaymentGatewayFiltersInput = z.object({
 // =====================================================
 
 export const TransactionFiltersInput = z.object({
-  user_id: z.number().positive().optional(),
+  user_id: z.coerce.number().positive().optional(),
   type: z.enum(["deposit", "withdrawal", "bet", "win", "bonus", "cashback", "refund", "adjustment"]).optional(),
   status: z.enum(["pending", "completed", "failed", "cancelled"]).optional(),
   payment_gateway: z.string().optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-  min_amount: z.number().optional(),
-  max_amount: z.number().optional(),
-  page: z.number().min(1).optional(),
-  limit: z.number().min(1).max(100).optional()
+  min_amount: z.coerce.number().optional(),
+  max_amount: z.coerce.number().optional(),
+  page: z.coerce.number().min(1).optional(),
+  limit: z.coerce.number().min(1).max(100).optional()
 });
 
 export const ApproveTransactionInput = z.object({
@@ -278,7 +278,7 @@ export const UpdateRTPSettingsInput = z.object({
 export const RTPAnalyticsFiltersInput = z.object({
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-  game_id: z.number().positive().optional(),
+  game_id: z.coerce.number().positive().optional(),
   provider: z.string().optional(),
   category: z.string().optional()
 });
@@ -348,8 +348,8 @@ export const AnalyticsFiltersInput = z.object({
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   group_by: z.enum(["day", "week", "month", "year"]).optional(),
-  user_id: z.number().positive().optional(),
-  game_id: z.number().positive().optional(),
+  user_id: z.coerce.number().positive().optional(),
+  game_id: z.coerce.number().positive().optional(),
   provider: z.string().optional()
 });
 
