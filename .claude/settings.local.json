@@ -68,7 +68,8 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE withdrawal_settings SET setting_value = ''false'' WHERE setting_key = ''require_kyc''; SELECT setting_key, setting_value FROM withdrawal_settings WHERE setting_key IN (''require_kyc'', ''min_account_age_hours'', ''min_deposit_before_withdrawal'');\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE withdrawal_settings SET setting_value = ''0'' WHERE setting_key IN (''min_account_age_hours'', ''min_deposit_before_withdrawal''); SELECT setting_key, setting_value FROM withdrawal_settings WHERE setting_key IN (''require_kyc'', ''min_account_age_hours'', ''min_deposit_before_withdrawal'', ''min_withdrawal_amount'');\")",
       "Bash(cat:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, user_id, amount, status, crypto_currency as payment_method, crypto_address as wallet_address, requested_at FROM withdrawal_requests WHERE status = ''pending'' ORDER BY id DESC;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, user_id, amount, status, crypto_currency as payment_method, crypto_address as wallet_address, requested_at FROM withdrawal_requests WHERE status = ''pending'' ORDER BY id DESC;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT code, api_key, api_secret, config FROM payment_gateways WHERE code = ''oxapay'';\")"
     ],
     "deny": [],
     "ask": []

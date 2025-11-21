@@ -503,11 +503,58 @@ export class WithdrawalService {
         config: gateway.config
       };
 
-      // Process through payment gateway
+      // Convert USD to crypto amount
       const paymentService = PaymentIntegrationService.getInstance();
-      const paymentRequest = {
-        amount: withdrawal.net_amount,
+
+      console.log('[Withdrawal] Converting USD to crypto:', {
+        usd_amount: withdrawal.net_amount,
+        target_currency: withdrawal.crypto_currency,
+        gateway: withdrawal.gateway_code
+      });
+
+      const conversionResult = await paymentService.convertCurrency(
+        withdrawal.gateway_code || 'oxapay',
+        gatewayConfig,
+        parseFloat(withdrawal.net_amount),
+        withdrawal.crypto_currency
+      );
+
+      if (!conversionResult.success) {
+        throw new Error(`Currency conversion failed: ${conversionResult.message}`);
+      }
+
+      const cryptoAmount = conversionResult.cryptoAmount;
+      const exchangeRate = conversionResult.rate;
+
+      console.log('[Withdrawal] Conversion successful:', {
+        usd_amount: withdrawal.net_amount,
+        crypto_amount: cryptoAmount,
         currency: withdrawal.crypto_currency,
+        exchange_rate: exchangeRate
+      });
+
+      // Store conversion details in withdrawal record
+      await client.query(
+        `UPDATE withdrawal_requests
+         SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb
+         WHERE id = $2`,
+        [
+          JSON.stringify({
+            conversion: {
+              usd_amount: parseFloat(withdrawal.net_amount),
+              crypto_amount: cryptoAmount,
+              exchange_rate: exchangeRate,
+              converted_at: new Date().toISOString()
+            }
+          }),
+          withdrawalId
+        ]
+      );
+
+      // Process through payment gateway with CRYPTO amount
+      const paymentRequest = {
+        amount: cryptoAmount!, // Use converted crypto amount, not USD!
+        currency: withdrawal.crypto_currency, // Crypto currency (BTC, ETH, USDT, etc.)
         order_id: `WD-${withdrawal.id}-${Date.now()}`,
         customer_email: withdrawal.email,
         customer_name: withdrawal.username,
@@ -516,7 +563,9 @@ export class WithdrawalService {
           address: withdrawal.crypto_address,
           network: withdrawal.crypto_network,
           memo: withdrawal.crypto_memo,
-          withdrawal_id: withdrawal.id
+          withdrawal_id: withdrawal.id,
+          usd_amount: parseFloat(withdrawal.net_amount),
+          exchange_rate: exchangeRate
         }
       };
 
@@ -824,6 +873,7 @@ export class WithdrawalService {
               wr.fee_amount, wr.net_amount, wr.gateway_code, wr.gateway_transaction_id,
               wr.notes as admin_notes, wr.rejection_reason,
               wr.risk_score, wr.risk_level,
+              wr.metadata,
               wr.requested_at, wr.processed_at, wr.completed_at,
               wr.created_at, wr.updated_at,
               u.username, u.email,
@@ -923,6 +973,7 @@ export class WithdrawalService {
         wr.status,
         wr.crypto_currency as payment_method,
         wr.crypto_address,
+        wr.metadata,
         wr.requested_at,
         wr.completed_at,
         u.username,
