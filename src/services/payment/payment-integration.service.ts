@@ -609,9 +609,8 @@ export class PaymentIntegrationService {
       // IMPORTANT: request.amount should already be in crypto currency at this point
       // The conversion from USD to crypto should happen BEFORE calling this method
 
-      // Oxapay uses a different base URL for payouts
-      const payoutBaseUrl = config.config?.payout_api_endpoint || 'https://app-api.oxapay.com/v1';
-      const endpoint = `${payoutBaseUrl}/payout`;
+      // Oxapay Official Payout API Endpoint
+      const endpoint = config.config?.payout_api_endpoint || 'https://api.oxapay.com/v1/payout';
 
       const requestBody: any = {
         address: request.metadata.address,
@@ -620,6 +619,11 @@ export class PaymentIntegrationService {
         network: request.metadata?.network || config.config?.network || 'TRC20',
         description: request.description || 'Withdrawal',
       };
+
+      // Add memo if provided (required for some currencies like XRP, XLM)
+      if (request.metadata?.memo) {
+        requestBody.memo = request.metadata.memo;
+      }
 
       console.log('[Oxapay] Payout request body:', JSON.stringify(requestBody, null, 2));
 

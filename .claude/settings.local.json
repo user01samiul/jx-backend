@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE withdrawal_settings SET setting_value = ''false'' WHERE setting_key = ''auto_process_enabled''; SELECT setting_key, setting_value FROM withdrawal_settings WHERE setting_key = ''auto_process_enabled'';\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE withdrawal_settings SET setting_value = ''false'' WHERE setting_key = ''auto_process_enabled''; SELECT setting_key, setting_value FROM withdrawal_settings WHERE setting_key = ''auto_process_enabled'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT code, api_endpoint, payout_api_key FROM payment_gateways WHERE code = ''oxapay'';\")"
     ],
     "deny": [],
     "ask": []
