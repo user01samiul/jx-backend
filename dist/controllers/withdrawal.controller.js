@@ -260,13 +260,21 @@ class WithdrawalController {
             if (to_date)
                 filters.toDate = new Date(to_date);
             const withdrawals = await withdrawal_service_1.WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit), offset: parseInt(offset) });
+            // Get total count for proper pagination
+            const totalResult = await withdrawal_service_1.WithdrawalService.getWithdrawals({ ...filters, limit: 99999, offset: 0 });
+            const total = totalResult.length;
+            const limitNum = parseInt(limit);
+            const offsetNum = parseInt(offset);
             return res.status(200).json({
                 success: true,
-                data: withdrawals,
-                pagination: {
-                    limit: parseInt(limit),
-                    offset: parseInt(offset),
-                    total: withdrawals.length
+                data: {
+                    data: withdrawals,
+                    pagination: {
+                        limit: limitNum,
+                        offset: offsetNum,
+                        total: total,
+                        has_more: offsetNum + withdrawals.length < total
+                    }
                 }
             });
         }
@@ -385,8 +393,13 @@ class WithdrawalController {
      */
     static async getStatistics(req, res) {
         try {
-            const { period = '24h' } = req.query;
-            const stats = await withdrawal_service_1.WithdrawalService.getStatistics(period);
+            const { from_date, to_date } = req.query;
+            const filters = {};
+            if (from_date)
+                filters.from_date = from_date;
+            if (to_date)
+                filters.to_date = to_date;
+            const stats = await withdrawal_service_1.WithdrawalService.getStatistics(filters);
             return res.status(200).json({
                 success: true,
                 data: stats
@@ -397,6 +410,27 @@ class WithdrawalController {
             return res.status(500).json({
                 success: false,
                 message: 'Failed to fetch withdrawal statistics',
+                error: error.message
+            });
+        }
+    }
+    /**
+     * Admin: Get dashboard statistics (cards + recent payouts)
+     * GET /api/admin/withdrawals/dashboard
+     */
+    static async getDashboard(req, res) {
+        try {
+            const dashboardData = await withdrawal_service_1.WithdrawalService.getDashboardStatistics();
+            return res.status(200).json({
+                success: true,
+                data: dashboardData
+            });
+        }
+        catch (error) {
+            console.error('Error fetching dashboard:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch dashboard data',
                 error: error.message
             });
         }
@@ -537,6 +571,48 @@ class WithdrawalController {
             return res.status(500).json({
                 success: false,
                 message: 'Failed to fetch audit log',
+                error: error.message
+            });
+        }
+    }
+    /**
+     * Admin: Process a specific approved withdrawal immediately
+     * POST /api/admin/withdrawals/:id/process
+     */
+    static async processWithdrawal(req, res) {
+        try {
+            const withdrawalId = parseInt(req.params.id);
+            if (isNaN(withdrawalId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid withdrawal ID'
+                });
+            }
+            // Check if withdrawal exists and is approved
+            const checkResult = await postgres_1.default.query('SELECT id, status FROM withdrawal_requests WHERE id = $1', [withdrawalId]);
+            if (checkResult.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Withdrawal not found'
+                });
+            }
+            if (checkResult.rows[0].status !== 'approved') {
+                return res.status(400).json({
+                    success: false,
+                    message: `Cannot process withdrawal with status: ${checkResult.rows[0].status}. Must be approved first.`
+                });
+            }
+            await withdrawal_service_1.WithdrawalService.processWithdrawal(withdrawalId);
+            return res.status(200).json({
+                success: true,
+                message: 'Withdrawal processed successfully'
+            });
+        }
+        catch (error) {
+            console.error('Error processing withdrawal:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to process withdrawal',
                 error: error.message
             });
         }

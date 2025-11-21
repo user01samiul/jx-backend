@@ -573,15 +573,7 @@ class WithdrawalService {
         }
         const limit = filters.limit || 50;
         const offset = filters.offset || 0;
-        const result = await postgres_1.default.query(`SELECT wr.id, wr.user_id, wr.amount, wr.currency, wr.status, wr.approval_status,
-              wr.crypto_currency as payment_method,
-              wr.crypto_address as wallet_address,
-              wr.crypto_network, wr.crypto_memo,
-              wr.fee_amount, wr.net_amount, wr.gateway_code, wr.gateway_transaction_id,
-              wr.notes as admin_notes, wr.rejection_reason,
-              wr.risk_score, wr.risk_level,
-              wr.requested_at, wr.processed_at, wr.completed_at,
-              wr.created_at, wr.updated_at,
+        const result = await postgres_1.default.query(`SELECT wr.*,
               u.username, u.email,
               approver.username as approved_by_username,
               rejector.username as rejected_by_username

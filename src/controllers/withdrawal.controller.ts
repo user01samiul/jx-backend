@@ -302,13 +302,22 @@ export class WithdrawalController {
 
       const withdrawals = await WithdrawalService.getWithdrawals({ ...filters, limit: parseInt(limit as string), offset: parseInt(offset as string) });
 
+      // Get total count for proper pagination
+      const totalResult = await WithdrawalService.getWithdrawals({ ...filters, limit: 99999, offset: 0 });
+      const total = totalResult.length;
+      const limitNum = parseInt(limit as string);
+      const offsetNum = parseInt(offset as string);
+
       return res.status(200).json({
         success: true,
-        data: withdrawals,
-        pagination: {
-          limit: parseInt(limit as string),
-          offset: parseInt(offset as string),
-          total: withdrawals.length
+        data: {
+          data: withdrawals,
+          pagination: {
+            limit: limitNum,
+            offset: offsetNum,
+            total: total,
+            has_more: offsetNum + withdrawals.length < total
+          }
         }
       });
 
@@ -445,9 +454,13 @@ export class WithdrawalController {
    */
   static async getStatistics(req: Request, res: Response) {
     try {
-      const { period = '24h' } = req.query;
+      const { from_date, to_date } = req.query;
 
-      const stats = await WithdrawalService.getStatistics(period as string);
+      const filters: any = {};
+      if (from_date) filters.from_date = from_date;
+      if (to_date) filters.to_date = to_date;
+
+      const stats = await WithdrawalService.getStatistics(filters);
 
       return res.status(200).json({
         success: true,
@@ -459,6 +472,29 @@ export class WithdrawalController {
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch withdrawal statistics',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Admin: Get dashboard statistics (cards + recent payouts)
+   * GET /api/admin/withdrawals/dashboard
+   */
+  static async getDashboard(req: Request, res: Response) {
+    try {
+      const dashboardData = await WithdrawalService.getDashboardStatistics();
+
+      return res.status(200).json({
+        success: true,
+        data: dashboardData
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching dashboard:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch dashboard data',
         error: error.message
       });
     }
@@ -627,6 +663,58 @@ export class WithdrawalController {
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch audit log',
+        error: error.message
+      });
+    }
+  }
+
+  /**
+   * Admin: Process a specific approved withdrawal immediately
+   * POST /api/admin/withdrawals/:id/process
+   */
+  static async processWithdrawal(req: Request, res: Response) {
+    try {
+      const withdrawalId = parseInt(req.params.id);
+
+      if (isNaN(withdrawalId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid withdrawal ID'
+        });
+      }
+
+      // Check if withdrawal exists and is approved
+      const checkResult = await pool.query(
+        'SELECT id, status FROM withdrawal_requests WHERE id = $1',
+        [withdrawalId]
+      );
+
+      if (checkResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Withdrawal not found'
+        });
+      }
+
+      if (checkResult.rows[0].status !== 'approved') {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot process withdrawal with status: ${checkResult.rows[0].status}. Must be approved first.`
+        });
+      }
+
+      await WithdrawalService.processWithdrawal(withdrawalId);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Withdrawal processed successfully'
+      });
+
+    } catch (error: any) {
+      console.error('Error processing withdrawal:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to process withdrawal',
         error: error.message
       });
     }

@@ -105,7 +105,7 @@ export class WithdrawalService {
       // 1. Validate user exists and get user info
       const userResult = await client.query(
         `SELECT u.id, u.username, u.email, u.status_id, s.name as status_name,
-                u.created_at, up.kyc_status,
+                u.created_at, up.is_verified, up.verification_level,
                 COALESCE(ub.balance, 0) as balance
          FROM users u
          LEFT JOIN statuses s ON u.status_id = s.id
@@ -126,8 +126,8 @@ export class WithdrawalService {
         throw new Error('Account is not active. Please contact support.');
       }
 
-      // 3. KYC Verification Check
-      if (settings.require_kyc && user.kyc_status !== 'approved') {
+      // 3. KYC Verification Check (using is_verified instead of kyc_status)
+      if (settings.require_kyc && !user.is_verified) {
         throw new Error('KYC verification required. Please complete identity verification before withdrawal.');
       }
 
@@ -817,7 +817,15 @@ export class WithdrawalService {
     const offset = filters.offset || 0;
 
     const result = await pool.query(
-      `SELECT wr.*,
+      `SELECT wr.id, wr.user_id, wr.amount, wr.currency, wr.status, wr.approval_status,
+              wr.crypto_currency as payment_method,
+              wr.crypto_address as wallet_address,
+              wr.crypto_network, wr.crypto_memo,
+              wr.fee_amount, wr.net_amount, wr.gateway_code, wr.gateway_transaction_id,
+              wr.notes as admin_notes, wr.rejection_reason,
+              wr.risk_score, wr.risk_level,
+              wr.requested_at, wr.processed_at, wr.completed_at,
+              wr.created_at, wr.updated_at,
               u.username, u.email,
               approver.username as approved_by_username,
               rejector.username as rejected_by_username
@@ -862,6 +870,8 @@ export class WithdrawalService {
          COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed_count,
          COALESCE(SUM(amount), 0) as total_amount,
          COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) as completed_amount,
+         COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_amount,
+         COALESCE(SUM(CASE WHEN status = 'processing' THEN amount ELSE 0 END), 0) as processing_amount,
          COALESCE(SUM(fee_amount), 0) as total_fees,
          COUNT(CASE WHEN approval_status = 'auto_approved' THEN 1 END) as auto_approved_count,
          COUNT(CASE WHEN approval_status = 'manually_approved' THEN 1 END) as manually_approved_count
@@ -871,6 +881,101 @@ export class WithdrawalService {
     );
 
     return result.rows[0];
+  }
+
+  /**
+   * Get dashboard statistics with month-over-month comparison
+   */
+  static async getDashboardStatistics(): Promise<any> {
+    // Current month stats
+    const currentResult = await pool.query(`
+      SELECT
+        COUNT(*) as total_payouts,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_count,
+        COUNT(CASE WHEN status = 'processing' THEN 1 END) as processing_count,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_count,
+        COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending_amount,
+        COALESCE(SUM(CASE WHEN status = 'processing' THEN amount ELSE 0 END), 0) as processing_amount,
+        COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) as completed_amount
+      FROM withdrawal_requests
+    `);
+
+    // Last month stats for comparison
+    const lastMonthResult = await pool.query(`
+      SELECT COUNT(*) as total_payouts
+      FROM withdrawal_requests
+      WHERE requested_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month')
+        AND requested_at < DATE_TRUNC('month', NOW())
+    `);
+
+    // This month stats
+    const thisMonthResult = await pool.query(`
+      SELECT COUNT(*) as total_payouts
+      FROM withdrawal_requests
+      WHERE requested_at >= DATE_TRUNC('month', NOW())
+    `);
+
+    // Recent payouts (last 10)
+    const recentResult = await pool.query(`
+      SELECT
+        wr.id,
+        wr.amount,
+        wr.status,
+        wr.crypto_currency as payment_method,
+        wr.crypto_address,
+        wr.requested_at,
+        wr.completed_at,
+        u.username,
+        u.email,
+        CONCAT(LEFT(u.username, 1), RIGHT(u.username, 1)) as initials
+      FROM withdrawal_requests wr
+      JOIN users u ON wr.user_id = u.id
+      ORDER BY wr.requested_at DESC
+      LIMIT 10
+    `);
+
+    const current = currentResult.rows[0];
+    const lastMonth = parseInt(lastMonthResult.rows[0].total_payouts) || 0;
+    const thisMonth = parseInt(thisMonthResult.rows[0].total_payouts) || 0;
+
+    // Calculate month-over-month percentage change
+    const monthChange = lastMonth > 0
+      ? ((thisMonth - lastMonth) / lastMonth * 100).toFixed(1)
+      : thisMonth > 0 ? '100' : '0';
+
+    return {
+      cards: {
+        total_payouts: {
+          count: parseInt(current.total_payouts),
+          change_percent: parseFloat(monthChange),
+          change_label: 'from last month'
+        },
+        pending: {
+          count: parseInt(current.pending_count),
+          amount: parseFloat(current.pending_amount)
+        },
+        processing: {
+          count: parseInt(current.processing_count),
+          amount: parseFloat(current.processing_amount)
+        },
+        completed: {
+          count: parseInt(current.completed_count),
+          amount: parseFloat(current.completed_amount)
+        }
+      },
+      recent_payouts: recentResult.rows.map(row => ({
+        id: row.id,
+        username: row.username,
+        email: row.email,
+        initials: row.initials,
+        payment_method: row.payment_method,
+        amount: parseFloat(row.amount),
+        status: row.status,
+        crypto_address: row.crypto_address,
+        requested_at: row.requested_at,
+        completed_at: row.completed_at
+      }))
+    };
   }
 
   /**

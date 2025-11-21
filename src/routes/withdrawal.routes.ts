@@ -59,6 +59,14 @@ router.get(
   WithdrawalController.getStatistics
 );
 
+// Get dashboard data (cards + recent payouts)
+router.get(
+  '/admin/dashboard',
+  authMiddleware,
+  adminMiddleware,
+  WithdrawalController.getDashboard
+);
+
 // Get withdrawal settings
 router.get(
   '/admin/settings',
@@ -113,6 +121,14 @@ router.post(
   authMiddleware,
   adminMiddleware,
   WithdrawalController.rejectWithdrawal
+);
+
+// Process approved withdrawal (sends to Oxapay)
+router.post(
+  '/admin/:id/process',
+  authMiddleware,
+  adminMiddleware,
+  WithdrawalController.processWithdrawal
 );
 
 export default router;

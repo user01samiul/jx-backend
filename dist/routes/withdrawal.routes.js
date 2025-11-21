@@ -28,6 +28,8 @@ router.delete('/:id', auth_middleware_1.authMiddleware, withdrawal_controller_1.
 router.get('/admin/all', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getAllWithdrawals);
 // Get withdrawal statistics
 router.get('/admin/statistics', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getStatistics);
+// Get dashboard data (cards + recent payouts)
+router.get('/admin/dashboard', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getDashboard);
 // Get withdrawal settings
 router.get('/admin/settings', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getSettings);
 // Update withdrawal settings
@@ -42,4 +44,6 @@ router.post('/admin/cron/trigger', auth_middleware_1.authMiddleware, admin_middl
 router.post('/admin/:id/approve', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.approveWithdrawal);
 // Reject withdrawal
 router.post('/admin/:id/reject', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.rejectWithdrawal);
+// Process approved withdrawal (sends to Oxapay)
+router.post('/admin/:id/process', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.processWithdrawal);
 exports.default = router;
