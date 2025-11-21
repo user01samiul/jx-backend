@@ -56,7 +56,10 @@
       "Bash(./test-igpx-quick.sh:*)",
       "Bash(./test-igpx-callback.sh:*)",
       "Bash(./test-old-endpoint.sh:*)",
-      "Bash(./test-new-endpoints.sh:*)"
+      "Bash(./test-new-endpoints.sh:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT provider_name, base_url, api_key, api_secret, metadata, is_active \nFROM game_provider_configs \nWHERE provider_name ILIKE ''%igpx%'' OR provider_name ILIKE ''%igpixel%'';\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT code, webhook_secret, api_key, api_secret \nFROM payment_gateways \nWHERE code = ''igpx'';\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete IGPX from payment_gateways\nDELETE FROM payment_gateways WHERE code = ''igpx'';\n\n-- Verify deletion\nSELECT code, name FROM payment_gateways ORDER BY created_at;\n\")"
     ],
     "deny": [],
     "ask": []

@@ -170,13 +170,25 @@ const handleIgpxCallback = async (req: any, res: any, endpointName: string) => {
     // Get raw body for HMAC verification
     const rawBody = req.rawBody || JSON.stringify(req.body);
 
-    // Get IGPX gateway configuration
-    const { getPaymentGatewayByCodeService } = require("./services/admin/payment-gateway.service");
-    const gateway = await getPaymentGatewayByCodeService('igpx');
+    // Get IGPX provider configuration from game_provider_configs
+    const { pool } = require("./db/postgres");
+    const result = await pool.query(
+      `SELECT * FROM game_provider_configs WHERE provider_name = $1 AND is_active = true`,
+      ['igpixel_sportsbook']
+    );
 
-    if (!gateway || !gateway.is_active) {
-      console.error('[IGPX] Gateway not found or inactive');
-      res.status(400).json({ error: "IGPX gateway not available" });
+    if (result.rows.length === 0) {
+      console.error('[IGPX] Provider not found or inactive in game_provider_configs');
+      res.status(400).json({ error: "IGPX provider not available" });
+      return;
+    }
+
+    const providerConfig = result.rows[0];
+    const webhookSecret = providerConfig.metadata?.webhook_secret || providerConfig.metadata?.security_hash;
+
+    if (!webhookSecret) {
+      console.error('[IGPX] Webhook secret not configured in provider metadata');
+      res.status(500).json({ error: "IGPX provider configuration incomplete" });
       return;
     }
 
@@ -188,7 +200,7 @@ const handleIgpxCallback = async (req: any, res: any, endpointName: string) => {
     const response = await igpxService.processCallback(
       callbackData,
       securityHash || '',
-      gateway.webhook_secret || ''
+      webhookSecret
     );
 
     console.log(`[IGPX] Callback processed at ${endpointName}:`, response);
