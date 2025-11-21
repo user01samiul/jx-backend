@@ -503,6 +503,9 @@ export class WithdrawalService {
         config: gateway.config
       };
 
+      // Initialize payment service
+      const paymentService = PaymentIntegrationService.getInstance();
+
       // Use existing conversion from approval (instead of converting again)
       let cryptoAmount: number;
       let exchangeRate: number;
@@ -521,7 +524,6 @@ export class WithdrawalService {
         });
       } else {
         // Fallback: Convert now if not done during approval (for backwards compatibility)
-        const paymentService = PaymentIntegrationService.getInstance();
 
         console.log('[Withdrawal Processing] No existing conversion found, converting now:', {
           usd_amount: withdrawal.net_amount,
