@@ -59,7 +59,11 @@
       "Bash(./test-new-endpoints.sh:*)",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT provider_name, base_url, api_key, api_secret, metadata, is_active \nFROM game_provider_configs \nWHERE provider_name ILIKE ''%igpx%'' OR provider_name ILIKE ''%igpixel%'';\n\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT code, webhook_secret, api_key, api_secret \nFROM payment_gateways \nWHERE code = ''igpx'';\n\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete IGPX from payment_gateways\nDELETE FROM payment_gateways WHERE code = ''igpx'';\n\n-- Verify deletion\nSELECT code, name FROM payment_gateways ORDER BY created_at;\n\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete IGPX from payment_gateways\nDELETE FROM payment_gateways WHERE code = ''igpx'';\n\n-- Verify deletion\nSELECT code, name FROM payment_gateways ORDER BY created_at;\n\")",
+      "WebSearch",
+      "WebFetch(domain:docs.oxapay.com)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Update Oxapay configuration in payment_gateways\nUPDATE payment_gateways \nSET \n  api_secret = NULL, -- Remove fake api_secret (not needed for Oxapay merchant API)\n  webhook_url = ''https://backend.jackpotx.net/api/payment/webhook/oxapay'',\n  webhook_secret = NULL, -- Oxapay doesn''t use webhook secrets\n  config = jsonb_build_object(\n    ''invoice_lifetime'', 60,\n    ''fee_paid_by_payer'', 0,\n    ''under_paid_coverage'', 5.00,\n    ''payout_api_endpoint'', ''https://app-api.oxapay.com/v1''\n  )\nWHERE code = ''oxapay'';\n\n-- Verify the update\nSELECT \n  code,\n  api_endpoint,\n  api_key,\n  api_secret,\n  webhook_url,\n  webhook_secret,\n  config\nFROM payment_gateways \nWHERE code = ''oxapay'';\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Update Oxapay with REAL API keys\nUPDATE payment_gateways \nSET \n  api_key = ''SHJOUV-LFTNOS-4EKBNU-AXKM7Q'',\n  payout_api_key = ''0DBSZS-3MGDAT-HV7PEL-ABHMGP'',\n  is_active = true\nWHERE code = ''oxapay'';\n\n-- Verify the update\nSELECT \n  id,\n  code,\n  name,\n  api_endpoint,\n  api_key,\n  payout_api_key,\n  webhook_url,\n  is_active,\n  supported_currencies,\n  min_amount,\n  max_amount\nFROM payment_gateways \nWHERE code = ''oxapay'';\n\")"
     ],
     "deny": [],
     "ask": []

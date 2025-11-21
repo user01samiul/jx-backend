@@ -349,142 +349,186 @@ export class PaymentIntegrationService {
     }
   }
 
-  // Oxapay Payment Handler
+  // Oxapay Payment Handler (Official API: https://docs.oxapay.com/api-reference/creating-an-invoice)
   private async handleOxapayPayment(config: PaymentGatewayConfig, request: PaymentRequest): Promise<PaymentResponse> {
     try {
       const axios = require('axios');
-      
-      // Try different possible endpoints for creating invoices
-      const possibleEndpoints = [
-        '/merchant/invoice',
-        '/invoice',
-        '/payment/invoice',
-        '/general/invoice'
-      ];
-      
-      let lastError: any = null;
-      
-      for (const endpoint of possibleEndpoints) {
-        try {
-          const res = await axios.post(
-            `${config.api_endpoint}${endpoint}`,
-            {
-              amount: request.amount,
-              currency: request.currency,
-              callback_url: config.webhook_url,
-              order_id: request.order_id,
-              network: config.config?.network || 'TRC20',
-              lifetime: config.config?.invoice_lifetime || 900,
-              confirmations: config.config?.callback_confirmations || 1,
-              description: request.description || 'Deposit',
-              merchant_id: config.merchant_id,
-              ...request.metadata,
-            },
-            {
-              headers: { 
-                'merchant_api_key': config.merchant_id || config.api_key,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-          
-          console.log('OxaPay response:', JSON.stringify(res.data, null, 2));
-          
-          return {
-            success: true,
-            transaction_id: res.data.data?.track_id || res.data.invoice_id || res.data.id,
-            payment_url: res.data.data?.payment_url || res.data.payment_url || res.data.pay_address_url || res.data.url,
-            status: 'pending',
-            gateway_response: res.data,
-          };
-        } catch (error: any) {
-          lastError = error;
-          // If it's a 404, try the next endpoint
-          if (error?.response?.status === 404) {
-            continue;
-          }
-          // If it's a different error, break and return the error
-          break;
-        }
+
+      console.log('[Oxapay] Creating invoice with request:', {
+        amount: request.amount,
+        currency: request.currency,
+        order_id: request.order_id,
+        endpoint: `${config.api_endpoint}/payment/invoice`
+      });
+
+      // Official Oxapay API endpoint
+      const endpoint = `${config.api_endpoint}/payment/invoice`;
+
+      // Build request body according to official Oxapay API docs
+      const requestBody: any = {
+        amount: request.amount,
+        currency: request.currency,
+        order_id: request.order_id,
+        description: request.description || 'Deposit',
+      };
+
+      // Add optional parameters if provided
+      if (config.webhook_url) {
+        requestBody.callback_url = config.webhook_url;
       }
-      
-      // If we get here, none of the endpoints worked
+      if (request.return_url) {
+        requestBody.return_url = request.return_url;
+      }
+      if (request.customer_email) {
+        requestBody.email = request.customer_email;
+      }
+      if (config.config?.invoice_lifetime) {
+        requestBody.lifetime = config.config.invoice_lifetime; // Minutes (15-2880, default: 60)
+      }
+      if (config.config?.fee_paid_by_payer !== undefined) {
+        requestBody.fee_paid_by_payer = config.config.fee_paid_by_payer; // 0 or 1
+      }
+      if (config.config?.under_paid_coverage !== undefined) {
+        requestBody.under_paid_coverage = config.config.under_paid_coverage; // 0-60.00
+      }
+
+      console.log('[Oxapay] Request body:', JSON.stringify(requestBody, null, 2));
+
+      const res = await axios.post(
+        endpoint,
+        requestBody,
+        {
+          headers: {
+            'merchant_api_key': config.api_key, // Use api_key directly (not merchant_id)
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000 // 30 second timeout
+        }
+      );
+
+      console.log('[Oxapay] Response:', JSON.stringify(res.data, null, 2));
+
+      // Check if response is successful
+      if (!res.data || res.data.status !== 200) {
+        throw new Error(res.data?.message || 'Oxapay API returned non-200 status');
+      }
+
+      // Extract payment details from response
+      const trackId = res.data.data?.track_id;
+      const paymentUrl = res.data.data?.payment_url;
+
+      if (!trackId || !paymentUrl) {
+        throw new Error('Invalid Oxapay response: missing track_id or payment_url');
+      }
+
       return {
-        success: false,
-        status: 'failed',
-        message: lastError?.response?.data?.message || lastError?.message || 'Oxapay payment creation failed - no valid endpoint found',
-        gateway_response: lastError?.response?.data,
+        success: true,
+        transaction_id: trackId,
+        payment_url: paymentUrl,
+        status: 'pending',
+        gateway_response: res.data,
       };
     } catch (error: any) {
+      console.error('[Oxapay] Payment creation error:', {
+        message: error?.response?.data?.message || error.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        error: error?.response?.data?.error
+      });
+
+      // Extract the specific error message from Oxapay response
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error.message ||
+        'Oxapay payment creation failed';
+
       return {
         success: false,
         status: 'failed',
-        message: error?.response?.data?.message || error.message || 'Oxapay payment creation failed',
+        message: errorMessage,
         gateway_response: error?.response?.data,
       };
     }
   }
 
-  // Oxapay Withdrawal Handler
+  // Oxapay Withdrawal Handler (Payout API: https://docs.oxapay.com/api-reference/creating-payout)
   private async handleOxapayWithdrawal(config: PaymentGatewayConfig, request: PaymentRequest): Promise<PaymentResponse> {
     try {
       const axios = require('axios');
-      
-      console.log('OxaPay Withdrawal Request:', {
-        endpoint: `${config.api_endpoint}/payout`,
-        address: request.metadata?.address,
+
+      // Validate required metadata
+      if (!request.metadata?.address) {
+        throw new Error('Withdrawal address is required in metadata.address');
+      }
+
+      console.log('[Oxapay] Creating payout with request:', {
+        address: request.metadata.address,
         amount: request.amount,
         currency: request.currency,
         network: request.metadata?.network || config.config?.network || 'TRC20',
-        memo: request.metadata?.memo,
-        description: request.description || 'Withdrawal',
-        order_id: request.order_id,
-        payout_api_key: config.payout_api_key ? 'SET' : 'NOT SET'
+        has_payout_key: !!config.payout_api_key
       });
-      
-      // Use the payout API endpoint and authentication header
+
+      // Oxapay uses a different base URL for payouts
+      const payoutBaseUrl = config.config?.payout_api_endpoint || 'https://app-api.oxapay.com/v1';
+      const endpoint = `${payoutBaseUrl}/payout`;
+
+      const requestBody: any = {
+        address: request.metadata.address,
+        amount: request.amount,
+        currency: request.currency,
+        network: request.metadata?.network || config.config?.network || 'TRC20',
+        description: request.description || 'Withdrawal',
+      };
+
+      console.log('[Oxapay] Payout request body:', JSON.stringify(requestBody, null, 2));
+
       const res = await axios.post(
-        `${config.api_endpoint}/payout`,
+        endpoint,
+        requestBody,
         {
-          address: request.metadata?.address,
-          amount: request.amount,
-          currency: request.currency,
-          network: request.metadata?.network || config.config?.network || 'TRC20',
-          memo: request.metadata?.memo,
-          description: request.description || 'Withdrawal',
-          order_id: request.order_id,
-        },
-        {
-          headers: { 
-            'payout_api_key': config.payout_api_key || config.api_secret,
+          headers: {
+            'payout_api_key': config.payout_api_key || config.api_key, // Use payout_api_key if available
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 30000 // 30 second timeout
         }
       );
-      
-      console.log('OxaPay Withdrawal Response:', res.data);
-      
+
+      console.log('[Oxapay] Payout response:', JSON.stringify(res.data, null, 2));
+
+      // Check if response is successful
+      if (!res.data || res.data.status !== 200) {
+        throw new Error(res.data?.message || 'Oxapay API returned non-200 status');
+      }
+
       return {
         success: true,
-        transaction_id: res.data.payout_id || res.data.id,
-        payment_url: res.data.payment_url || res.data.url,
+        transaction_id: res.data.data?.track_id || res.data.data?.payout_id || request.order_id,
+        payment_url: undefined, // Payouts don't have payment URLs
         status: 'pending',
         gateway_response: res.data,
       };
     } catch (error: any) {
-      console.log('OxaPay Withdrawal Error:', {
+      console.error('[Oxapay] Payout error:', {
         message: error?.response?.data?.message || error.message,
         status: error?.response?.status,
-        data: error?.response?.data
+        data: error?.response?.data,
+        error: error?.response?.data?.error
       });
-      
-      // Extract the specific error message from OxaPay response
-      const oxaPayError = error?.response?.data?.error?.message || error?.response?.data?.message;
-      
+
+      // Extract the specific error message from Oxapay response
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error.message ||
+        'Oxapay payout creation failed';
+
       return {
         success: false,
         status: 'failed',
-        message: oxaPayError || error.message || 'Oxapay withdrawal creation failed',
+        message: errorMessage,
         gateway_response: error?.response?.data,
       };
     }
@@ -721,37 +765,73 @@ export class PaymentIntegrationService {
   private async checkOxapayStatus(config: PaymentGatewayConfig, transactionId: string): Promise<PaymentStatusResponse> {
     try {
       const axios = require('axios');
-      const res = await axios.get(
-        `${config.api_endpoint}/merchant/invoice/${transactionId}`,
+
+      console.log('[Oxapay] Checking payment status for:', transactionId);
+
+      // Use the payment information endpoint
+      const res = await axios.post(
+        `${config.api_endpoint}/payment/info`,
         {
-          headers: { 
-            'general_api_key': config.api_key,
+          track_id: transactionId
+        },
+        {
+          headers: {
+            'merchant_api_key': config.api_key,
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 10000
         }
       );
-      let status: 'pending' | 'completed' | 'failed' | 'cancelled' = 'pending';
-      if (res.data.status === 'paid' || res.data.status === 'confirmed') {
-        status = 'completed';
-      } else if (res.data.status === 'expired' || res.data.status === 'cancelled') {
-        status = 'cancelled';
-      } else if (res.data.status === 'failed') {
-        status = 'failed';
+
+      console.log('[Oxapay] Status check response:', JSON.stringify(res.data, null, 2));
+
+      if (!res.data || res.data.status !== 200) {
+        throw new Error(res.data?.message || 'Oxapay status check failed');
       }
+
+      const paymentData = res.data.data;
+      let status: 'pending' | 'completed' | 'failed' | 'cancelled' = 'pending';
+
+      // Map Oxapay status to our status
+      switch (paymentData?.status) {
+        case 'Paid':
+        case 'Confirmed':
+          status = 'completed';
+          break;
+        case 'Expired':
+        case 'Cancelled':
+          status = 'cancelled';
+          break;
+        case 'Failed':
+          status = 'failed';
+          break;
+        case 'Waiting':
+        case 'Pending':
+        default:
+          status = 'pending';
+          break;
+      }
+
       return {
         success: true,
         transaction_id: transactionId,
         status,
-        amount: res.data.amount,
-        currency: res.data.currency,
+        amount: paymentData?.amount,
+        currency: paymentData?.currency,
         gateway_response: res.data,
       };
     } catch (error: any) {
+      console.error('[Oxapay] Status check error:', {
+        message: error?.response?.data?.message || error.message,
+        status: error?.response?.status,
+        data: error?.response?.data
+      });
+
       return {
         success: false,
         transaction_id: transactionId,
         status: 'failed',
-        message: error?.response?.data?.message || error.message || 'Oxapay status check failed',
+        message: error?.response?.data?.error?.message || error?.response?.data?.message || error.message || 'Oxapay status check failed',
         gateway_response: error?.response?.data,
       };
     }
@@ -876,29 +956,51 @@ export class PaymentIntegrationService {
   private async testOxapayConnection(config: PaymentGatewayConfig): Promise<{ success: boolean; message: string }> {
     try {
       const axios = require('axios');
-      // Test with the general API endpoint that we know works
+
+      console.log('[Oxapay] Testing connection with API key:', config.api_key?.substring(0, 10) + '...');
+
+      // Test with a simple endpoint to verify API key
       const res = await axios.post(
-        `${config.api_endpoint}/general/swap`,
+        `${config.api_endpoint}/payment/info`,
         {
-          amount: 0.1,
-          from_currency: "USDT",
-          to_currency: "USDT"
+          track_id: 'test_connection'
         },
         {
-          headers: { 
-            'general_api_key': config.api_key,
+          headers: {
+            'merchant_api_key': config.api_key,
             'Content-Type': 'application/json'
-          }
+          },
+          timeout: 10000
         }
       );
-      // If we get a response (even with an error), the connection is working
-      return { success: true, message: 'Oxapay connection successful' };
+
+      // If we get any response, connection is working
+      return {
+        success: true,
+        message: 'Oxapay connection successful'
+      };
     } catch (error: any) {
-      // If we get a specific error about balance or invalid data, the connection is working
-      if (error?.response?.status === 400 && error?.response?.data?.error?.key) {
-        return { success: true, message: 'Oxapay connection successful' };
+      // If we get a 400 error (invalid track_id), it means the API key is valid and connection works
+      if (error?.response?.status === 400) {
+        return {
+          success: true,
+          message: 'Oxapay connection successful (API key validated)'
+        };
       }
-      return { success: false, message: error?.response?.data?.message || error.message || 'Oxapay connection failed' };
+
+      // If we get a 401/403, API key is invalid
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        return {
+          success: false,
+          message: 'Oxapay connection failed: Invalid API key'
+        };
+      }
+
+      // Other errors
+      return {
+        success: false,
+        message: error?.response?.data?.error?.message || error?.response?.data?.message || error.message || 'Oxapay connection failed'
+      };
     }
   }
 
@@ -1122,40 +1224,71 @@ export class PaymentIntegrationService {
     }
   }
 
-  // Oxapay Webhook Handler
+  // Oxapay Webhook Handler (Official webhook format: https://docs.oxapay.com/webhook)
   private async handleOxapayWebhook(config: PaymentGatewayConfig, data: any, signature?: string): Promise<WebhookData> {
     try {
-      const { status: oxapayStatus, invoice_id, amount, currency } = data;
+      console.log('[Oxapay] Processing webhook:', JSON.stringify(data, null, 2));
+
+      // Oxapay webhook data structure
+      const {
+        trackId,
+        status: oxapayStatus,
+        amount,
+        currency,
+        payAmount,
+        payCurrency,
+        email,
+        orderId,
+        type: webhookType
+      } = data;
+
       let status: 'completed' | 'failed' | 'pending' = 'pending';
       let transactionType: 'deposit' | 'withdrawal' = 'deposit';
 
-      switch (oxapayStatus) {
+      // Map Oxapay webhook status
+      switch (oxapayStatus?.toLowerCase()) {
         case 'paid':
         case 'confirmed':
           status = 'completed';
-          transactionType = 'deposit';
           break;
         case 'expired':
         case 'cancelled':
+        case 'canceled':
           status = 'failed';
           break;
+        case 'waiting':
+        case 'pending':
         default:
           status = 'pending';
+          break;
+      }
+
+      // Determine transaction type (invoice = deposit, payout = withdrawal)
+      if (webhookType?.toLowerCase() === 'payout') {
+        transactionType = 'withdrawal';
       }
 
       return {
         success: true,
-        transaction_id: invoice_id,
+        transaction_id: trackId || orderId,
         status: status,
-        amount: amount ? parseFloat(amount) : 0,
-        currency: currency,
+        amount: payAmount ? parseFloat(payAmount) : (amount ? parseFloat(amount) : 0),
+        currency: payCurrency || currency,
         type: transactionType,
-        gateway_data: data
+        gateway_data: data,
+        metadata: {
+          oxapay_track_id: trackId,
+          oxapay_order_id: orderId,
+          email: email,
+          webhook_type: webhookType
+        }
       };
     } catch (error) {
+      console.error('[Oxapay] Webhook processing error:', error);
+
       return {
         success: false,
-        transaction_id: data?.invoice_id || 'unknown',
+        transaction_id: data?.trackId || data?.orderId || 'unknown',
         status: 'failed',
         message: error instanceof Error ? error.message : 'Oxapay webhook processing failed',
         gateway_data: data
