@@ -959,11 +959,19 @@ export class PaymentIntegrationService {
 
       console.log('[Oxapay] Testing connection with API key:', config.api_key?.substring(0, 10) + '...');
 
-      // Test with a simple endpoint to verify API key
+      // Test by creating a minimal test invoice (the most reliable way)
+      // This actually validates the API key and connection
+      const testAmount = 0.01; // Minimal test amount
+      const testOrderId = `test_${Date.now()}`;
+
       const res = await axios.post(
-        `${config.api_endpoint}/payment/info`,
+        `${config.api_endpoint}/payment/invoice`,
         {
-          track_id: 'test_connection'
+          amount: testAmount,
+          currency: 'USD',
+          order_id: testOrderId,
+          description: 'Connection test',
+          lifetime: 1 // Expire in 1 minute
         },
         {
           headers: {
@@ -974,19 +982,31 @@ export class PaymentIntegrationService {
         }
       );
 
-      // If we get any response, connection is working
-      return {
-        success: true,
-        message: 'Oxapay connection successful'
-      };
-    } catch (error: any) {
-      // If we get a 400 error (invalid track_id), it means the API key is valid and connection works
-      if (error?.response?.status === 400) {
+      console.log('[Oxapay] Connection test response:', {
+        status: res.status,
+        response_status: res.data?.status,
+        has_payment_url: !!res.data?.data?.payment_url
+      });
+
+      // Check if we got a successful response
+      if (res.data && res.data.status === 200 && res.data.data?.payment_url) {
         return {
           success: true,
-          message: 'Oxapay connection successful (API key validated)'
+          message: 'Oxapay connection successful! API key is valid and working'
         };
       }
+
+      // If response is not as expected
+      return {
+        success: false,
+        message: res.data?.message || 'Unexpected response from Oxapay'
+      };
+    } catch (error: any) {
+      console.error('[Oxapay] Connection test error:', {
+        status: error?.response?.status,
+        message: error?.response?.data?.message,
+        error: error?.response?.data?.error
+      });
 
       // If we get a 401/403, API key is invalid
       if (error?.response?.status === 401 || error?.response?.status === 403) {
@@ -996,10 +1016,33 @@ export class PaymentIntegrationService {
         };
       }
 
-      // Other errors
+      // If we get a 400 with specific error about the API key
+      if (error?.response?.status === 400) {
+        const errorKey = error?.response?.data?.error?.key;
+        if (errorKey === 'invalid_merchant_api_key' || errorKey === 'unauthorized') {
+          return {
+            success: false,
+            message: 'Oxapay connection failed: Invalid or unauthorized API key'
+          };
+        }
+        // Other 400 errors might indicate the API is working but request is invalid
+        // This is actually a good sign - means connection is working
+        return {
+          success: true,
+          message: 'Oxapay connection successful! API is responding (request validation working)'
+        };
+      }
+
+      // Extract error message
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.response?.data?.message ||
+        error.message ||
+        'Oxapay connection failed';
+
       return {
         success: false,
-        message: error?.response?.data?.error?.message || error?.response?.data?.message || error.message || 'Oxapay connection failed'
+        message: errorMessage
       };
     }
   }
