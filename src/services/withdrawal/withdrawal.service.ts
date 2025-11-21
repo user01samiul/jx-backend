@@ -503,53 +503,63 @@ export class WithdrawalService {
         config: gateway.config
       };
 
-      // Convert USD to crypto amount
-      const paymentService = PaymentIntegrationService.getInstance();
+      // Use existing conversion from approval (instead of converting again)
+      let cryptoAmount: number;
+      let exchangeRate: number;
 
-      console.log('[Withdrawal] Converting USD to crypto:', {
-        usd_amount: withdrawal.net_amount,
-        target_currency: withdrawal.crypto_currency,
-        gateway: withdrawal.gateway_code
-      });
+      if (withdrawal.metadata && withdrawal.metadata.conversion) {
+        // Use conversion details from approval
+        cryptoAmount = withdrawal.metadata.conversion.crypto_amount;
+        exchangeRate = withdrawal.metadata.conversion.exchange_rate;
 
-      const conversionResult = await paymentService.convertCurrency(
-        withdrawal.gateway_code || 'oxapay',
-        gatewayConfig,
-        parseFloat(withdrawal.net_amount),
-        withdrawal.crypto_currency
-      );
+        console.log('[Withdrawal Processing] Using conversion from approval:', {
+          usd_amount: withdrawal.net_amount,
+          crypto_amount: cryptoAmount,
+          currency: withdrawal.crypto_currency,
+          exchange_rate: exchangeRate,
+          converted_at: withdrawal.metadata.conversion.converted_at
+        });
+      } else {
+        // Fallback: Convert now if not done during approval (for backwards compatibility)
+        const paymentService = PaymentIntegrationService.getInstance();
 
-      if (!conversionResult.success) {
-        throw new Error(`Currency conversion failed: ${conversionResult.message}`);
+        console.log('[Withdrawal Processing] No existing conversion found, converting now:', {
+          usd_amount: withdrawal.net_amount,
+          target_currency: withdrawal.crypto_currency
+        });
+
+        const conversionResult = await paymentService.convertCurrency(
+          withdrawal.gateway_code || 'oxapay',
+          gatewayConfig,
+          parseFloat(withdrawal.net_amount),
+          withdrawal.crypto_currency
+        );
+
+        if (!conversionResult.success) {
+          throw new Error(`Currency conversion failed: ${conversionResult.message}`);
+        }
+
+        cryptoAmount = conversionResult.cryptoAmount!;
+        exchangeRate = conversionResult.rate!;
+
+        // Store conversion details
+        await client.query(
+          `UPDATE withdrawal_requests
+           SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb
+           WHERE id = $2`,
+          [
+            JSON.stringify({
+              conversion: {
+                usd_amount: parseFloat(withdrawal.net_amount),
+                crypto_amount: cryptoAmount,
+                exchange_rate: exchangeRate,
+                converted_at: new Date().toISOString()
+              }
+            }),
+            withdrawalId
+          ]
+        );
       }
-
-      const cryptoAmount = conversionResult.cryptoAmount;
-      const exchangeRate = conversionResult.rate;
-
-      console.log('[Withdrawal] Conversion successful:', {
-        usd_amount: withdrawal.net_amount,
-        crypto_amount: cryptoAmount,
-        currency: withdrawal.crypto_currency,
-        exchange_rate: exchangeRate
-      });
-
-      // Store conversion details in withdrawal record
-      await client.query(
-        `UPDATE withdrawal_requests
-         SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb
-         WHERE id = $2`,
-        [
-          JSON.stringify({
-            conversion: {
-              usd_amount: parseFloat(withdrawal.net_amount),
-              crypto_amount: cryptoAmount,
-              exchange_rate: exchangeRate,
-              converted_at: new Date().toISOString()
-            }
-          }),
-          withdrawalId
-        ]
-      );
 
       // Process through payment gateway with CRYPTO amount
       const paymentRequest = {
@@ -715,7 +725,56 @@ export class WithdrawalService {
         throw new Error(`Cannot approve withdrawal with status: ${withdrawal.status}`);
       }
 
-      // Update withdrawal
+      // Get gateway configuration for conversion
+      const gatewayResult = await client.query(
+        `SELECT * FROM payment_gateways WHERE code = $1 AND is_active = true`,
+        [withdrawal.gateway_code || 'oxapay']
+      );
+
+      if (gatewayResult.rows.length === 0) {
+        throw new Error('Payment gateway not configured');
+      }
+
+      const gateway = gatewayResult.rows[0];
+      const gatewayConfig = {
+        api_key: gateway.api_key,
+        api_secret: gateway.api_secret,
+        api_endpoint: gateway.api_endpoint,
+        payout_api_key: gateway.payout_api_key,
+        config: gateway.config
+      };
+
+      // Convert USD to crypto amount at approval time
+      const paymentService = PaymentIntegrationService.getInstance();
+
+      console.log('[Withdrawal Approval] Converting USD to crypto:', {
+        usd_amount: withdrawal.net_amount,
+        target_currency: withdrawal.crypto_currency,
+        gateway: withdrawal.gateway_code
+      });
+
+      const conversionResult = await paymentService.convertCurrency(
+        withdrawal.gateway_code || 'oxapay',
+        gatewayConfig,
+        parseFloat(withdrawal.net_amount),
+        withdrawal.crypto_currency
+      );
+
+      if (!conversionResult.success) {
+        throw new Error(`Currency conversion failed: ${conversionResult.message}`);
+      }
+
+      const cryptoAmount = conversionResult.cryptoAmount;
+      const exchangeRate = conversionResult.rate;
+
+      console.log('[Withdrawal Approval] Conversion successful:', {
+        usd_amount: withdrawal.net_amount,
+        crypto_amount: cryptoAmount,
+        currency: withdrawal.crypto_currency,
+        exchange_rate: exchangeRate
+      });
+
+      // Update withdrawal with conversion details
       await client.query(
         `UPDATE withdrawal_requests
          SET status = 'approved',
@@ -723,9 +782,22 @@ export class WithdrawalService {
              approved_by = $1,
              approved_at = CURRENT_TIMESTAMP,
              notes = $2,
+             metadata = COALESCE(metadata, '{}'::jsonb) || $3::jsonb,
              updated_at = CURRENT_TIMESTAMP
-         WHERE id = $3`,
-        [approval.approved_by, approval.notes, approval.withdrawal_id]
+         WHERE id = $4`,
+        [
+          approval.approved_by,
+          approval.notes,
+          JSON.stringify({
+            conversion: {
+              usd_amount: parseFloat(withdrawal.net_amount),
+              crypto_amount: cryptoAmount,
+              exchange_rate: exchangeRate,
+              converted_at: new Date().toISOString()
+            }
+          }),
+          approval.withdrawal_id
+        ]
       );
 
       await this.createAuditLog(
@@ -736,7 +808,15 @@ export class WithdrawalService {
         'admin',
         'pending',
         'approved',
-        { notes: approval.notes }
+        {
+          notes: approval.notes,
+          conversion: {
+            usd_amount: parseFloat(withdrawal.net_amount),
+            crypto_amount: cryptoAmount,
+            exchange_rate: exchangeRate,
+            currency: withdrawal.crypto_currency
+          }
+        }
       );
 
       // Get settings to check if we should process immediately
