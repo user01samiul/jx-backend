@@ -58,6 +58,38 @@ export const createDeposit = async (
       return;
     }
 
+    // Convert crypto amount to USD for balance tracking
+    let usdAmount: number;
+    let exchangeRate: number;
+
+    // Convert crypto amount to USD using the proper deposit conversion function
+    console.log(`[DEPOSIT] Converting ${numAmount} ${currency} to USD...`);
+
+    const conversionResult = await paymentService.convertCryptoToUSD(
+      gateway_code,
+      {
+        api_key: gatewayConfig.api_key,
+        api_secret: gatewayConfig.api_secret,
+        api_endpoint: gatewayConfig.api_endpoint,
+        config: gatewayConfig.config
+      },
+      numAmount,
+      currency
+    );
+
+    if (!conversionResult.success) {
+      res.status(400).json({
+        success: false,
+        message: `Failed to get exchange rate for ${currency}: ${conversionResult.message}`
+      });
+      return;
+    }
+
+    usdAmount = conversionResult.usdAmount!;
+    exchangeRate = conversionResult.rate || 1;
+
+    console.log(`[DEPOSIT] Converted ${numAmount} ${currency} to $${usdAmount} USD (rate: ${exchangeRate})`);
+
     // Create transaction record
     const client = await pool.connect();
     try {
@@ -70,29 +102,40 @@ export const createDeposit = async (
         [
           userId,
           'deposit',
-          numAmount,
-          currency,
+          usdAmount,  // Store USD amount for balance
+          'USD',  // Always USD for balance tracking
           'pending',
           description || `Deposit via ${gateway_code}`,
-          JSON.stringify({ gateway_code, gateway_id: gatewayConfig.id })
+          JSON.stringify({
+            gateway_code,
+            gateway_id: gatewayConfig.id,
+            crypto_amount: numAmount,
+            crypto_currency: currency,
+            exchange_rate: exchangeRate,
+            converted_at: new Date().toISOString()
+          })
         ]
       );
 
       const transactionId = transactionResult.rows[0].id;
       const orderId = `deposit_${transactionId}_${Date.now()}`;
 
-      // Create payment request
+      // Create payment request with CRYPTO amount (Oxapay processes crypto)
       const paymentRequest = {
-        amount: numAmount,
-        currency,
+        amount: numAmount,  // Crypto amount for payment gateway
+        currency,  // Crypto currency (BTC, USDT, etc.)
         order_id: orderId,
-        description: description || `Deposit via ${gateway_code}`,
+        description: description || `Deposit $${usdAmount.toFixed(2)} USD (${numAmount} ${currency})`,
         return_url: `${req.protocol}://${req.get('host')}/payment/success`,
         cancel_url: `${req.protocol}://${req.get('host')}/payment/cancel`,
         metadata: {
           user_id: userId,
           transaction_id: transactionId,
-          gateway_code
+          gateway_code,
+          usd_amount: usdAmount,
+          crypto_amount: numAmount,
+          crypto_currency: currency,
+          exchange_rate: exchangeRate
         }
       };
 
@@ -136,8 +179,15 @@ export const createDeposit = async (
         userId,
         action: "create_deposit",
         category: "financial",
-        description: `Created ${currency} ${amount} deposit via ${gateway_code}`,
-        metadata: { transaction_id: transactionId, gateway_code }
+        description: `Created deposit: $${usdAmount.toFixed(2)} USD (${numAmount} ${currency})`,
+        metadata: {
+          transaction_id: transactionId,
+          gateway_code,
+          crypto_amount: numAmount,
+          crypto_currency: currency,
+          usd_amount: usdAmount,
+          exchange_rate: exchangeRate
+        }
       });
 
       await client.query('COMMIT');
@@ -150,8 +200,10 @@ export const createDeposit = async (
           order_id: orderId,
           payment_url: paymentResponse.payment_url,
           gateway_transaction_id: paymentResponse.transaction_id,
-          amount: numAmount,
-          currency,
+          crypto_amount: numAmount,
+          crypto_currency: currency,
+          usd_amount: usdAmount,
+          exchange_rate: exchangeRate,
           gateway_code,
           status: 'pending'
         }
@@ -231,17 +283,35 @@ export const checkPaymentStatus = async (
         try {
           // Import BalanceService
           const { BalanceService } = require('../../services/user/balance.service');
-          
-          // Process the deposit using BalanceService
+
+          // Extract crypto details from metadata
+          const metadata = JSON.parse(transaction.metadata || '{}');
+          const cryptoAmount = metadata.crypto_amount || transaction.amount;
+          const cryptoCurrency = metadata.crypto_currency || transaction.currency;
+          const usdAmount = transaction.amount; // Transaction amount is stored in USD
+          const exchangeRate = metadata.exchange_rate || 1;
+
+          console.log(`[STATUS_CHECK] Processing crypto deposit:`, {
+            user_id: userId,
+            crypto_amount: cryptoAmount,
+            crypto_currency: cryptoCurrency,
+            usd_amount: usdAmount,
+            exchange_rate: exchangeRate
+          });
+
+          // Process the deposit using BalanceService (with USD amount)
           const balanceResult = await BalanceService.processDeposit(
             userId,
-            transaction.amount,
-            `Deposit of ${transaction.currency} ${transaction.amount} completed via ${gatewayCode} status check`,
+            usdAmount,  // USD amount for balance
+            `Deposit of ${cryptoAmount} ${cryptoCurrency} ($${usdAmount.toFixed(2)} USD) completed`,
             statusResponse.transaction_id,
             {
               gateway_code: gatewayCode,
               status_check: true,
-              original_transaction_id: transaction_id
+              original_transaction_id: transaction_id,
+              crypto_amount: cryptoAmount,
+              crypto_currency: cryptoCurrency,
+              exchange_rate: exchangeRate
             }
           );
 
@@ -250,17 +320,26 @@ export const checkPaymentStatus = async (
             userId,
             action: "deposit_completed",
             category: "financial",
-            description: `Deposit of ${transaction.currency} ${transaction.amount} completed`,
-            metadata: { 
-              transaction_id, 
+            description: `Deposit of ${cryptoAmount} ${cryptoCurrency} ($${usdAmount.toFixed(2)} USD) completed`,
+            metadata: {
+              transaction_id,
               gateway_code: gatewayCode,
               balance_transaction_id: balanceResult.transaction_id,
               balance_before: balanceResult.balance_before,
-              balance_after: balanceResult.balance_after
+              balance_after: balanceResult.balance_after,
+              crypto_amount: cryptoAmount,
+              crypto_currency: cryptoCurrency,
+              usd_amount: usdAmount,
+              exchange_rate: exchangeRate
             }
           });
 
-          console.log(`[STATUS_CHECK] Balance updated successfully for user ${userId}: ${balanceResult.balance_before} -> ${balanceResult.balance_after}`);
+          console.log(`[STATUS_CHECK] Crypto deposit completed for user ${userId}:`, {
+            crypto: `${cryptoAmount} ${cryptoCurrency}`,
+            usd: `$${usdAmount.toFixed(2)}`,
+            balance_before: `$${balanceResult.balance_before}`,
+            balance_after: `$${balanceResult.balance_after}`
+          });
         } catch (error) {
           console.error(`[STATUS_CHECK] Error updating balance for user ${userId}:`, error);
           // Don't fail the status check, just log the error
@@ -382,18 +461,36 @@ export const handleWebhook = async (
       try {
         // Import BalanceService
         const { BalanceService } = require('../../services/user/balance.service');
-        
+
         if (transaction.type === 'deposit') {
-          // Process the deposit using BalanceService
+          // Extract crypto details from metadata
+          const metadata = JSON.parse(transaction.metadata || '{}');
+          const cryptoAmount = metadata.crypto_amount || webhookResult.amount;
+          const cryptoCurrency = metadata.crypto_currency || webhookResult.currency;
+          const usdAmount = transaction.amount; // Transaction amount is stored in USD
+          const exchangeRate = metadata.exchange_rate || 1;
+
+          console.log(`[WEBHOOK] Processing crypto deposit:`, {
+            user_id: transaction.user_id,
+            crypto_amount: cryptoAmount,
+            crypto_currency: cryptoCurrency,
+            usd_amount: usdAmount,
+            exchange_rate: exchangeRate
+          });
+
+          // Process the deposit using BalanceService (with USD amount)
           const balanceResult = await BalanceService.processDeposit(
             transaction.user_id,
-            transaction.amount,
-            `Deposit of ${transaction.currency} ${transaction.amount} completed via ${gateway_code} webhook`,
+            usdAmount,  // USD amount for balance
+            `Deposit of ${cryptoAmount} ${cryptoCurrency} ($${usdAmount.toFixed(2)} USD) completed`,
             webhookResult.transaction_id,
             {
               gateway_code,
               webhook_data: webhookResult.gateway_data,
-              original_transaction_id: transaction.id
+              original_transaction_id: transaction.id,
+              crypto_amount: cryptoAmount,
+              crypto_currency: cryptoCurrency,
+              exchange_rate: exchangeRate
             }
           );
 
@@ -402,17 +499,26 @@ export const handleWebhook = async (
             userId: transaction.user_id,
             action: "deposit_completed",
             category: "financial",
-            description: `Deposit of ${transaction.currency} ${transaction.amount} completed via webhook`,
-            metadata: { 
-              transaction_id: transaction.id, 
+            description: `Deposit of ${cryptoAmount} ${cryptoCurrency} ($${usdAmount.toFixed(2)} USD) completed`,
+            metadata: {
+              transaction_id: transaction.id,
               gateway_code,
               balance_transaction_id: balanceResult.transaction_id,
               balance_before: balanceResult.balance_before,
-              balance_after: balanceResult.balance_after
+              balance_after: balanceResult.balance_after,
+              crypto_amount: cryptoAmount,
+              crypto_currency: cryptoCurrency,
+              usd_amount: usdAmount,
+              exchange_rate: exchangeRate
             }
           });
 
-          console.log(`[WEBHOOK] Deposit balance updated successfully for user ${transaction.user_id}: ${balanceResult.balance_before} -> ${balanceResult.balance_after}`);
+          console.log(`[WEBHOOK] Crypto deposit completed for user ${transaction.user_id}:`, {
+            crypto: `${cryptoAmount} ${cryptoCurrency}`,
+            usd: `$${usdAmount.toFixed(2)}`,
+            balance_before: `$${balanceResult.balance_before}`,
+            balance_after: `$${balanceResult.balance_after}`
+          });
         } else if (transaction.type === 'withdrawal') {
           // For withdrawals, we don't need to update balance again since it was already deducted when created
           // Just log the successful withdrawal
