@@ -520,7 +520,7 @@ export class PaymentIntegrationService {
         'XMR': 'monero',
         'TON': 'the-open-network',
         'NOT': 'notcoin',
-        'DOGS': 'dogs-1',
+        'DOGS': 'dogs-2',
         'DAI': 'dai',
         'USDT': 'tether',
         'USDC': 'usd-coin'
@@ -648,7 +648,7 @@ export class PaymentIntegrationService {
         'XMR': 'monero',
         'TON': 'the-open-network',
         'NOT': 'notcoin',
-        'DOGS': 'dogs-1',
+        'DOGS': 'dogs-2',
         'DAI': 'dai',
         'USDT': 'tether',
         'USDC': 'usd-coin'

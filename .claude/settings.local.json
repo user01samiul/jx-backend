@@ -12,7 +12,9 @@
       "Bash(npm run build:*)",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT code, name, api_endpoint, payout_api_key, supported_currencies, networks, config FROM payment_gateways WHERE code = ''oxapay'';\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE payment_gateways SET supported_currencies = ARRAY[''BTC'', ''ETH'', ''USDT'', ''USDC'', ''TRX'', ''BNB'', ''DOGE'', ''LTC'', ''XMR'', ''TON'', ''NOT'', ''POL'', ''BCH'', ''SHIB'', ''SOL'', ''DOGS'', ''DAI'', ''XRP''] WHERE code = ''oxapay''; SELECT code, supported_currencies FROM payment_gateways WHERE code = ''oxapay'';\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(python3:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
