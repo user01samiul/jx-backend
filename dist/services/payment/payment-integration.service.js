@@ -71,6 +71,15 @@ class PaymentIntegrationService {
             message: `Currency conversion not supported for gateway: ${gatewayCode}`,
         };
     }
+    async convertCryptoToUSD(gatewayCode, config, cryptoAmount, cryptoCurrency) {
+        if (gatewayCode.toLowerCase() === 'oxapay') {
+            return await this.convertCryptoToUSDInternal(config, cryptoAmount, cryptoCurrency);
+        }
+        return {
+            success: false,
+            message: `Currency conversion not supported for gateway: ${gatewayCode}`,
+        };
+    }
     async checkPaymentStatus(gatewayCode, config, transactionId) {
         const handler = this.gatewayHandlers.get(gatewayCode.toLowerCase());
         if (!handler) {
@@ -395,6 +404,7 @@ class PaymentIntegrationService {
                 'DOT': 'polkadot',
                 'DOGE': 'dogecoin',
                 'MATIC': 'matic-network',
+                'POL': 'polygon-ecosystem-token',
                 'SHIB': 'shiba-inu',
                 'AVAX': 'avalanche-2',
                 'UNI': 'uniswap',
@@ -404,6 +414,8 @@ class PaymentIntegrationService {
                 'ETC': 'ethereum-classic',
                 'XMR': 'monero',
                 'TON': 'the-open-network',
+                'NOT': 'notcoin',
+                'DOGS': 'dogs-1',
                 'DAI': 'dai',
                 'USDT': 'tether',
                 'USDC': 'usd-coin'
@@ -466,6 +478,105 @@ class PaymentIntegrationService {
                 error?.response?.data?.error ||
                 error.message ||
                 'Currency conversion failed';
+            return {
+                success: false,
+                message: errorMessage
+            };
+        }
+    }
+    // Convert Crypto to USD for deposits (opposite of convertUSDToCrypto)
+    async convertCryptoToUSDInternal(config, cryptoAmount, cryptoCurrency) {
+        try {
+            const axios = require('axios');
+            // Stablecoins are 1:1 with USD
+            const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'USDD'];
+            if (stablecoins.includes(cryptoCurrency.toUpperCase())) {
+                console.log('[Conversion] No conversion needed for stablecoin:', cryptoCurrency);
+                return {
+                    success: true,
+                    usdAmount: cryptoAmount,
+                    rate: 1.0
+                };
+            }
+            console.log('[Conversion] Converting crypto to USD:', {
+                crypto_amount: cryptoAmount,
+                crypto_currency: cryptoCurrency
+            });
+            // Map crypto symbols to CoinGecko IDs
+            const currencyMap = {
+                'BTC': 'bitcoin',
+                'ETH': 'ethereum',
+                'LTC': 'litecoin',
+                'BCH': 'bitcoin-cash',
+                'XRP': 'ripple',
+                'TRX': 'tron',
+                'BNB': 'binancecoin',
+                'ADA': 'cardano',
+                'SOL': 'solana',
+                'DOT': 'polkadot',
+                'DOGE': 'dogecoin',
+                'MATIC': 'matic-network',
+                'POL': 'polygon-ecosystem-token',
+                'SHIB': 'shiba-inu',
+                'AVAX': 'avalanche-2',
+                'UNI': 'uniswap',
+                'LINK': 'chainlink',
+                'XLM': 'stellar',
+                'ATOM': 'cosmos',
+                'ETC': 'ethereum-classic',
+                'XMR': 'monero',
+                'TON': 'the-open-network',
+                'NOT': 'notcoin',
+                'DOGS': 'dogs-1',
+                'DAI': 'dai',
+                'USDT': 'tether',
+                'USDC': 'usd-coin'
+            };
+            const coinId = currencyMap[cryptoCurrency.toUpperCase()];
+            if (!coinId) {
+                throw new Error(`Unsupported currency: ${cryptoCurrency}. Please contact support to add this currency.`);
+            }
+            // Use CoinGecko API (Free, no API key needed)
+            const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+            console.log('[Conversion] Fetching rate from CoinGecko:', endpoint);
+            const res = await axios.get(endpoint, {
+                timeout: 10000,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            console.log('[Conversion] CoinGecko response:', JSON.stringify(res.data, null, 2));
+            // Extract price (price of 1 crypto in USD)
+            const cryptoPrice = res.data?.[coinId]?.usd;
+            if (!cryptoPrice || cryptoPrice <= 0) {
+                throw new Error(`Failed to get price for ${cryptoCurrency} from CoinGecko`);
+            }
+            // Calculate USD amount: crypto amount × crypto price in USD
+            const usdAmount = cryptoAmount * cryptoPrice;
+            // Round to 2 decimal places for USD
+            const roundedUSD = parseFloat(usdAmount.toFixed(2));
+            console.log('[Conversion] Conversion successful:', {
+                crypto_amount: cryptoAmount,
+                crypto_currency: cryptoCurrency,
+                crypto_price: cryptoPrice,
+                usd_amount: roundedUSD
+            });
+            return {
+                success: true,
+                usdAmount: roundedUSD,
+                rate: cryptoPrice // Price of 1 crypto in USD
+            };
+        }
+        catch (error) {
+            console.error('[Conversion] Crypto to USD conversion error:', {
+                message: error?.response?.data?.message || error.message,
+                status: error?.response?.status,
+                data: error?.response?.data
+            });
+            const errorMessage = error?.response?.data?.status?.error_message ||
+                error?.response?.data?.error ||
+                error.message ||
+                'Crypto to USD conversion failed';
             return {
                 success: false,
                 message: errorMessage

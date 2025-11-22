@@ -509,6 +509,7 @@ export class PaymentIntegrationService {
         'DOT': 'polkadot',
         'DOGE': 'dogecoin',
         'MATIC': 'matic-network',
+        'POL': 'polygon-ecosystem-token',
         'SHIB': 'shiba-inu',
         'AVAX': 'avalanche-2',
         'UNI': 'uniswap',
@@ -518,6 +519,8 @@ export class PaymentIntegrationService {
         'ETC': 'ethereum-classic',
         'XMR': 'monero',
         'TON': 'the-open-network',
+        'NOT': 'notcoin',
+        'DOGS': 'dogs-1',
         'DAI': 'dai',
         'USDT': 'tether',
         'USDC': 'usd-coin'
@@ -634,6 +637,7 @@ export class PaymentIntegrationService {
         'DOT': 'polkadot',
         'DOGE': 'dogecoin',
         'MATIC': 'matic-network',
+        'POL': 'polygon-ecosystem-token',
         'SHIB': 'shiba-inu',
         'AVAX': 'avalanche-2',
         'UNI': 'uniswap',
@@ -643,6 +647,8 @@ export class PaymentIntegrationService {
         'ETC': 'ethereum-classic',
         'XMR': 'monero',
         'TON': 'the-open-network',
+        'NOT': 'notcoin',
+        'DOGS': 'dogs-1',
         'DAI': 'dai',
         'USDT': 'tether',
         'USDC': 'usd-coin'

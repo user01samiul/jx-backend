@@ -114,11 +114,8 @@ const CURRENCY_NETWORK_COMPATIBILITY = {
 };
 // All valid networks
 const VALID_NETWORKS = ['TRC20', 'ERC20', 'BEP20', 'BTC', 'LTC', 'DOGE', 'SOL', 'TON', 'Polygon', 'XRP', 'XMR', 'BCH'];
-// All valid currencies
-const VALID_CURRENCIES = [
-    'BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'DOGE', 'POL', 'MATIC', 'LTC', 'SOL',
-    'TRX', 'SHIB', 'TON', 'XMR', 'DAI', 'BCH', 'NOT', 'DOGS', 'XRP'
-];
+// Note: Valid currencies are now fetched dynamically from payment_gateways table
+// This ensures currency support automatically updates when gateway configuration changes
 // Validate wallet address format based on network
 function validateWalletAddress(address, network) {
     if (!address || typeof address !== 'string') {
@@ -224,10 +221,21 @@ class WithdrawalController {
             // 3. CRYPTO-SPECIFIC VALIDATION
             // ============================================
             if (payment_method === 'crypto') {
-                // Currency validation (if provided)
+                // Currency validation (if provided) - fetch supported currencies from database
                 const currencyToValidate = currency || 'USDT';
-                if (currency && !VALID_CURRENCIES.includes(currency) && currency !== 'crypto') {
-                    errors.push(`Invalid currency. Supported: ${VALID_CURRENCIES.join(', ')}`);
+                if (currency && currency !== 'crypto') {
+                    // Fetch supported currencies from payment gateway configuration
+                    const gatewayResult = await postgres_1.default.query('SELECT supported_currencies FROM payment_gateways WHERE code = $1 AND is_active = true', ['oxapay'] // Using oxapay as default gateway for crypto
+                    );
+                    if (gatewayResult.rows.length > 0) {
+                        const supportedCurrencies = gatewayResult.rows[0].supported_currencies || [];
+                        if (!supportedCurrencies.includes(currency)) {
+                            errors.push(`Invalid currency. Supported: ${supportedCurrencies.join(', ')}`);
+                        }
+                    }
+                    else {
+                        errors.push('Payment gateway not configured');
+                    }
                 }
                 // Network validation
                 if (!crypto_network) {

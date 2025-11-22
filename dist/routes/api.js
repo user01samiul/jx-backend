@@ -1935,10 +1935,32 @@ router.post("/payment/create", authenticate_1.authenticate, async (req, res) => 
             res.status(400).json({ success: false, message: `Currency ${currency} not supported by this gateway` });
             return;
         }
-        // Create payment using integration service
+        // Convert crypto amount to USD for balance tracking
         const { PaymentIntegrationService } = require("../services/payment/payment-integration.service");
         const paymentService = PaymentIntegrationService.getInstance();
+        let usdAmount;
+        let exchangeRate;
+        // Convert crypto amount to USD using the proper deposit conversion function
+        console.log(`[PAYMENT] Converting ${amount} ${currency} to USD...`);
         const config = {
+            api_key: gateway.api_key,
+            api_secret: gateway.api_secret,
+            api_endpoint: gateway.api_endpoint,
+            config: gateway.config,
+        };
+        const conversionResult = await paymentService.convertCryptoToUSD(gateway.code, config, amount, currency);
+        if (!conversionResult.success) {
+            res.status(400).json({
+                success: false,
+                message: `Failed to get exchange rate for ${currency}: ${conversionResult.message}`
+            });
+            return;
+        }
+        usdAmount = conversionResult.usdAmount;
+        exchangeRate = conversionResult.rate || 1;
+        console.log(`[PAYMENT] Converted ${amount} ${currency} to $${usdAmount} USD (rate: ${exchangeRate})`);
+        // Update config with full gateway details for payment creation
+        const fullConfig = {
             api_key: gateway.api_key,
             api_secret: gateway.api_secret,
             api_endpoint: gateway.api_endpoint,
@@ -1949,47 +1971,67 @@ router.post("/payment/create", authenticate_1.authenticate, async (req, res) => 
             config: gateway.config,
         };
         const orderId = `${gateway.code}_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Create payment request with CRYPTO amount (gateways process crypto)
         const paymentRequest = {
-            amount,
-            currency,
+            amount, // Crypto amount for payment gateway
+            currency, // Crypto currency (BTC, USDT, etc.)
             order_id: orderId,
             customer_email: req.user?.email,
             customer_name: `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim(),
-            description: description || `${type} payment`,
+            description: description || `Deposit $${usdAmount.toFixed(2)} USD (${amount} ${currency})`,
             return_url: return_url || `${process.env.FRONTEND_URL}/payment/success`,
             cancel_url: cancel_url || `${process.env.FRONTEND_URL}/payment/cancel`,
             metadata: {
                 user_id: userId,
                 gateway_id: gateway_id,
                 type: type,
+                usd_amount: usdAmount,
+                crypto_amount: amount,
+                crypto_currency: currency,
+                exchange_rate: exchangeRate,
                 ...metadata // Include any additional metadata
             }
         };
-        const paymentResponse = await paymentService.createPayment(gateway.code, config, paymentRequest);
+        const paymentResponse = await paymentService.createPayment(gateway.code, fullConfig, paymentRequest);
         if (!paymentResponse.success) {
             res.status(400).json({ success: false, message: paymentResponse.message });
             return;
         }
-        // Save transaction to database (you'll need to implement this)
-        // const transaction = await createTransactionService({
-        //   user_id: userId,
-        //   gateway_id: gateway_id,
-        //   amount: amount,
-        //   currency: currency,
-        //   type: type,
-        //   status: paymentResponse.status,
-        //   transaction_id: paymentResponse.transaction_id,
-        //   payment_url: paymentResponse.payment_url,
-        //   gateway_response: paymentResponse.gateway_response
-        // });
+        // Save transaction to database with USD amount
+        const transactionResult = await postgres_1.default.query(`INSERT INTO transactions (user_id, type, amount, currency, status, description, reference_id, external_reference, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id`, [
+            userId,
+            type,
+            usdAmount, // Store USD amount for balance
+            'USD', // Always USD for balance tracking
+            paymentResponse.status,
+            description || `${type} payment`,
+            orderId,
+            paymentResponse.transaction_id,
+            JSON.stringify({
+                gateway_code: gateway.code,
+                gateway_id: gateway_id,
+                crypto_amount: amount,
+                crypto_currency: currency,
+                exchange_rate: exchangeRate,
+                converted_at: new Date().toISOString(),
+                gateway_response: paymentResponse.gateway_response,
+                payment_url: paymentResponse.payment_url
+            })
+        ]);
+        const transactionId = transactionResult.rows[0].id;
         res.status(200).json({
             success: true,
             data: {
-                transaction_id: paymentResponse.transaction_id,
+                transaction_id: transactionId,
+                gateway_transaction_id: paymentResponse.transaction_id,
                 payment_url: paymentResponse.payment_url,
                 status: paymentResponse.status,
-                amount: amount,
-                currency: currency,
+                crypto_amount: amount,
+                crypto_currency: currency,
+                usd_amount: usdAmount,
+                exchange_rate: exchangeRate,
                 gateway_name: gateway.name,
                 order_id: orderId
             }
