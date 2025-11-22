@@ -2302,6 +2302,92 @@ router.get("/payment/status/:transaction_id", authenticate_1.authenticate, async
 });
 /**
  * @openapi
+ * /api/payment/crypto-conversion:
+ *   get:
+ *     summary: Convert crypto amount to USD
+ *     tags:
+ *       - Payment
+ *     security:
+ *       - bearerAuth: []
+ *     description: |
+ *       Converts a cryptocurrency amount to USD using real-time exchange rates.
+ *       Rates are cached for 60 seconds to optimize API calls.
+ *     parameters:
+ *       - in: query
+ *         name: currency
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [BTC, ETH, USDT, USDC, TRX, BNB, DOGE, LTC, XMR, TON, NOT, POL, BCH, SHIB, SOL, DOGS, DAI, XRP]
+ *         description: The cryptocurrency code
+ *         example: BTC
+ *       - in: query
+ *         name: amount
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: The amount of cryptocurrency to convert
+ *         example: 0.5
+ *     responses:
+ *       200:
+ *         description: Conversion successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     currency:
+ *                       type: string
+ *                       example: BTC
+ *                     crypto_amount:
+ *                       type: number
+ *                       example: 0.5
+ *                     usd_amount:
+ *                       type: number
+ *                       example: 50000.00
+ *                     exchange_rate:
+ *                       type: number
+ *                       example: 100000.00
+ *                     crypto_decimals:
+ *                       type: number
+ *                       example: 8
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                       example: "2025-11-22T10:30:00Z"
+ *                     cached:
+ *                       type: boolean
+ *                       example: false
+ *       400:
+ *         description: Invalid parameters
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Conversion failed
+ */
+router.get("/payment/crypto-conversion", authenticate_1.authenticate, async (req, res) => {
+    try {
+        const { getCryptoConversion } = require("../api/payment/payment.controller");
+        await getCryptoConversion(req, res, (error) => {
+            if (error) {
+                console.error('Crypto conversion error:', error);
+                res.status(500).json({ success: false, message: error.message });
+            }
+        });
+    }
+    catch (error) {
+        console.error('Crypto conversion error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+/**
+ * @openapi
  * /api/payment/webhook/igpx:
  *   post:
  *     summary: IGPX Sportsbook webhook endpoint

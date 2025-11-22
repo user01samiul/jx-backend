@@ -1064,4 +1064,27 @@ export class WithdrawalController {
       });
     }
   }
+
+  /**
+   * Admin: Get payment method statistics
+   * GET /api/withdrawals/admin/stats/payment-methods
+   */
+  static async getPaymentMethodStats(req: Request, res: Response) {
+    try {
+      const stats = await WithdrawalService.getPaymentMethodStats();
+
+      return res.status(200).json({
+        success: true,
+        data: stats
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching payment method stats:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch payment method statistics',
+        error: error.message
+      });
+    }
+  }
 }

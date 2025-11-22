@@ -882,6 +882,29 @@ class WithdrawalService {
         }
     }
     /**
+     * Get payment method statistics (crypto currencies breakdown)
+     */
+    static async getPaymentMethodStats() {
+        const result = await postgres_1.default.query(`
+      SELECT
+        crypto_currency as payment_method,
+        COUNT(*) as transaction_count,
+        COALESCE(SUM(amount), 0) as total_amount
+      FROM withdrawal_requests
+      WHERE status IN ('pending', 'approved', 'processing', 'completed')
+      GROUP BY crypto_currency
+      ORDER BY total_amount DESC
+    `);
+        // Calculate total for percentage calculation
+        const total = result.rows.reduce((sum, row) => sum + parseFloat(row.total_amount), 0);
+        return result.rows.map(row => ({
+            payment_method: row.payment_method,
+            transaction_count: parseInt(row.transaction_count),
+            total_amount: parseFloat(row.total_amount),
+            percentage: total > 0 ? parseFloat(((parseFloat(row.total_amount) / total) * 100).toFixed(1)) : 0
+        }));
+    }
+    /**
      * Create audit log entry
      */
     static async createAuditLog(client, withdrawalId, action, actorId, actorType, oldStatus, newStatus, details, ipAddress) {

@@ -59,6 +59,14 @@ router.get(
   WithdrawalController.getStatistics
 );
 
+// Get payment method statistics
+router.get(
+  '/admin/stats/payment-methods',
+  authMiddleware,
+  adminMiddleware,
+  WithdrawalController.getPaymentMethodStats
+);
+
 // Get dashboard data (cards + recent payouts)
 router.get(
   '/admin/dashboard',

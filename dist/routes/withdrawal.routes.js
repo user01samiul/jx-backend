@@ -28,6 +28,8 @@ router.delete('/:id', auth_middleware_1.authMiddleware, withdrawal_controller_1.
 router.get('/admin/all', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getAllWithdrawals);
 // Get withdrawal statistics
 router.get('/admin/statistics', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getStatistics);
+// Get payment method statistics
+router.get('/admin/stats/payment-methods', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getPaymentMethodStats);
 // Get dashboard data (cards + recent payouts)
 router.get('/admin/dashboard', auth_middleware_1.authMiddleware, admin_middleware_1.adminMiddleware, withdrawal_controller_1.WithdrawalController.getDashboard);
 // Get withdrawal settings
