@@ -650,6 +650,14 @@ export class WithdrawalService {
           error: paymentResponse.message,
           refunded: true
         });
+
+        // Commit the failed status and refund before throwing error
+        if (!clientConnection) {
+          await client.query('COMMIT');
+        }
+
+        // Throw error so controller returns proper error response
+        throw new Error(paymentResponse.message || 'Payment gateway failed to process withdrawal');
       }
 
       if (!clientConnection) {
@@ -657,12 +665,18 @@ export class WithdrawalService {
       }
 
     } catch (error) {
-      if (!clientConnection) {
+      // If error message indicates payment gateway failure (already handled),
+      // don't rollback as we already committed the failed status
+      const isPaymentGatewayError = error instanceof Error &&
+        error.message.includes('Payment gateway failed to process withdrawal');
+
+      if (!clientConnection && !isPaymentGatewayError) {
         await client.query('ROLLBACK');
       }
 
-      // Mark withdrawal as failed and refund
-      try {
+      // Mark withdrawal as failed and refund (only if not already done)
+      if (!isPaymentGatewayError) {
+        try {
         await client.query(
           `UPDATE withdrawal_requests SET status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
           [withdrawalId]
@@ -692,6 +706,7 @@ export class WithdrawalService {
         }
       } catch (refundError) {
         console.error('Failed to refund withdrawal:', refundError);
+      }
       }
 
       throw error;

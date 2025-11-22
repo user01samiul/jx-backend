@@ -2,9 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentIntegrationService = void 0;
 class PaymentIntegrationService {
+    static instance;
+    gatewayHandlers = new Map();
+    webhookHandlers = new Map();
     constructor() {
-        this.gatewayHandlers = new Map();
-        this.webhookHandlers = new Map();
         this.initializeGatewayHandlers();
         this.initializeWebhookHandlers();
     }
@@ -59,6 +60,15 @@ class PaymentIntegrationService {
             success: false,
             status: 'failed',
             message: `Withdrawal not supported for gateway: ${gatewayCode}`,
+        };
+    }
+    async convertCurrency(gatewayCode, config, usdAmount, targetCurrency) {
+        if (gatewayCode.toLowerCase() === 'oxapay') {
+            return await this.convertUSDToCrypto(config, usdAmount, targetCurrency);
+        }
+        return {
+            success: false,
+            message: `Currency conversion not supported for gateway: ${gatewayCode}`,
         };
     }
     async checkPaymentStatus(gatewayCode, config, transactionId) {
@@ -353,6 +363,115 @@ class PaymentIntegrationService {
             };
         }
     }
+    // Currency Conversion using CoinGecko API (Free, no API key needed)
+    async convertUSDToCrypto(config, usdAmount, targetCurrency) {
+        try {
+            const axios = require('axios');
+            // Stablecoins don't need conversion (1:1 with USD)
+            const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'USDD'];
+            if (stablecoins.includes(targetCurrency.toUpperCase())) {
+                console.log('[Conversion] No conversion needed for stablecoin:', targetCurrency);
+                return {
+                    success: true,
+                    cryptoAmount: usdAmount,
+                    rate: 1.0
+                };
+            }
+            console.log('[Conversion] Converting USD to crypto:', {
+                usd_amount: usdAmount,
+                target_currency: targetCurrency
+            });
+            // Map crypto symbols to CoinGecko IDs
+            const currencyMap = {
+                'BTC': 'bitcoin',
+                'ETH': 'ethereum',
+                'LTC': 'litecoin',
+                'BCH': 'bitcoin-cash',
+                'XRP': 'ripple',
+                'TRX': 'tron',
+                'BNB': 'binancecoin',
+                'ADA': 'cardano',
+                'SOL': 'solana',
+                'DOT': 'polkadot',
+                'DOGE': 'dogecoin',
+                'MATIC': 'matic-network',
+                'SHIB': 'shiba-inu',
+                'AVAX': 'avalanche-2',
+                'UNI': 'uniswap',
+                'LINK': 'chainlink',
+                'XLM': 'stellar',
+                'ATOM': 'cosmos',
+                'ETC': 'ethereum-classic',
+                'XMR': 'monero',
+                'TON': 'the-open-network',
+                'DAI': 'dai',
+                'USDT': 'tether',
+                'USDC': 'usd-coin'
+            };
+            const coinId = currencyMap[targetCurrency.toUpperCase()];
+            if (!coinId) {
+                throw new Error(`Unsupported currency: ${targetCurrency}. Please contact support to add this currency.`);
+            }
+            // Use CoinGecko API (Free, no API key needed)
+            // Rate limit: 10-50 calls/minute on free tier
+            const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+            console.log('[Conversion] Fetching rate from CoinGecko:', endpoint);
+            const res = await axios.get(endpoint, {
+                timeout: 10000,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            console.log('[Conversion] CoinGecko response:', JSON.stringify(res.data, null, 2));
+            // Extract price
+            const cryptoPrice = res.data?.[coinId]?.usd;
+            if (!cryptoPrice || cryptoPrice <= 0) {
+                throw new Error(`Failed to get price for ${targetCurrency} from CoinGecko`);
+            }
+            // Calculate crypto amount: USD amount / crypto price in USD
+            const cryptoAmount = usdAmount / cryptoPrice;
+            // Determine precision based on crypto value
+            let precision = 8; // Default for most cryptos
+            if (cryptoPrice >= 1000) {
+                precision = 6; // BTC, ETH (high value coins)
+            }
+            else if (cryptoPrice >= 1) {
+                precision = 4; // Mid-range coins
+            }
+            else if (cryptoPrice >= 0.01) {
+                precision = 2; // Low value coins
+            }
+            const roundedAmount = parseFloat(cryptoAmount.toFixed(precision));
+            console.log('[Conversion] Conversion successful:', {
+                usd_amount: usdAmount,
+                crypto_price: cryptoPrice,
+                crypto_amount: roundedAmount,
+                currency: targetCurrency,
+                precision: precision
+            });
+            return {
+                success: true,
+                cryptoAmount: roundedAmount,
+                rate: cryptoPrice
+            };
+        }
+        catch (error) {
+            console.error('[Conversion] Conversion error:', {
+                message: error?.response?.data?.message || error.message,
+                status: error?.response?.status,
+                data: error?.response?.data
+            });
+            // Fallback error message
+            const errorMessage = error?.response?.data?.status?.error_message ||
+                error?.response?.data?.error ||
+                error.message ||
+                'Currency conversion failed';
+            return {
+                success: false,
+                message: errorMessage
+            };
+        }
+    }
     // Oxapay Withdrawal Handler (Payout API: https://docs.oxapay.com/api-reference/creating-payout)
     async handleOxapayWithdrawal(config, request) {
         try {
@@ -368,16 +487,21 @@ class PaymentIntegrationService {
                 network: request.metadata?.network || config.config?.network || 'TRC20',
                 has_payout_key: !!config.payout_api_key
             });
-            // Oxapay uses a different base URL for payouts
-            const payoutBaseUrl = config.config?.payout_api_endpoint || 'https://app-api.oxapay.com/v1';
-            const endpoint = `${payoutBaseUrl}/payout`;
+            // IMPORTANT: request.amount should already be in crypto currency at this point
+            // The conversion from USD to crypto should happen BEFORE calling this method
+            // Oxapay Official Payout API Endpoint
+            const endpoint = config.config?.payout_api_endpoint || 'https://api.oxapay.com/v1/payout';
             const requestBody = {
                 address: request.metadata.address,
-                amount: request.amount,
-                currency: request.currency,
+                amount: request.amount, // This MUST be in crypto currency amount
+                currency: request.currency, // This MUST be crypto currency code (BTC, ETH, USDT, etc.)
                 network: request.metadata?.network || config.config?.network || 'TRC20',
                 description: request.description || 'Withdrawal',
             };
+            // Add memo if provided (required for some currencies like XRP, XLM)
+            if (request.metadata?.memo) {
+                requestBody.memo = request.metadata.memo;
+            }
             console.log('[Oxapay] Payout request body:', JSON.stringify(requestBody, null, 2));
             const res = await axios.post(endpoint, requestBody, {
                 headers: {

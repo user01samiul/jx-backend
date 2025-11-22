@@ -286,8 +286,8 @@ class WithdrawalController {
             const withdrawalRequest = {
                 user_id: userId,
                 amount: parseFloat(amount),
-                currency: currency || 'USD',
-                crypto_currency: payment_method,
+                currency: 'USD', // Always USD (fiat currency in the app)
+                crypto_currency: currency || 'USDT', // The actual crypto (USDT, BTC, ETH, etc.)
                 crypto_address: crypto_address?.trim(),
                 crypto_network: crypto_network,
                 crypto_memo: memo,
