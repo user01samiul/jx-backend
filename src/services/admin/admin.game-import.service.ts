@@ -127,12 +127,163 @@ export class AdminGameImportService {
   // Get all provider configurations
   async getAllProviderConfigs(): Promise<ProviderConfig[]> {
     const query = `
-      SELECT * FROM game_provider_configs 
+      SELECT * FROM game_provider_configs
       ORDER BY provider_name
     `;
-    
+
     const result = await pool.query(query);
     return result.rows;
+  }
+
+  // Get provider configuration by ID
+  async getProviderConfigById(id: number): Promise<ProviderConfig | null> {
+    const query = `
+      SELECT * FROM game_provider_configs
+      WHERE id = $1
+    `;
+
+    const result = await pool.query(query, [id]);
+    return result.rows[0] || null;
+  }
+
+  // Update provider configuration by ID
+  async updateProviderConfigById(id: number, data: {
+    provider_name?: string;
+    api_key?: string;
+    api_secret?: string;
+    base_url?: string;
+    is_active?: boolean;
+    metadata?: any;
+  }): Promise<ProviderConfig | null> {
+    const updateFields = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (data.provider_name !== undefined) {
+      updateFields.push(`provider_name = $${paramCount++}`);
+      values.push(data.provider_name);
+    }
+    if (data.api_key !== undefined) {
+      updateFields.push(`api_key = $${paramCount++}`);
+      values.push(data.api_key);
+    }
+    if (data.api_secret !== undefined) {
+      updateFields.push(`api_secret = $${paramCount++}`);
+      values.push(data.api_secret);
+    }
+    if (data.base_url !== undefined) {
+      updateFields.push(`base_url = $${paramCount++}`);
+      values.push(data.base_url);
+    }
+    if (data.is_active !== undefined) {
+      updateFields.push(`is_active = $${paramCount++}`);
+      values.push(data.is_active);
+    }
+    if (data.metadata !== undefined) {
+      updateFields.push(`metadata = $${paramCount++}`);
+      values.push(JSON.stringify(data.metadata));
+    }
+
+    if (updateFields.length === 0) {
+      return this.getProviderConfigById(id);
+    }
+
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(id);
+
+    const query = `
+      UPDATE game_provider_configs
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  // Delete provider configuration by ID (with cascade handling)
+  async deleteProviderConfigById(id: number): Promise<{
+    success: boolean;
+    message: string;
+    affected_games?: number;
+  }> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Get provider details before deletion
+      const providerResult = await client.query(
+        'SELECT provider_name FROM game_provider_configs WHERE id = $1',
+        [id]
+      );
+
+      if (providerResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: 'Provider not found'
+        };
+      }
+
+      const providerName = providerResult.rows[0].provider_name;
+
+      // Check for active bets with games from this provider
+      const activeBetsCheck = await client.query(`
+        SELECT COUNT(*) as count
+        FROM bets b
+        INNER JOIN games g ON b.game_id = g.id
+        WHERE g.provider = $1
+        AND b.outcome = 'pending'
+      `, [providerName]);
+
+      const activeBetsCount = parseInt(activeBetsCheck.rows[0].count);
+      if (activeBetsCount > 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: `Cannot delete provider. There are ${activeBetsCount} active bets using games from this provider.`
+        };
+      }
+
+      // Deactivate all games from this provider (soft delete)
+      const deactivateResult = await client.query(`
+        UPDATE games
+        SET is_active = false, updated_at = CURRENT_TIMESTAMP
+        WHERE provider = $1
+      `, [providerName]);
+
+      const affectedGames = deactivateResult.rowCount || 0;
+
+      // Delete the provider configuration
+      const deleteResult = await client.query(
+        'DELETE FROM game_provider_configs WHERE id = $1 RETURNING *',
+        [id]
+      );
+
+      if (deleteResult.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: 'Failed to delete provider'
+        };
+      }
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: `Provider "${providerName}" deleted successfully`,
+        affected_games: affectedGames
+      };
+
+    } catch (error: any) {
+      await client.query('ROLLBACK');
+      console.error('[DELETE_PROVIDER] Error:', error);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   // Import games by category from external API

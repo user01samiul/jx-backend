@@ -67,6 +67,31 @@ export const CreateProviderInput = z.object({
 
 export const UpdateProviderInput = CreateProviderInput.partial();
 
+// Game Provider Configs (game_provider_configs table)
+export const CreateGameProviderConfigInput = z.object({
+  provider_name: z.string().min(1, "Provider name is required").max(100),
+  api_key: z.string().min(1, "API key is required").max(255),
+  api_secret: z.string().min(1, "API secret is required").max(255),
+  base_url: z.string().url("Invalid base URL"),
+  is_active: z.boolean().optional().default(true),
+  metadata: z.object({
+    callback_url: z.string().url().optional(),
+    launch_host: z.string().url().optional(),
+    operator_id: z.string().optional(),
+    provider_type: z.enum(['casino', 'sportsbook']).optional(),
+    auth_endpoint: z.string().optional()
+  }).optional()
+});
+
+export const UpdateGameProviderConfigInput = CreateGameProviderConfigInput.partial();
+
+export const ActivateGameProviderInput = z.object({
+  is_active: z.boolean({
+    required_error: "is_active is required",
+    invalid_type_error: "is_active must be a boolean"
+  })
+});
+
 // =====================================================
 // USER MANAGEMENT SCHEMAS
 // =====================================================

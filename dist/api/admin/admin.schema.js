@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BulkGameOperationInput = exports.BulkUserOperationInput = exports.UpdateUserLevelInput = exports.CreateUserLevelInput = exports.UpdatePromotionInput = exports.CreatePromotionInput = exports.ReportFiltersInput = exports.AnalyticsFiltersInput = exports.UpdateServerSettingsInput = exports.RTPReportFiltersInput = exports.BulkUpdateRTPInput = exports.RTPAnalyticsFiltersInput = exports.UpdateRTPSettingsInput = exports.UpdateSystemSettingsInput = exports.BulkApproveTransactionsInput = exports.ApproveTransactionInput = exports.TransactionFiltersInput = exports.PaymentGatewayFiltersInput = exports.UpdatePaymentGatewayInput = exports.CreatePaymentGatewayInput = exports.KYCApprovalInput = exports.AdminCreateUserInput = exports.UpdateUserBalanceInput = exports.UpdateUserRoleInput = exports.UpdateUserStatusInput = exports.UserFiltersInput = exports.UpdateProviderInput = exports.CreateProviderInput = exports.GameFiltersInput = exports.UpdateGameInput = exports.CreateGameInput = void 0;
+exports.BulkGameOperationInput = exports.BulkUserOperationInput = exports.UpdateUserLevelInput = exports.CreateUserLevelInput = exports.UpdatePromotionInput = exports.CreatePromotionInput = exports.ReportFiltersInput = exports.AnalyticsFiltersInput = exports.UpdateServerSettingsInput = exports.RTPReportFiltersInput = exports.BulkUpdateRTPInput = exports.RTPAnalyticsFiltersInput = exports.UpdateRTPSettingsInput = exports.UpdateSystemSettingsInput = exports.BulkApproveTransactionsInput = exports.ApproveTransactionInput = exports.TransactionFiltersInput = exports.PaymentGatewayFiltersInput = exports.UpdatePaymentGatewayInput = exports.CreatePaymentGatewayInput = exports.KYCApprovalInput = exports.AdminCreateUserInput = exports.UpdateUserBalanceInput = exports.UpdateUserRoleInput = exports.UpdateUserStatusInput = exports.UserFiltersInput = exports.ActivateGameProviderInput = exports.UpdateGameProviderConfigInput = exports.CreateGameProviderConfigInput = exports.UpdateProviderInput = exports.CreateProviderInput = exports.GameFiltersInput = exports.UpdateGameInput = exports.CreateGameInput = void 0;
 const zod_1 = require("zod");
 // =====================================================
 // GAME MANAGEMENT SCHEMAS
@@ -62,6 +62,28 @@ exports.CreateProviderInput = zod_1.z.object({
     }).optional()
 });
 exports.UpdateProviderInput = exports.CreateProviderInput.partial();
+// Game Provider Configs (game_provider_configs table)
+exports.CreateGameProviderConfigInput = zod_1.z.object({
+    provider_name: zod_1.z.string().min(1, "Provider name is required").max(100),
+    api_key: zod_1.z.string().min(1, "API key is required").max(255),
+    api_secret: zod_1.z.string().min(1, "API secret is required").max(255),
+    base_url: zod_1.z.string().url("Invalid base URL"),
+    is_active: zod_1.z.boolean().optional().default(true),
+    metadata: zod_1.z.object({
+        callback_url: zod_1.z.string().url().optional(),
+        launch_host: zod_1.z.string().url().optional(),
+        operator_id: zod_1.z.string().optional(),
+        provider_type: zod_1.z.enum(['casino', 'sportsbook']).optional(),
+        auth_endpoint: zod_1.z.string().optional()
+    }).optional()
+});
+exports.UpdateGameProviderConfigInput = exports.CreateGameProviderConfigInput.partial();
+exports.ActivateGameProviderInput = zod_1.z.object({
+    is_active: zod_1.z.boolean({
+        required_error: "is_active is required",
+        invalid_type_error: "is_active must be a boolean"
+    })
+});
 // =====================================================
 // USER MANAGEMENT SCHEMAS
 // =====================================================

@@ -264,8 +264,14 @@ export const createProvider = async (
       is_active,
       metadata
     });
-    res.status(201).json({ success: true, data: provider });
+    res.status(201).json({ success: true, data: provider, message: 'Provider created successfully' });
   } catch (error: any) {
+    // Handle unique constraint violation (duplicate provider_name)
+    if (error.code === '23505') {
+      res.status(409).json({ success: false, message: 'Provider with this name already exists' });
+      return;
+    }
+    console.error('[CREATE_PROVIDER] Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -281,16 +287,23 @@ export const updateProvider = async (
       res.status(400).json({ success: false, message: 'Invalid provider ID' });
       return;
     }
-    // Find provider by id to get provider_name
-    const all = await adminGameImportService.getAllProviderConfigs();
-    const provider = all.find(p => p.id === id);
-    if (!provider) {
+
+    // Use efficient ID-based lookup
+    const updated = await adminGameImportService.updateProviderConfigById(id, req.body);
+
+    if (!updated) {
       res.status(404).json({ success: false, message: 'Provider not found' });
       return;
     }
-    const updated = await adminGameImportService.updateProviderConfig(provider.provider_name, req.body);
-    res.status(200).json({ success: true, data: updated });
+
+    res.status(200).json({ success: true, data: updated, message: 'Provider updated successfully' });
   } catch (error: any) {
+    // Handle unique constraint violation (duplicate provider_name)
+    if (error.code === '23505') {
+      res.status(409).json({ success: false, message: 'Provider with this name already exists' });
+      return;
+    }
+    console.error('[UPDATE_PROVIDER] Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -306,21 +319,65 @@ export const activateProvider = async (
       res.status(400).json({ success: false, message: 'Invalid provider ID' });
       return;
     }
+
     const { is_active } = req.body;
     if (typeof is_active !== 'boolean') {
       res.status(400).json({ success: false, message: 'is_active must be boolean' });
       return;
     }
-    // Find provider by id to get provider_name
-    const all = await adminGameImportService.getAllProviderConfigs();
-    const provider = all.find(p => p.id === id);
-    if (!provider) {
+
+    // Use efficient ID-based lookup
+    const updated = await adminGameImportService.updateProviderConfigById(id, { is_active });
+
+    if (!updated) {
       res.status(404).json({ success: false, message: 'Provider not found' });
       return;
     }
-    const updated = await adminGameImportService.updateProviderConfig(provider.provider_name, { is_active });
-    res.status(200).json({ success: true, data: updated });
+
+    const statusMessage = is_active ? 'activated' : 'deactivated';
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: `Provider ${statusMessage} successfully`
+    });
   } catch (error: any) {
+    console.error('[ACTIVATE_PROVIDER] Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteProvider = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, message: 'Invalid provider ID' });
+      return;
+    }
+
+    // Delete provider with cascade handling
+    const result = await adminGameImportService.deleteProviderConfigById(id);
+
+    if (!result.success) {
+      // Return appropriate status code based on error
+      const statusCode = result.message.includes('not found') ? 404 : 400;
+      res.status(statusCode).json({
+        success: false,
+        message: result.message
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      affected_games: result.affected_games
+    });
+  } catch (error: any) {
+    console.error('[DELETE_PROVIDER] Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -2528,7 +2528,7 @@ router.post("/users/:id/topup", async (req, res) => {
  *       201:
  *         description: Provider created successfully
  */
-router.post("/providers", admin_controller_2.createProvider);
+router.post("/providers", (0, validate_1.validate)({ body: admin_schema_1.CreateGameProviderConfigInput }), admin_controller_2.createProvider);
 /**
  * @swagger
  * /api/admin/providers/{id}:
@@ -2566,7 +2566,7 @@ router.post("/providers", admin_controller_2.createProvider);
  *       200:
  *         description: Provider updated successfully
  */
-router.put("/providers/:id", admin_controller_2.updateProvider);
+router.put("/providers/:id", (0, validate_1.validate)({ body: admin_schema_1.UpdateGameProviderConfigInput }), admin_controller_2.updateProvider);
 /**
  * @swagger
  * /api/admin/providers:
@@ -2610,7 +2610,46 @@ router.get("/providers", admin_controller_2.getProviders);
  *       200:
  *         description: Provider activation status updated
  */
-router.patch("/providers/:id/activate", admin_controller_2.activateProvider);
+router.patch("/providers/:id/activate", (0, validate_1.validate)({ body: admin_schema_1.ActivateGameProviderInput }), admin_controller_2.activateProvider);
+/**
+ * @swagger
+ * /api/admin/providers/{id}:
+ *   delete:
+ *     summary: Delete a game supplier/provider
+ *     description: Deletes a provider and deactivates all associated games. Fails if there are active bets on games from this provider.
+ *     tags: [Admin Providers]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The provider ID
+ *     responses:
+ *       200:
+ *         description: Provider deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Provider \"thinkcode_prod\" deleted successfully"
+ *                 affected_games:
+ *                   type: integer
+ *                   example: 157
+ *       400:
+ *         description: Cannot delete provider due to active bets
+ *       404:
+ *         description: Provider not found
+ */
+router.delete("/providers/:id", admin_controller_2.deleteProvider);
 // =====================================================
 // TRANSACTION MANAGEMENT ROUTES
 // =====================================================

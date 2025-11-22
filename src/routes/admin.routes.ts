@@ -2,7 +2,7 @@ import { Router } from "express";
 import { validate } from "../middlewares/validate";
 import { authenticate } from "../middlewares/authenticate";
 import { authorize } from "../middlewares/authorize";
-import { 
+import {
   CreateGameInput,
   UpdateGameInput,
   UserFiltersInput,
@@ -14,7 +14,10 @@ import {
   UpdateRTPSettingsInput,
   RTPAnalyticsFiltersInput,
   BulkUpdateRTPInput,
-  RTPReportFiltersInput
+  RTPReportFiltersInput,
+  CreateGameProviderConfigInput,
+  UpdateGameProviderConfigInput,
+  ActivateGameProviderInput
 } from "../api/admin/admin.schema";
 import {
   CreateGameCategorySchema,
@@ -60,6 +63,7 @@ import {
   createProvider,
   updateProvider,
   activateProvider,
+  deleteProvider,
   // Transaction Management
   getTransactions,
   approveTransaction,
@@ -2806,7 +2810,7 @@ router.post("/users/:id/topup", async (req, res) => {
  *       201:
  *         description: Provider created successfully
  */
-router.post("/providers", createProvider);
+router.post("/providers", validate({ body: CreateGameProviderConfigInput }), createProvider);
 
 /**
  * @swagger
@@ -2845,7 +2849,7 @@ router.post("/providers", createProvider);
  *       200:
  *         description: Provider updated successfully
  */
-router.put("/providers/:id", updateProvider);
+router.put("/providers/:id", validate({ body: UpdateGameProviderConfigInput }), updateProvider);
 
 /**
  * @swagger
@@ -2891,7 +2895,47 @@ router.get("/providers", getProviders);
  *       200:
  *         description: Provider activation status updated
  */
-router.patch("/providers/:id/activate", activateProvider);
+router.patch("/providers/:id/activate", validate({ body: ActivateGameProviderInput }), activateProvider);
+
+/**
+ * @swagger
+ * /api/admin/providers/{id}:
+ *   delete:
+ *     summary: Delete a game supplier/provider
+ *     description: Deletes a provider and deactivates all associated games. Fails if there are active bets on games from this provider.
+ *     tags: [Admin Providers]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The provider ID
+ *     responses:
+ *       200:
+ *         description: Provider deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Provider \"thinkcode_prod\" deleted successfully"
+ *                 affected_games:
+ *                   type: integer
+ *                   example: 157
+ *       400:
+ *         description: Cannot delete provider due to active bets
+ *       404:
+ *         description: Provider not found
+ */
+router.delete("/providers/:id", deleteProvider);
 
 // =====================================================
 // TRANSACTION MANAGEMENT ROUTES

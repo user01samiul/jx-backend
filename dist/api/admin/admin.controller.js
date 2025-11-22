@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createUser = exports.triggerManualDailySummary = exports.triggerManualAutoAdjustment = exports.stopCronJobs = exports.startCronJobs = exports.getCronStatus = exports.getProfitPerformance = exports.triggerAutoAdjustment = exports.getProfitAnalytics = exports.getRTPReport = exports.bulkUpdateRTP = exports.getRTPAnalytics = exports.updateRTPSettings = exports.getRTPSettings = exports.getPaymentGatewayStats = exports.testPaymentGatewayConnection = exports.getActivePaymentGateways = exports.deletePaymentGateway = exports.getPaymentGatewayById = exports.getPaymentGateways = exports.updatePaymentGateway = exports.createPaymentGateway = exports.getUserAnalytics = exports.getRevenueAnalytics = exports.updateSystemSettings = exports.getSystemSettings = exports.approveTransaction = exports.getTransactions = exports.activateProvider = exports.updateProvider = exports.createProvider = exports.getProviders = exports.getDashboardStats = exports.updateUserBalance = exports.updateUserStatus = exports.getUsersForAdmin = exports.getGamesForAdmin = exports.deleteGame = exports.updateGame = exports.createGame = void 0;
+exports.createUser = exports.triggerManualDailySummary = exports.triggerManualAutoAdjustment = exports.stopCronJobs = exports.startCronJobs = exports.getCronStatus = exports.getProfitPerformance = exports.triggerAutoAdjustment = exports.getProfitAnalytics = exports.getRTPReport = exports.bulkUpdateRTP = exports.getRTPAnalytics = exports.updateRTPSettings = exports.getRTPSettings = exports.getPaymentGatewayStats = exports.testPaymentGatewayConnection = exports.getActivePaymentGateways = exports.deletePaymentGateway = exports.getPaymentGatewayById = exports.getPaymentGateways = exports.updatePaymentGateway = exports.createPaymentGateway = exports.getUserAnalytics = exports.getRevenueAnalytics = exports.updateSystemSettings = exports.getSystemSettings = exports.approveTransaction = exports.getTransactions = exports.deleteProvider = exports.activateProvider = exports.updateProvider = exports.createProvider = exports.getProviders = exports.getDashboardStats = exports.updateUserBalance = exports.updateUserStatus = exports.getUsersForAdmin = exports.getGamesForAdmin = exports.deleteGame = exports.updateGame = exports.createGame = void 0;
 const admin_service_1 = require("../../services/admin/admin.service");
 const payment_gateway_service_1 = require("../../services/admin/payment-gateway.service");
 const admin_game_import_service_1 = require("../../services/admin/admin.game-import.service");
@@ -157,9 +157,15 @@ const createProvider = async (req, res, next) => {
             is_active,
             metadata
         });
-        res.status(201).json({ success: true, data: provider });
+        res.status(201).json({ success: true, data: provider, message: 'Provider created successfully' });
     }
     catch (error) {
+        // Handle unique constraint violation (duplicate provider_name)
+        if (error.code === '23505') {
+            res.status(409).json({ success: false, message: 'Provider with this name already exists' });
+            return;
+        }
+        console.error('[CREATE_PROVIDER] Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -171,17 +177,21 @@ const updateProvider = async (req, res, next) => {
             res.status(400).json({ success: false, message: 'Invalid provider ID' });
             return;
         }
-        // Find provider by id to get provider_name
-        const all = await adminGameImportService.getAllProviderConfigs();
-        const provider = all.find(p => p.id === id);
-        if (!provider) {
+        // Use efficient ID-based lookup
+        const updated = await adminGameImportService.updateProviderConfigById(id, req.body);
+        if (!updated) {
             res.status(404).json({ success: false, message: 'Provider not found' });
             return;
         }
-        const updated = await adminGameImportService.updateProviderConfig(provider.provider_name, req.body);
-        res.status(200).json({ success: true, data: updated });
+        res.status(200).json({ success: true, data: updated, message: 'Provider updated successfully' });
     }
     catch (error) {
+        // Handle unique constraint violation (duplicate provider_name)
+        if (error.code === '23505') {
+            res.status(409).json({ success: false, message: 'Provider with this name already exists' });
+            return;
+        }
+        console.error('[UPDATE_PROVIDER] Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -198,21 +208,55 @@ const activateProvider = async (req, res, next) => {
             res.status(400).json({ success: false, message: 'is_active must be boolean' });
             return;
         }
-        // Find provider by id to get provider_name
-        const all = await adminGameImportService.getAllProviderConfigs();
-        const provider = all.find(p => p.id === id);
-        if (!provider) {
+        // Use efficient ID-based lookup
+        const updated = await adminGameImportService.updateProviderConfigById(id, { is_active });
+        if (!updated) {
             res.status(404).json({ success: false, message: 'Provider not found' });
             return;
         }
-        const updated = await adminGameImportService.updateProviderConfig(provider.provider_name, { is_active });
-        res.status(200).json({ success: true, data: updated });
+        const statusMessage = is_active ? 'activated' : 'deactivated';
+        res.status(200).json({
+            success: true,
+            data: updated,
+            message: `Provider ${statusMessage} successfully`
+        });
     }
     catch (error) {
+        console.error('[ACTIVATE_PROVIDER] Error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 };
 exports.activateProvider = activateProvider;
+const deleteProvider = async (req, res, next) => {
+    try {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            res.status(400).json({ success: false, message: 'Invalid provider ID' });
+            return;
+        }
+        // Delete provider with cascade handling
+        const result = await adminGameImportService.deleteProviderConfigById(id);
+        if (!result.success) {
+            // Return appropriate status code based on error
+            const statusCode = result.message.includes('not found') ? 404 : 400;
+            res.status(statusCode).json({
+                success: false,
+                message: result.message
+            });
+            return;
+        }
+        res.status(200).json({
+            success: true,
+            message: result.message,
+            affected_games: result.affected_games
+        });
+    }
+    catch (error) {
+        console.error('[DELETE_PROVIDER] Error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+exports.deleteProvider = deleteProvider;
 // =====================================================
 // TRANSACTION MANAGEMENT CONTROLLERS
 // =====================================================
