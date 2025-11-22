@@ -638,3 +638,140 @@ export const getTransactionHistory = async (
     next(err);
   }
 }; 
+// Rate cache for crypto-to-USD conversion (60 second TTL)
+interface CachedRate {
+  rate: number;
+  timestamp: number;
+}
+
+const rateCache = new Map<string, CachedRate>();
+const CACHE_TTL = 60000; // 60 seconds
+
+// Currency decimal places mapping
+const CRYPTO_DECIMALS: Record<string, number> = {
+  'BTC': 8,
+  'ETH': 8,
+  'LTC': 8,
+  'BCH': 8,
+  'XRP': 6,
+  'TRX': 6,
+  'BNB': 8,
+  'SOL': 9,
+  'DOGE': 8,
+  'XMR': 12,
+  'TON': 9,
+  'NOT': 9,
+  'POL': 18,
+  'SHIB': 18,
+  'DOGS': 9,
+  'USDT': 2,
+  'USDC': 2,
+  'DAI': 2
+};
+
+/**
+ * GET /api/payment/crypto-conversion
+ * Convert crypto amount to USD
+ */
+export const getCryptoConversion = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { currency, amount } = req.query;
+
+    // Validation
+    if (!currency || !amount) {
+      res.status(400).json({
+        success: false,
+        message: 'Currency and amount are required'
+      });
+      return;
+    }
+
+    const cryptoCurrency = (currency as string).toUpperCase();
+    const cryptoAmount = parseFloat(amount as string);
+
+    if (isNaN(cryptoAmount) || cryptoAmount <= 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Amount must be a positive number'
+      });
+      return;
+    }
+
+    // Check if rate is cached and fresh
+    const cached = rateCache.get(cryptoCurrency);
+    const now = Date.now();
+    let exchangeRate: number;
+
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+      // Use cached rate
+      exchangeRate = cached.rate;
+      console.log(`[Crypto Conversion] Using cached rate for ${cryptoCurrency}: $${exchangeRate}`);
+    } else {
+      // Fetch fresh rate using payment service
+      const gatewayConfig = {
+        api_key: '',
+        api_secret: '',
+        api_endpoint: '',
+        payout_api_key: '',
+        config: {}
+      };
+
+      const conversionResult = await paymentService.convertCryptoToUSD(
+        'oxapay',
+        gatewayConfig,
+        cryptoAmount,
+        cryptoCurrency
+      );
+
+      if (!conversionResult.success || !conversionResult.rate) {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to fetch conversion rate',
+          error: conversionResult.message || 'Unknown error'
+        });
+        return;
+      }
+
+      exchangeRate = conversionResult.rate;
+
+      // Cache the rate
+      rateCache.set(cryptoCurrency, {
+        rate: exchangeRate,
+        timestamp: now
+      });
+
+      console.log(`[Crypto Conversion] Fetched fresh rate for ${cryptoCurrency}: $${exchangeRate}`);
+    }
+
+    // Calculate USD amount
+    const usdAmount = cryptoAmount * exchangeRate;
+
+    // Get decimal places for this currency
+    const cryptoDecimals = CRYPTO_DECIMALS[cryptoCurrency] || 8;
+
+    res.json({
+      success: true,
+      data: {
+        currency: cryptoCurrency,
+        crypto_amount: cryptoAmount,
+        usd_amount: parseFloat(usdAmount.toFixed(2)),
+        exchange_rate: exchangeRate,
+        crypto_decimals: cryptoDecimals,
+        timestamp: new Date().toISOString(),
+        cached: cached && (now - cached.timestamp) < CACHE_TTL
+      }
+    });
+
+  } catch (err: any) {
+    console.error('[Crypto Conversion] Error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch conversion rate',
+      error: err.message || 'Unknown error'
+    });
+  }
+};
