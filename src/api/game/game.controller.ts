@@ -78,14 +78,15 @@ export const getGameCategories = async (
   }
 };
 
-// Get game providers
+// Get game providers (optionally filtered by category)
 export const getGameProviders = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    const providers = await getGameProvidersService();
+    const category = req.query.category as string | undefined;
+    const providers = await getGameProvidersService(category);
     res.status(200).json({ success: true, data: providers });
   } catch (err) {
     next(err);

@@ -241,19 +241,69 @@ export const getGameCategoriesService = async () => {
 };
 
 // Get game providers
-export const getGameProvidersService = async () => {
-  const result = await pool.query(
-    `
-    SELECT DISTINCT 
+export const getGameProvidersService = async (category?: string) => {
+  let query = `
+    SELECT DISTINCT
       provider,
       COUNT(*) as game_count
-    FROM games 
+    FROM games
     WHERE is_active = TRUE
+  `;
+
+  const params: any[] = [];
+  let paramCount = 0;
+
+  if (category) {
+    const categoryLower = category.toLowerCase();
+
+    // Handle special categories that use different database columns
+    if (['hot', 'hots'].includes(categoryLower)) {
+      query += ` AND is_hot = TRUE`;
+    } else if (['popular', 'toppicks'].includes(categoryLower)) {
+      query += ` AND is_hot = TRUE`; // Using is_hot for popular/toppicks
+    } else if (['featured', 'feature'].includes(categoryLower)) {
+      query += ` AND is_featured = TRUE`;
+    } else if (categoryLower === 'new') {
+      query += ` AND is_new = TRUE`;
+    }
+    // Handle special virtual categories
+    else if (categoryLower === 'all-live') {
+      query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow')`;
+    }
+    else if (categoryLower === 'live-exclusives') {
+      query += ` AND (
+        (provider ILIKE '%evolution%' AND (
+          name ILIKE '%vip%' OR
+          name ILIKE '%salon%' OR
+          name ILIKE '%grand%' OR
+          name ILIKE '%platinum%' OR
+          name ILIKE '%diamond%' OR
+          name ILIKE '%prive%'
+        ))
+        OR
+        (provider ILIKE '%pragmatic%' AND (
+          name ILIKE '%mega%' OR
+          name ILIKE '%powerup%' OR
+          name ILIKE '%fortune%'
+        ))
+        OR
+        category = 'gameshow'
+      )`;
+    }
+    // Regular category filtering
+    else {
+      paramCount++;
+      query += ` AND LOWER(category) = LOWER($${paramCount})`;
+      params.push(category);
+    }
+  }
+
+  query += `
     GROUP BY provider
     ORDER BY game_count DESC, provider ASC
-    `
-  );
+  `;
 
+  const result = await pool.query(query, params);
   return result.rows;
 };
 
