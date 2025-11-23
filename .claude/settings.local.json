@@ -32,7 +32,8 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Show complete hierarchical structure\nSELECT \n  CASE \n    WHEN \"\"parentId\"\" IS NULL THEN ''📁 '' || title \n    ELSE ''  └─ '' || title \n  END as structure,\n  id,\n  path,\n  \"\"menuName\"\",\n  \"\"parentId\"\"\nFROM modules\nORDER BY \n  CASE WHEN \"\"parentId\"\" IS NULL THEN id ELSE \"\"parentId\"\" END,\n  \"\"parentId\"\" NULLS FIRST,\n  id;\n\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Final verification with counts\nSELECT \n  COUNT(*) as total_rows,\n  COUNT(*) FILTER (WHERE \"\"menuName\"\" = ''sidebar'' AND \"\"parentId\"\" IS NULL) as sidebar_parents,\n  COUNT(*) FILTER (WHERE \"\"menuName\"\" = ''sidebar'' AND \"\"parentId\"\" IS NOT NULL) as sidebar_children,\n  COUNT(*) FILTER (WHERE \"\"menuName\"\" = ''base'') as base_items\nFROM modules;\n\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nSELECT \n  id,\n  title,\n  path,\n  \"\"menuName\"\",\n  \"\"parentId\"\",\n  CASE \n    WHEN path IS NULL THEN ''❌ No path''\n    ELSE ''✅ '' || path\n  END as href_status\nFROM modules\nORDER BY \n  CASE WHEN \"\"parentId\"\" IS NULL THEN id ELSE \"\"parentId\"\" END,\n  \"\"parentId\"\" NULLS FIRST,\n  id;\n\")",
-      "Bash(node run-sync-now.js:*)"
+      "Bash(node run-sync-now.js:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Check categories related to live casino\nSELECT DISTINCT category\nFROM games\nWHERE LOWER(category) LIKE ''%live%'' OR LOWER(category) LIKE ''%blackjack%'' OR LOWER(category) LIKE ''%baccarat%'' OR LOWER(category) LIKE ''%roulette%''\nORDER BY category;\n\")"
     ],
     "deny": [],
     "ask": []
