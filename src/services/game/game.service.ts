@@ -1368,7 +1368,7 @@ export const getGamesByCategoryService = async (filters: {
   const { category, limit = 50 } = filters;
 
   let query = `
-    SELECT 
+    SELECT
       id,
       name,
       provider,
@@ -1387,7 +1387,7 @@ export const getGamesByCategoryService = async (filters: {
       is_hot,
       is_active,
       created_at
-    FROM games 
+    FROM games
     WHERE is_active = TRUE
   `;
 
@@ -1395,9 +1395,15 @@ export const getGamesByCategoryService = async (filters: {
   let paramCount = 0;
 
   if (category) {
-    paramCount++;
-    query += ` AND LOWER(category) = LOWER($${paramCount})`;
-    params.push(category);
+    // Special case: "all-live" returns all live casino games
+    if (category.toLowerCase() === 'all-live') {
+      paramCount++;
+      query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow', 'live-exclusives')`;
+    } else {
+      paramCount++;
+      query += ` AND LOWER(category) = LOWER($${paramCount})`;
+      params.push(category);
+    }
   }
 
   query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
