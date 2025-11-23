@@ -1,27 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE withdrawal_settings SET setting_value = ''false'' WHERE setting_key = ''auto_process_enabled''; SELECT setting_key, setting_value FROM withdrawal_settings WHERE setting_key = ''auto_process_enabled'';\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT code, api_endpoint, payout_api_key FROM payment_gateways WHERE code = ''oxapay'';\")",
-      "WebFetch(domain:docs.oxapay.com)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT code, api_key, payout_api_key, config FROM payment_gateways WHERE code = ''oxapay'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT COUNT(*) as total_bets, COUNT(*) FILTER (WHERE outcome = ''pending'') as pending_bets, COUNT(*) FILTER (WHERE outcome = ''win'') as winning_bets, COUNT(*) FILTER (WHERE outcome = ''lose'') as losing_bets, MIN(placed_at) as first_bet, MAX(placed_at) as last_bet FROM bets;\")",
       "Bash(PGPASSWORD='12358Voot#' psql:*)",
-      "Bash(curl:*)",
-      "Bash(pm2 restart:*)",
-      "Bash(pm2 logs:*)",
-      "Bash(npm run build:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT code, name, api_endpoint, payout_api_key, supported_currencies, networks, config FROM payment_gateways WHERE code = ''oxapay'';\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE payment_gateways SET supported_currencies = ARRAY[''BTC'', ''ETH'', ''USDT'', ''USDC'', ''TRX'', ''BNB'', ''DOGE'', ''LTC'', ''XMR'', ''TON'', ''NOT'', ''POL'', ''BCH'', ''SHIB'', ''SOL'', ''DOGS'', ''DAI'', ''XRP''] WHERE code = ''oxapay''; SELECT code, supported_currencies FROM payment_gateways WHERE code = ''oxapay'';\")",
-      "Bash(npx tsc:*)",
-      "Bash(python3:*)",
-      "Bash(echo:*)",
-      "Bash(npx pm2 restart backend)",
-      "Bash(npx pm2:*)",
-      "Bash(npm start)",
-      "Bash(netstat:*)",
-      "Bash(taskkill:*)",
-      "Bash(findstr:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, email, role FROM users WHERE role IN (''admin'', ''manager'') LIMIT 3;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, code, name, is_active, api_key, api_secret FROM payment_gateways WHERE code = ''igpx'' OR LOWER(name) LIKE ''%igpx%'' OR LOWER(name) LIKE ''%sport%'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, config, is_active FROM payment_gateways LIMIT 2;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, api_key, api_secret, webhook_secret, is_active, config FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, code, is_active, api_endpoint, api_key, LENGTH(api_secret) as secret_len, LENGTH(webhook_secret) as webhook_len FROM payment_gateways WHERE code = ''igpx'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, is_active FROM payment_gateways ORDER BY id;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete the record with ID 16\nDELETE FROM payment_gateways WHERE id = 16;\n\n-- Insert with specific ID 15\nINSERT INTO payment_gateways (\n  id,\n  name, \n  code, \n  type, \n  description,\n  api_endpoint,\n  api_key,\n  api_secret,\n  webhook_secret,\n  is_active,\n  config,\n  supported_currencies,\n  supported_countries,\n  min_amount,\n  max_amount,\n  auto_approval,\n  requires_kyc\n) VALUES (\n  15,\n  ''IGPX Sportsbook'',\n  ''igpx'',\n  ''both'',\n  ''IGPX Sportsbook integration for sports betting'',\n  ''https://sp-int-9cr.6579883.com'',\n  ''jackpotx'',\n  ''NwFhr_KsyqpJwi62_Bc'',\n  ''737e36e0-6d0b-4a67-aa50-2c448fe319f3'',\n  true,\n  ''{\"\"api_version\"\": \"\"1.0.0\"\", \"\"client_username\"\": \"\"jackpotx\"\"}'',\n  ''{\"\"USD\"\"}'',\n  ''{\"\"ALL\"\"}'',\n  1.00,\n  100000.00,\n  true,\n  false\n);\n\n-- Update the sequence to prevent conflicts\nSELECT setval(''payment_gateways_id_seq'', (SELECT MAX(id) FROM payment_gateways));\n\n-- Verify the insert\nSELECT id, name, code, is_active FROM payment_gateways WHERE code = ''igpx'';\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, api_key, api_secret, webhook_secret, is_active FROM payment_gateways WHERE id = 15;\")"
     ],
     "deny": [],
     "ask": []
