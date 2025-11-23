@@ -114,8 +114,10 @@ export const getNewGames = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
-    const games = await getNewGamesService(limit);
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const search = req.query.search as string;
+    const games = await getNewGamesService(limit, offset, search);
     res.status(200).json({ success: true, data: games });
   } catch (err) {
     next(err);
@@ -129,8 +131,10 @@ export const getHotGames = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
-    const games = await getHotGamesService(limit);
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const search = req.query.search as string;
+    const games = await getHotGamesService(limit, offset, search);
     res.status(200).json({ success: true, data: games });
   } catch (err) {
     next(err);
@@ -144,8 +148,10 @@ export const getPopularGames = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
-    const games = await getPopularGamesService(limit);
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const search = req.query.search as string;
+    const games = await getPopularGamesService(limit, offset, search);
     res.status(200).json({ success: true, data: games });
   } catch (err) {
     next(err);

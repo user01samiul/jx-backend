@@ -239,9 +239,9 @@ const getFeaturedGamesService = async (limit = 10) => {
 };
 exports.getFeaturedGamesService = getFeaturedGamesService;
 // Get new games
-const getNewGamesService = async (limit = 10) => {
-    const result = await postgres_1.default.query(`
-    SELECT 
+const getNewGamesService = async (limit = 10, offset = 0, search) => {
+    let query = `
+    SELECT
       id,
       name,
       provider,
@@ -258,18 +258,27 @@ const getNewGamesService = async (limit = 10) => {
       is_featured,
       is_new,
       is_hot
-    FROM games 
+    FROM games
     WHERE is_active = TRUE AND is_new = TRUE
-    ORDER BY created_at DESC
-    LIMIT $1
-    `, [limit]);
+  `;
+    const params = [];
+    let paramCount = 0;
+    if (search) {
+        paramCount++;
+        query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
+        params.push(`%${search}%`);
+    }
+    query += ` ORDER BY created_at DESC`;
+    query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+    const result = await postgres_1.default.query(query, params);
     return result.rows;
 };
 exports.getNewGamesService = getNewGamesService;
 // Get hot games
-const getHotGamesService = async (limit = 10) => {
-    const result = await postgres_1.default.query(`
-    SELECT 
+const getHotGamesService = async (limit = 10, offset = 0, search) => {
+    let query = `
+    SELECT
       id,
       name,
       provider,
@@ -286,11 +295,20 @@ const getHotGamesService = async (limit = 10) => {
       is_featured,
       is_new,
       is_hot
-    FROM games 
+    FROM games
     WHERE is_active = TRUE AND is_hot = TRUE
-    ORDER BY created_at DESC
-    LIMIT $1
-    `, [limit]);
+  `;
+    const params = [];
+    let paramCount = 0;
+    if (search) {
+        paramCount++;
+        query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
+        params.push(`%${search}%`);
+    }
+    query += ` ORDER BY created_at DESC`;
+    query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+    const result = await postgres_1.default.query(query, params);
     return result.rows;
 };
 exports.getHotGamesService = getHotGamesService;
@@ -805,9 +823,9 @@ const getGameStatisticsService = async (gameIdOrCode) => {
 };
 exports.getGameStatisticsService = getGameStatisticsService;
 // Get popular games (by bet count)
-const getPopularGamesService = async (limit = 10) => {
-    const result = await postgres_1.default.query(`
-    SELECT 
+const getPopularGamesService = async (limit = 10, offset = 0, search) => {
+    let query = `
+    SELECT
       g.id,
       g.name,
       g.provider,
@@ -820,10 +838,19 @@ const getPopularGamesService = async (limit = 10) => {
     FROM games g
     LEFT JOIN bets b ON g.id = b.game_id
     WHERE g.is_active = TRUE
-    GROUP BY g.id, g.name, g.provider, g.category, g.image_url, g.thumbnail_url
-    ORDER BY bet_count DESC, total_wagered DESC
-    LIMIT $1
-    `, [limit]);
+  `;
+    const params = [];
+    let paramCount = 0;
+    if (search) {
+        paramCount++;
+        query += ` AND (g.name ILIKE $${paramCount} OR g.provider ILIKE $${paramCount} OR g.game_code ILIKE $${paramCount})`;
+        params.push(`%${search}%`);
+    }
+    query += ` GROUP BY g.id, g.name, g.provider, g.category, g.image_url, g.thumbnail_url`;
+    query += ` ORDER BY bet_count DESC, total_wagered DESC`;
+    query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+    params.push(limit, offset);
+    const result = await postgres_1.default.query(query, params);
     return result.rows;
 };
 exports.getPopularGamesService = getPopularGamesService;

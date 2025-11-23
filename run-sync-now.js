@@ -211,6 +211,45 @@ async function runSync() {
     console.log(`Total deactivated: ${totalDeactivated}`);
     console.log('='.repeat(60));
 
+    // NEW: Mark last 100 games as "new releases"
+    console.log('\n📌 Updating "New Releases" category...');
+
+    // First, unmark all games
+    await pool.query(`UPDATE games SET is_new = false`);
+    console.log('   Reset all games is_new flag');
+
+    // Then mark the last 100 most recently created/updated games as new
+    const newReleasesResult = await pool.query(`
+      UPDATE games
+      SET is_new = true
+      WHERE id IN (
+        SELECT id
+        FROM games
+        WHERE is_active = true
+        ORDER BY created_at DESC, updated_at DESC
+        LIMIT 100
+      )
+    `);
+
+    const newReleasesCount = newReleasesResult.rowCount || 0;
+    console.log(`   ✓ Marked ${newReleasesCount} games as "New Releases"`);
+
+    // Show some of the new releases
+    const sampleNewReleases = await pool.query(`
+      SELECT name, provider, created_at
+      FROM games
+      WHERE is_new = true
+      ORDER BY created_at DESC
+      LIMIT 5
+    `);
+
+    if (sampleNewReleases.rows.length > 0) {
+      console.log('\n   Sample new releases:');
+      sampleNewReleases.rows.forEach(g => {
+        console.log(`   - ${g.name} (${g.provider})`);
+      });
+    }
+
     // Check game 64032 specifically
     console.log('\n📌 Checking game 64032 (from your error)...');
     const game64032 = await pool.query(`

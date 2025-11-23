@@ -263,10 +263,9 @@ export const getFeaturedGamesService = async (limit: number = 10) => {
 };
 
 // Get new games
-export const getNewGamesService = async (limit: number = 10) => {
-  const result = await pool.query(
-    `
-    SELECT 
+export const getNewGamesService = async (limit: number = 10, offset: number = 0, search?: string) => {
+  let query = `
+    SELECT
       id,
       name,
       provider,
@@ -283,22 +282,31 @@ export const getNewGamesService = async (limit: number = 10) => {
       is_featured,
       is_new,
       is_hot
-    FROM games 
+    FROM games
     WHERE is_active = TRUE AND is_new = TRUE
-    ORDER BY created_at DESC
-    LIMIT $1
-    `,
-    [limit]
-  );
+  `;
 
+  const params: any[] = [];
+  let paramCount = 0;
+
+  if (search) {
+    paramCount++;
+    query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
+    params.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+  query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+  params.push(limit, offset);
+
+  const result = await pool.query(query, params);
   return result.rows;
 };
 
 // Get hot games
-export const getHotGamesService = async (limit: number = 10) => {
-  const result = await pool.query(
-    `
-    SELECT 
+export const getHotGamesService = async (limit: number = 10, offset: number = 0, search?: string) => {
+  let query = `
+    SELECT
       id,
       name,
       provider,
@@ -315,14 +323,24 @@ export const getHotGamesService = async (limit: number = 10) => {
       is_featured,
       is_new,
       is_hot
-    FROM games 
+    FROM games
     WHERE is_active = TRUE AND is_hot = TRUE
-    ORDER BY created_at DESC
-    LIMIT $1
-    `,
-    [limit]
-  );
+  `;
 
+  const params: any[] = [];
+  let paramCount = 0;
+
+  if (search) {
+    paramCount++;
+    query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
+    params.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY created_at DESC`;
+  query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+  params.push(limit, offset);
+
+  const result = await pool.query(query, params);
   return result.rows;
 };
 
@@ -1005,10 +1023,9 @@ export const getGameStatisticsService = async (gameIdOrCode: number) => {
 };
 
 // Get popular games (by bet count)
-export const getPopularGamesService = async (limit: number = 10) => {
-  const result = await pool.query(
-    `
-    SELECT 
+export const getPopularGamesService = async (limit: number = 10, offset: number = 0, search?: string) => {
+  let query = `
+    SELECT
       g.id,
       g.name,
       g.provider,
@@ -1021,13 +1038,23 @@ export const getPopularGamesService = async (limit: number = 10) => {
     FROM games g
     LEFT JOIN bets b ON g.id = b.game_id
     WHERE g.is_active = TRUE
-    GROUP BY g.id, g.name, g.provider, g.category, g.image_url, g.thumbnail_url
-    ORDER BY bet_count DESC, total_wagered DESC
-    LIMIT $1
-    `,
-    [limit]
-  );
+  `;
 
+  const params: any[] = [];
+  let paramCount = 0;
+
+  if (search) {
+    paramCount++;
+    query += ` AND (g.name ILIKE $${paramCount} OR g.provider ILIKE $${paramCount} OR g.game_code ILIKE $${paramCount})`;
+    params.push(`%${search}%`);
+  }
+
+  query += ` GROUP BY g.id, g.name, g.provider, g.category, g.image_url, g.thumbnail_url`;
+  query += ` ORDER BY bet_count DESC, total_wagered DESC`;
+  query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
+  params.push(limit, offset);
+
+  const result = await pool.query(query, params);
   return result.rows;
 };
 

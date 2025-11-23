@@ -67,8 +67,10 @@ exports.getFeaturedGames = getFeaturedGames;
 // Get new games
 const getNewGames = async (req, res, next) => {
     try {
-        const limit = parseInt(req.query.limit) || 10;
-        const games = await (0, game_service_1.getNewGamesService)(limit);
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = parseInt(req.query.offset) || 0;
+        const search = req.query.search;
+        const games = await (0, game_service_1.getNewGamesService)(limit, offset, search);
         res.status(200).json({ success: true, data: games });
     }
     catch (err) {
@@ -79,8 +81,10 @@ exports.getNewGames = getNewGames;
 // Get hot games
 const getHotGames = async (req, res, next) => {
     try {
-        const limit = parseInt(req.query.limit) || 10;
-        const games = await (0, game_service_1.getHotGamesService)(limit);
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = parseInt(req.query.offset) || 0;
+        const search = req.query.search;
+        const games = await (0, game_service_1.getHotGamesService)(limit, offset, search);
         res.status(200).json({ success: true, data: games });
     }
     catch (err) {
@@ -91,8 +95,10 @@ exports.getHotGames = getHotGames;
 // Get popular games
 const getPopularGames = async (req, res, next) => {
     try {
-        const limit = parseInt(req.query.limit) || 10;
-        const games = await (0, game_service_1.getPopularGamesService)(limit);
+        const limit = parseInt(req.query.limit) || 20;
+        const offset = parseInt(req.query.offset) || 0;
+        const search = req.query.search;
+        const games = await (0, game_service_1.getPopularGamesService)(limit, offset, search);
         res.status(200).json({ success: true, data: games });
     }
     catch (err) {
