@@ -14,7 +14,10 @@
       "Bash(npm run build:*)",
       "Bash(pm2 restart:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx pm2 list)"
+      "Bash(npx pm2 list)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT provider_name FROM game_provider_configs WHERE LOWER(provider_name) LIKE ''%vim%'';\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT DISTINCT provider FROM games LIMIT 20;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, is_active FROM payment_gateways WHERE LOWER(code) = ''vimplay'' OR LOWER(name) LIKE ''%vimplay%'';\")"
     ],
     "deny": [],
     "ask": []

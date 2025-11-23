@@ -24,6 +24,7 @@ import supportTicketRoutes from "./routes/support-ticket.routes";
 import supportUserRoutes from "./routes/support-user.routes";
 import userManagementRoutes from "./routes/user-management.routes";
 import withdrawalRoutes from "./routes/withdrawal.routes";
+import vimplayRoutes from "./routes/vimplay.routes";
 // import userRoutes from "./api/user/user.routes";
 
 // Middleware
@@ -217,6 +218,9 @@ const handleIgpxCallback = async (req: any, res: any, endpointName: string) => {
 app.post('/igpx', (req, res) => handleIgpxCallback(req, res, '/igpx'));
 app.post('/igpx/transaction', (req, res) => handleIgpxCallback(req, res, '/igpx/transaction'));
 app.post('/igpx/transaction-rollback', (req, res) => handleIgpxCallback(req, res, '/igpx/transaction-rollback'));
+
+// Vimplay callback endpoints at root level (before /api routes)
+app.use('/vimplay', vimplayRoutes);
 
 // 3. ROUTES AFTER CORS
 app.use("/api", apiRoutes);

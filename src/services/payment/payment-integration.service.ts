@@ -83,6 +83,7 @@ export class PaymentIntegrationService {
     this.gatewayHandlers.set('crypto', this.handleCryptoPayment.bind(this));
     this.gatewayHandlers.set('oxapay', this.handleOxapayPayment.bind(this));
     this.gatewayHandlers.set('igpx', this.handleIgpxPayment.bind(this));
+    this.gatewayHandlers.set('vimplay', this.handleVimplayPayment.bind(this));
   }
 
   private initializeWebhookHandlers() {
@@ -895,6 +896,84 @@ export class PaymentIntegrationService {
         status: 'failed',
         message: error?.response?.data?.message || error.message || 'IGPX payment creation failed',
         gateway_response: error?.response?.data,
+      };
+    }
+  }
+
+  // Vimplay Game Launch Handler
+  private async handleVimplayPayment(config: PaymentGatewayConfig, request: PaymentRequest): Promise<PaymentResponse> {
+    try {
+      const axios = require('axios');
+
+      // Get Vimplay configuration
+      const vimplayEndpoint = config.api_endpoint;
+      const vimplayToken = config.api_key; // Bearer token provided by Vimplay
+      const siteId = config.config?.site_id;
+
+      if (!vimplayEndpoint || !vimplayToken || !siteId) {
+        throw new Error('Vimplay configuration incomplete');
+      }
+
+      console.log('[VIMPLAY] Launching game:', {
+        gameId: request.metadata?.game_id,
+        playerId: request.metadata?.user_id,
+        currency: request.currency,
+        language: request.metadata?.language
+      });
+
+      // Call Vimplay getLaunchUrl API
+      const launchResponse = await axios.post(
+        `${vimplayEndpoint}/api/getLaunchUrl`,
+        {
+          gameId: parseInt(request.metadata?.game_id || '0'),
+          siteId: parseInt(siteId),
+          playerId: request.metadata?.user_id?.toString() || request.order_id,
+          languageCode: request.metadata?.language || 'en',
+          currencyCode: request.currency,
+          gameMode: request.metadata?.game_mode || 'real', // 'real' or 'demo'
+          nickName: request.metadata?.nickname || request.customer_name || ''
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${vimplayToken}`
+          }
+        }
+      );
+
+      console.log('[VIMPLAY] Launch response received');
+
+      if (!launchResponse.data.gameUrl) {
+        throw new Error('No game URL returned from Vimplay');
+      }
+
+      // Add partner-side token to the game URL
+      const finalGameUrl = `${launchResponse.data.gameUrl}&externalToken=${request.metadata?.external_token || request.order_id}`;
+
+      console.log('[VIMPLAY] Game launched successfully');
+
+      return {
+        success: true,
+        transaction_id: request.order_id,
+        payment_url: finalGameUrl,
+        status: 'pending',
+        gateway_response: {
+          gameUrl: launchResponse.data.gameUrl,
+          finalUrl: finalGameUrl,
+          gameId: request.metadata?.game_id,
+          playerId: request.metadata?.user_id
+        }
+      };
+
+    } catch (error: any) {
+      console.error('[VIMPLAY] Launch error:', error);
+      console.error('[VIMPLAY] Error response:', error?.response?.data);
+
+      return {
+        success: false,
+        status: 'failed',
+        message: error?.response?.data?.message || error.message || 'Vimplay game launch failed',
+        gateway_response: error?.response?.data
       };
     }
   }
