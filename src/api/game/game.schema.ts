@@ -51,6 +51,8 @@ export const GameFiltersSchema = z.object({
   search: z.string().optional(),
   limit: z.string().transform(val => parseInt(val)).optional(),
   offset: z.string().transform(val => parseInt(val)).optional(),
+  sortBy: z.string().optional(),
+  sortOrder: z.string().optional(),
 });
 
 // Schema for game category filters (query parameters)
