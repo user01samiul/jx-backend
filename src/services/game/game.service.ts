@@ -1364,8 +1364,9 @@ export const getBetResultsService = async (userId?: number, limit: number = 50) 
 export const getGamesByCategoryService = async (filters: {
   category?: string;
   limit?: number;
+  offset?: number;
 }) => {
-  const { category, limit = 50 } = filters;
+  const { category, limit = 50, offset = 0 } = filters;
 
   let query = `
     SELECT
@@ -1397,9 +1398,30 @@ export const getGamesByCategoryService = async (filters: {
   if (category) {
     // Special case: "all-live" returns all live casino games
     if (category.toLowerCase() === 'all-live') {
-      paramCount++;
-      query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow', 'live-exclusives')`;
-    } else {
+      query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow')`;
+    }
+    // Special case: "live-exclusives" returns premium/VIP live games and game shows
+    else if (category.toLowerCase() === 'live-exclusives') {
+      query += ` AND (
+        (provider ILIKE '%evolution%' AND (
+          name ILIKE '%vip%' OR
+          name ILIKE '%salon%' OR
+          name ILIKE '%grand%' OR
+          name ILIKE '%platinum%' OR
+          name ILIKE '%diamond%' OR
+          name ILIKE '%prive%'
+        ))
+        OR
+        (provider ILIKE '%pragmatic%' AND (
+          name ILIKE '%mega%' OR
+          name ILIKE '%powerup%' OR
+          name ILIKE '%fortune%'
+        ))
+        OR
+        category = 'gameshow'
+      )`;
+    }
+    else {
       paramCount++;
       query += ` AND LOWER(category) = LOWER($${paramCount})`;
       params.push(category);
@@ -1407,8 +1429,13 @@ export const getGamesByCategoryService = async (filters: {
   }
 
   query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
-  query += ` LIMIT $${paramCount + 1}`;
+  paramCount++;
+  query += ` LIMIT $${paramCount}`;
   params.push(limit);
+
+  paramCount++;
+  query += ` OFFSET $${paramCount}`;
+  params.push(offset);
 
   const result = await pool.query(query, params);
   return result.rows;

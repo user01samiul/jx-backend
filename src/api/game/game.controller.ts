@@ -444,7 +444,7 @@ export const getGamesByCategory = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const filters: { category?: string; limit?: number } = req.query as any;
+    const filters: { category?: string; limit?: number; offset?: number } = req.query as any;
     const games = await getGamesByCategoryService(filters);
     res.status(200).json({ success: true, data: games });
   } catch (err) {
