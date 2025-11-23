@@ -41,10 +41,11 @@ const getGameCategories = async (req, res, next) => {
     }
 };
 exports.getGameCategories = getGameCategories;
-// Get game providers
+// Get game providers (optionally filtered by category)
 const getGameProviders = async (req, res, next) => {
     try {
-        const providers = await (0, game_service_1.getGameProvidersService)();
+        const category = req.query.category;
+        const providers = await (0, game_service_1.getGameProvidersService)(category);
         res.status(200).json({ success: true, data: providers });
     }
     catch (err) {

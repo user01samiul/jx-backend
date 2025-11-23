@@ -46,49 +46,43 @@ Vimplay → Backend Callback Endpoints
 
 ### 1. Database Setup
 
-Add Vimplay configuration to `payment_gateways` table:
+Vimplay is configured as a **game provider** (not a payment gateway) and is stored in the `game_provider_configs` table:
 
 ```sql
-INSERT INTO payment_gateways (
-  name,
-  code,
-  type,
-  description,
-  api_endpoint,
+INSERT INTO game_provider_configs (
+  provider_name,
   api_key,
   api_secret,
+  base_url,
   is_active,
-  config,
-  supported_currencies,
-  supported_countries,
-  min_amount,
-  max_amount
+  metadata
 ) VALUES (
   'Vimplay',
-  'vimplay',
-  'both',
-  'Vimplay game provider integration',
-  'https://vimplay-api-endpoint.com',  -- Provided by Vimplay
-  'Bearer_Token_From_Vimplay',          -- Provided by Vimplay
+  'e60eedfa6fb4549fcc5dda03acce2630ad974f57d6131cdf46d057fb54d68acc',  -- Staging token
   '',                                    -- Not used for Vimplay
+  'https://api.int-vimplay.com/',       -- Staging environment
   true,
-  '{"site_id": "YOUR_SITE_ID"}',        -- Provided by Vimplay
-  '{"USD", "EUR", "GBP"}',
-  '{"ALL"}',
-  0.00,
-  100000.00
+  '{"site_id": "243", "currency": "USD", "partner_secret": "e60eedfa6fb4549fcc5dda03acce2630ad974f57d6131cdf46d057fb54d68acc"}'::jsonb
 );
 ```
+
+**Important Notes**:
+- Vimplay is stored in `game_provider_configs` (not `payment_gateways`) as it's a game provider
+- This makes Vimplay appear in `/api/admin/providers` endpoint
+- The backend automatically handles Vimplay differently when launching games via `/api/payment/create`
+- The system normalizes the config structure from `game_provider_configs` to work with the payment service
 
 ### 2. Environment Variables
 
 Add to your `.env` file:
 
 ```env
-VIMPLAY_ENDPOINT=https://vimplay-api-endpoint.com
-VIMPLAY_TOKEN=Bearer_Token_From_Vimplay
-VIMPLAY_SITE_ID=12345
-VIMPLAY_PARTNER_SECRET=your_secret_key_here
+# Vimplay Staging Environment Credentials
+VIMPLAY_ENDPOINT=https://api.int-vimplay.com/
+VIMPLAY_TOKEN=e60eedfa6fb4549fcc5dda03acce2630ad974f57d6131cdf46d057fb54d68acc
+VIMPLAY_SITE_ID=243
+VIMPLAY_PARTNER_SECRET=e60eedfa6fb4549fcc5dda03acce2630ad974f57d6131cdf46d057fb54d68acc
+VIMPLAY_CURRENCY=USD
 ```
 
 ### 3. Callback URL Configuration
@@ -239,7 +233,7 @@ Each format provides 3 versions: original (org), AVIF, and WebP
 **Request:**
 ```json
 {
-  "siteId": 12345,
+  "siteId": 243,
   "playerId": "123",
   "token": "user_token",
   "currency": "USD",
@@ -280,7 +274,7 @@ Each format provides 3 versions: original (org), AVIF, and WebP
 **Request:**
 ```json
 {
-  "siteId": 12345,
+  "siteId": 243,
   "playerId": "123",
   "token": "user_token",
   "currency": "USD",
@@ -317,7 +311,7 @@ Each format provides 3 versions: original (org), AVIF, and WebP
 **Request:**
 ```json
 {
-  "siteId": 12345,
+  "siteId": 243,
   "playerId": "123",
   "token": "user_token",
   "currency": "USD",
@@ -438,7 +432,7 @@ All Vimplay transactions are stored in the `transactions` table with metadata:
   "vimplay_processed": "true",
   "round_id": "round_abc123",
   "game_id": 456,
-  "site_id": 12345,
+  "site_id": 243,
   "bet_amount": 10.00,
   "win_amount": 50.00,
   "in_game_bonus": false,
@@ -498,7 +492,7 @@ curl -X POST https://backend.jackpotx.net/vimplay/authenticate \
 curl -X POST https://backend.jackpotx.net/vimplay/debit \
   -H "Content-Type: application/json" \
   -d '{
-    "siteId": 12345,
+    "siteId": 243,
     "playerId": "1",
     "token": "test_token",
     "currency": "USD",
@@ -576,7 +570,28 @@ For Vimplay-related issues:
 
 ## Related Files
 
-- Service: `src/services/payment/vimplay-callback.service.ts`
-- Routes: `src/routes/vimplay.routes.ts`
-- Payment Integration: `src/services/payment/payment-integration.service.ts`
-- App Configuration: `src/app.ts`
+- **Callback Service**: `src/services/payment/vimplay-callback.service.ts` - Handles wallet callbacks (auth, debit, credit, betwin, refund)
+- **Routes**: `src/routes/vimplay.routes.ts` - Vimplay callback endpoints
+- **Payment Integration**: `src/services/payment/payment-integration.service.ts` - Game launch handler
+- **Payment API**: `src/routes/api.ts` - `/api/payment/create` endpoint with Vimplay special handling
+- **App Configuration**: `src/app.ts` - Main app setup
+
+## Architecture Notes
+
+**Game Provider vs Payment Gateway**:
+- Vimplay is a **game provider**, not a payment gateway
+- Stored in `game_provider_configs` table (appears in `/api/admin/providers`)
+- When `/api/payment/create` is called with a Vimplay `gateway_id`, the backend automatically:
+  1. Checks if the gateway is in `payment_gateways` first
+  2. If not found or if code is 'vimplay', fetches from `game_provider_configs`
+  3. Normalizes the structure (base_url → api_endpoint, metadata → config)
+  4. Passes to `PaymentIntegrationService.handleVimplayPayment()`
+
+**Config Structure Mapping**:
+```
+game_provider_configs        →    PaymentGatewayConfig
+-----------------------           ---------------------
+base_url                     →    api_endpoint
+metadata.site_id             →    config.site_id
+metadata.currency            →    supported_currencies
+```

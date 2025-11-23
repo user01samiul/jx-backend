@@ -96,9 +96,36 @@ const getAvailableGamesService = async (filters) => {
     const params = [];
     let paramCount = 0;
     if (category) {
-        paramCount++;
-        query += ` AND category = $${paramCount}`;
-        params.push(category);
+        // Special case: "all-live" returns all live casino games
+        if (category.toLowerCase() === 'all-live') {
+            query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow')`;
+        }
+        // Special case: "live-exclusives" returns premium/VIP live games and game shows
+        else if (category.toLowerCase() === 'live-exclusives') {
+            query += ` AND (
+        (provider ILIKE '%evolution%' AND (
+          name ILIKE '%vip%' OR
+          name ILIKE '%salon%' OR
+          name ILIKE '%grand%' OR
+          name ILIKE '%platinum%' OR
+          name ILIKE '%diamond%' OR
+          name ILIKE '%prive%'
+        ))
+        OR
+        (provider ILIKE '%pragmatic%' AND (
+          name ILIKE '%mega%' OR
+          name ILIKE '%powerup%' OR
+          name ILIKE '%fortune%'
+        ))
+        OR
+        category = 'gameshow'
+      )`;
+        }
+        else {
+            paramCount++;
+            query += ` AND category = $${paramCount}`;
+            params.push(category);
+        }
     }
     if (provider) {
         paramCount++;
@@ -197,16 +224,67 @@ const getGameCategoriesService = async () => {
 };
 exports.getGameCategoriesService = getGameCategoriesService;
 // Get game providers
-const getGameProvidersService = async () => {
-    const result = await postgres_1.default.query(`
-    SELECT DISTINCT 
+const getGameProvidersService = async (category) => {
+    let query = `
+    SELECT DISTINCT
       provider,
       COUNT(*) as game_count
-    FROM games 
+    FROM games
     WHERE is_active = TRUE
+  `;
+    const params = [];
+    let paramCount = 0;
+    if (category) {
+        const categoryLower = category.toLowerCase();
+        // Handle special categories that use different database columns
+        if (['hot', 'hots'].includes(categoryLower)) {
+            query += ` AND is_hot = TRUE`;
+        }
+        else if (['popular', 'toppicks'].includes(categoryLower)) {
+            query += ` AND is_hot = TRUE`; // Using is_hot for popular/toppicks
+        }
+        else if (['featured', 'feature'].includes(categoryLower)) {
+            query += ` AND is_featured = TRUE`;
+        }
+        else if (categoryLower === 'new') {
+            query += ` AND is_new = TRUE`;
+        }
+        // Handle special virtual categories
+        else if (categoryLower === 'all-live') {
+            query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow')`;
+        }
+        else if (categoryLower === 'live-exclusives') {
+            query += ` AND (
+        (provider ILIKE '%evolution%' AND (
+          name ILIKE '%vip%' OR
+          name ILIKE '%salon%' OR
+          name ILIKE '%grand%' OR
+          name ILIKE '%platinum%' OR
+          name ILIKE '%diamond%' OR
+          name ILIKE '%prive%'
+        ))
+        OR
+        (provider ILIKE '%pragmatic%' AND (
+          name ILIKE '%mega%' OR
+          name ILIKE '%powerup%' OR
+          name ILIKE '%fortune%'
+        ))
+        OR
+        category = 'gameshow'
+      )`;
+        }
+        // Regular category filtering
+        else {
+            paramCount++;
+            query += ` AND LOWER(category) = LOWER($${paramCount})`;
+            params.push(category);
+        }
+    }
+    query += `
     GROUP BY provider
     ORDER BY game_count DESC, provider ASC
-    `);
+  `;
+    const result = await postgres_1.default.query(query, params);
     return result.rows;
 };
 exports.getGameProvidersService = getGameProvidersService;
@@ -1111,7 +1189,7 @@ const getBetResultsService = async (userId, limit = 50) => {
 exports.getBetResultsService = getBetResultsService;
 // Get games by category with simplified data
 const getGamesByCategoryService = async (filters) => {
-    const { category, limit = 50 } = filters;
+    const { category, limit = 50, offset = 0 } = filters;
     let query = `
     SELECT
       id,
@@ -1140,8 +1218,28 @@ const getGamesByCategoryService = async (filters) => {
     if (category) {
         // Special case: "all-live" returns all live casino games
         if (category.toLowerCase() === 'all-live') {
-            paramCount++;
-            query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow', 'live-exclusives')`;
+            query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow')`;
+        }
+        // Special case: "live-exclusives" returns premium/VIP live games and game shows
+        else if (category.toLowerCase() === 'live-exclusives') {
+            query += ` AND (
+        (provider ILIKE '%evolution%' AND (
+          name ILIKE '%vip%' OR
+          name ILIKE '%salon%' OR
+          name ILIKE '%grand%' OR
+          name ILIKE '%platinum%' OR
+          name ILIKE '%diamond%' OR
+          name ILIKE '%prive%'
+        ))
+        OR
+        (provider ILIKE '%pragmatic%' AND (
+          name ILIKE '%mega%' OR
+          name ILIKE '%powerup%' OR
+          name ILIKE '%fortune%'
+        ))
+        OR
+        category = 'gameshow'
+      )`;
         }
         else {
             paramCount++;
@@ -1150,8 +1248,12 @@ const getGamesByCategoryService = async (filters) => {
         }
     }
     query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
-    query += ` LIMIT $${paramCount + 1}`;
+    paramCount++;
+    query += ` LIMIT $${paramCount}`;
     params.push(limit);
+    paramCount++;
+    query += ` OFFSET $${paramCount}`;
+    params.push(offset);
     const result = await postgres_1.default.query(query, params);
     return result.rows;
 };

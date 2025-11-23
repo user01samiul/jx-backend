@@ -9,6 +9,9 @@ export interface PaymentGatewayConfig {
   webhook_url?: string;
   webhook_secret?: string;
   config?: Record<string, any>;
+  // Support for game_provider_configs structure (used by Vimplay)
+  base_url?: string;
+  metadata?: Record<string, any>;
 }
 
 export interface PaymentRequest {
@@ -905,10 +908,10 @@ export class PaymentIntegrationService {
     try {
       const axios = require('axios');
 
-      // Get Vimplay configuration
-      const vimplayEndpoint = config.api_endpoint;
+      // Get Vimplay configuration - supports both payment_gateways and game_provider_configs structures
+      const vimplayEndpoint = config.api_endpoint || config.base_url;
       const vimplayToken = config.api_key; // Bearer token provided by Vimplay
-      const siteId = config.config?.site_id;
+      const siteId = config.config?.site_id || config.metadata?.site_id;
 
       if (!vimplayEndpoint || !vimplayToken || !siteId) {
         throw new Error('Vimplay configuration incomplete');

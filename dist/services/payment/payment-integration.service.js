@@ -737,10 +737,10 @@ class PaymentIntegrationService {
     async handleVimplayPayment(config, request) {
         try {
             const axios = require('axios');
-            // Get Vimplay configuration
-            const vimplayEndpoint = config.api_endpoint;
+            // Get Vimplay configuration - supports both payment_gateways and game_provider_configs structures
+            const vimplayEndpoint = config.api_endpoint || config.base_url;
             const vimplayToken = config.api_key; // Bearer token provided by Vimplay
-            const siteId = config.config?.site_id;
+            const siteId = config.config?.site_id || config.metadata?.site_id;
             if (!vimplayEndpoint || !vimplayToken || !siteId) {
                 throw new Error('Vimplay configuration incomplete');
             }

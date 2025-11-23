@@ -1916,7 +1916,28 @@ router.post("/payment/create", authenticate_1.authenticate, async (req, res) => 
         }
         // Get payment gateway
         const { getPaymentGatewayByIdService } = require("../services/admin/payment-gateway.service");
-        const gateway = await getPaymentGatewayByIdService(gateway_id);
+        let gateway = await getPaymentGatewayByIdService(gateway_id);
+        // Special handling for Vimplay - fetch from game_provider_configs instead
+        if (!gateway || (gateway && gateway.code === 'vimplay')) {
+            const vimplayResult = await postgres_1.default.query(`SELECT * FROM game_provider_configs WHERE id = $1 AND LOWER(provider_name) = 'vimplay'`, [gateway_id]);
+            if (vimplayResult.rows.length > 0) {
+                const vimplayConfig = vimplayResult.rows[0];
+                // Normalize structure to match payment gateway format
+                gateway = {
+                    id: vimplayConfig.id,
+                    code: 'vimplay',
+                    name: vimplayConfig.provider_name,
+                    api_key: vimplayConfig.api_key,
+                    api_secret: vimplayConfig.api_secret || '',
+                    api_endpoint: vimplayConfig.base_url,
+                    is_active: vimplayConfig.is_active,
+                    supported_currencies: [vimplayConfig.metadata?.currency || 'USD'],
+                    min_amount: 0,
+                    max_amount: 100000,
+                    config: vimplayConfig.metadata
+                };
+            }
+        }
         if (!gateway || !gateway.is_active) {
             res.status(404).json({ success: false, message: "Payment gateway not found or inactive" });
             return;
