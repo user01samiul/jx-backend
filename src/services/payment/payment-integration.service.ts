@@ -821,15 +821,20 @@ export class PaymentIntegrationService {
     try {
       const axios = require('axios');
 
+      // Get API version from config (default to 1.0.0)
+      const apiVersion = config.config?.api_version || '1.0.0';
+
       console.log('[IGPX] Creating session with request:', {
         user_id: request.metadata?.user_id,
         currency: request.currency,
         language: request.metadata?.language,
-        order_id: request.order_id
+        order_id: request.order_id,
+        api_endpoint: config.api_endpoint,
+        api_version: apiVersion
       });
 
       // Step 1: Authenticate to get token
-      const authResponse = await axios.post(`${config.api_endpoint}/auth`, {
+      const authResponse = await axios.post(`${config.api_endpoint}/${apiVersion}/auth`, {
         username: config.api_key, // CLIENT_USERNAME
         password: config.api_secret // CLIENT_PASSWORD
       });
@@ -841,28 +846,31 @@ export class PaymentIntegrationService {
       const token = authResponse.data.token;
       const expiresIn = authResponse.data.expires_in;
 
-      console.log('[IGPX] Authentication successful');
+      console.log('[IGPX] Authentication successful, token expires in:', expiresIn);
 
-      // Step 2: Start session to get play URL
-      // Note: Callback URL is configured once on IGPX's side, not passed per session
+      // Step 2: Start session to get iframe URL
+      const userId = request.metadata?.user_id?.toString() || request.order_id;
+      const language = request.metadata?.language || 'en';
+
       const sessionData = {
-        user_id: request.metadata?.user_id?.toString() || request.order_id,
+        user_id: userId,
         currency: request.currency,
-        lang: request.metadata?.language || 'en'
+        lang: language
       };
 
       console.log('[IGPX] Starting session with data:', sessionData);
 
-      const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, sessionData, {
+      const sessionResponse = await axios.post(`${config.api_endpoint}/${apiVersion}/start-session`, sessionData, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       console.log('[IGPX] Session response:', sessionResponse.data);
 
       if (!sessionResponse.data.url) {
-        throw new Error('Failed to create IGPX session');
+        throw new Error('Failed to create IGPX session - no URL returned');
       }
 
       return {
@@ -873,10 +881,15 @@ export class PaymentIntegrationService {
         gateway_response: {
           token: token,
           expires_in: expiresIn,
-          session_data: sessionResponse.data
+          user_id: userId,
+          currency: request.currency,
+          language: language,
+          iframe_url: sessionResponse.data.url
         },
       };
     } catch (error: any) {
+      console.error('[IGPX] Payment creation error:', error);
+      console.error('[IGPX] Error response:', error?.response?.data);
       return {
         success: false,
         status: 'failed',
