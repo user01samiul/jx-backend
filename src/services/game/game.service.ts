@@ -43,6 +43,8 @@ export const getAvailableGamesService = async (filters: {
   search?: string;
   limit?: number;
   offset?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) => {
   const {
     category,
@@ -52,7 +54,9 @@ export const getAvailableGamesService = async (filters: {
     is_hot,
     search,
     limit = 50,
-    offset = 0
+    offset = 0,
+    sortBy,
+    sortOrder = 'desc'
   } = filters;
 
   let query = `
@@ -150,7 +154,16 @@ export const getAvailableGamesService = async (filters: {
     params.push(`%${search}%`);
   }
 
-  query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
+  // Handle sorting
+  const validSortColumns = ['created_at', 'name', 'rating', 'popularity', 'id'];
+  const order = sortOrder?.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+  if (sortBy && validSortColumns.includes(sortBy)) {
+    query += ` ORDER BY ${sortBy} ${order}`;
+  } else {
+    query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
+  }
+
   query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
   params.push(limit, offset);
 

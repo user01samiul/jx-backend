@@ -40,7 +40,16 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ''game_provider_configs'' ORDER BY ordinal_position;\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, provider_name, api_key, base_url, is_active, metadata FROM game_provider_configs WHERE provider_name = ''Vimplay'';\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, provider_name, base_url, api_key, LENGTH(metadata->>''partner_secret'') as secret_len FROM game_provider_configs WHERE LOWER(provider_name) = ''vimplay'';\")",
-      "Bash(npx pm2 restart all)"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, provider_name, base_url, api_key, is_active, metadata FROM game_provider_configs WHERE LOWER(provider_name) = ''vimplay'';\")",
+      "Bash(curl:*)",
+      "Bash(cat:*)",
+      "Bash(npx pm2:*)",
+      "Bash(netstat:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT category, COUNT(*) as count FROM games WHERE provider = ''Vimplay'' AND is_active = true GROUP BY category ORDER BY count DESC;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\nINSERT INTO game_categories (name, display_name, description, display_order, is_active) VALUES\n(''betWin'', ''Bet & Win'', ''Vimplay Bet & Win games'', 100, true),\n(''live'', ''Live Casino'', ''Vimplay Live Casino games'', 101, true),\n(''step'', ''Step Games'', ''Vimplay Step games'', 102, true),\n(''crush'', ''Crush Games'', ''Vimplay Crush games'', 103, true)\nON CONFLICT (name) DO UPDATE SET display_name = EXCLUDED.display_name, is_active = true;\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, game_code, provider, category FROM games WHERE name = ''Aqua Keno'';\")",
+      "Bash(tail -5 sleep 3 curl -s \"https://backend.jackpotx.net/api/games?provider=Vimplay&limit=10&sortBy=created_at&sortOrder=desc\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET metadata = jsonb_set(COALESCE(metadata, ''{}'')::jsonb, ''{provider_type}'', ''\"\"sportsbook\"\"'') WHERE provider_name ILIKE ''%igpx%'' OR provider_name ILIKE ''%sportsbook%''; SELECT provider_name, metadata->>''provider_type'' as type FROM game_provider_configs WHERE provider_name ILIKE ''%igpx%'' OR provider_name ILIKE ''%sportsbook%'';\")"
     ],
     "deny": [],
     "ask": []

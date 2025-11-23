@@ -872,11 +872,12 @@ export class AdminGameImportService {
             providerResults.push({
               provider_name: provider.provider_name,
               success: true,
+              skipped: true,
               games_count: 0,
               imported: 0,
               updated: 0,
               failed: 0,
-              error: 'Skipped - Sportsbook provider'
+              reason: 'Sportsbook provider - no games to sync'
             });
             continue;
           }
@@ -884,10 +885,26 @@ export class AdminGameImportService {
           const headers = await this.getProviderHeaders(provider);
           console.log(`[SYNC] Request headers:`, { ...headers, 'X-Authorization': headers['X-Authorization'] ? 'SHA1_HASH' : undefined });
 
-          const response = await axios.get(provider.base_url, {
-            headers,
-            timeout: 60000
-          });
+          let response;
+
+          // Vimplay uses POST to /api/games/partner/list with secret
+          if (provider.provider_name.toLowerCase().includes('vimplay')) {
+            const baseUrl = provider.base_url.replace(/\/$/, ''); // Remove trailing slash
+            const vimplayEndpoint = `${baseUrl}/api/games/partner/list`;
+            const partnerSecret = provider.metadata?.partner_secret || provider.api_key;
+
+            console.log(`[SYNC] Vimplay endpoint: ${vimplayEndpoint}`);
+
+            response = await axios.post(vimplayEndpoint,
+              { secret: partnerSecret },
+              { headers, timeout: 60000 }
+            );
+          } else {
+            response = await axios.get(provider.base_url, {
+              headers,
+              timeout: 60000
+            });
+          }
 
           console.log(`[SYNC] Response status: ${response.status}`);
 
