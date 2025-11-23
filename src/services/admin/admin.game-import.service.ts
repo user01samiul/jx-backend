@@ -428,7 +428,8 @@ export class AdminGameImportService {
 
       // Vimplay uses POST to /api/games/partner/list with secret
       if (providerConfig.provider_name.toLowerCase().includes('vimplay')) {
-        const vimplayEndpoint = `${providerConfig.base_url}/api/games/partner/list`;
+        const baseUrl = providerConfig.base_url.replace(/\/$/, ''); // Remove trailing slash
+        const vimplayEndpoint = `${baseUrl}/api/games/partner/list`;
         const partnerSecret = providerConfig.metadata?.partner_secret || providerConfig.api_key;
 
         console.log(`[VIMPLAY_SYNC] Fetching games from: ${vimplayEndpoint}`);
@@ -551,7 +552,8 @@ export class AdminGameImportService {
 
       // Vimplay uses POST to /api/games/partner/list (no category/pagination support)
       if (providerConfig.provider_name.toLowerCase().includes('vimplay')) {
-        const vimplayEndpoint = `${providerConfig.base_url}/api/games/partner/list`;
+        const baseUrl = providerConfig.base_url.replace(/\/$/, ''); // Remove trailing slash
+        const vimplayEndpoint = `${baseUrl}/api/games/partner/list`;
         const partnerSecret = providerConfig.metadata?.partner_secret || providerConfig.api_key;
 
         response = await axios.post(vimplayEndpoint,

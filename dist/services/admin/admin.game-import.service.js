@@ -331,11 +331,25 @@ class AdminGameImportService {
             }
             // Get appropriate headers for the provider
             const headers = await this.getProviderHeaders(providerConfig);
-            const response = await axios_1.default.get(providerConfig.base_url, { headers });
-            if (debug) {
-                return { success: true, raw: response.data };
+            let response;
+            let games;
+            // Vimplay uses POST to /api/games/partner/list with secret
+            if (providerConfig.provider_name.toLowerCase().includes('vimplay')) {
+                const baseUrl = providerConfig.base_url.replace(/\/$/, ''); // Remove trailing slash
+                const vimplayEndpoint = `${baseUrl}/api/games/partner/list`;
+                const partnerSecret = providerConfig.metadata?.partner_secret || providerConfig.api_key;
+                console.log(`[VIMPLAY_SYNC] Fetching games from: ${vimplayEndpoint}`);
+                response = await axios_1.default.post(vimplayEndpoint, { secret: partnerSecret }, { headers, timeout: 30000 });
+                games = response.data; // Vimplay returns array directly
             }
-            const games = response.data.games || response.data;
+            else {
+                // Default behavior for other providers (Innova/IGPX)
+                response = await axios_1.default.get(providerConfig.base_url, { headers });
+                games = response.data.games || response.data;
+            }
+            if (debug) {
+                return { success: true, raw: games };
+            }
             const categories = [...new Set(games.map(game => game.category || game.type || game.subtype || 'uncategorized'))];
             const results = [];
             for (const category of categories) {
@@ -402,6 +416,12 @@ class AdminGameImportService {
                 'Content-Type': 'application/json'
             };
         }
+        // Vimplay-specific authentication
+        else if (providerConfig.provider_name.toLowerCase().includes('vimplay')) {
+            return {
+                'Content-Type': 'application/json'
+            };
+        }
         else {
             // Default authentication method (ThinkCode/Innova)
             // Get operator_id from metadata, fallback to api_key
@@ -417,16 +437,40 @@ class AdminGameImportService {
     async fetchGamesFromProvider(providerConfig, category, limit, offset) {
         try {
             const headers = await this.getProviderHeaders(providerConfig);
-            const response = await axios_1.default.get(`${providerConfig.base_url}/games`, {
-                headers,
-                params: {
-                    category,
-                    limit,
-                    offset
-                },
-                timeout: 30000
-            });
-            return this.transformProviderResponse(response.data, providerConfig.provider_name);
+            let response;
+            let games;
+            // Vimplay uses POST to /api/games/partner/list (no category/pagination support)
+            if (providerConfig.provider_name.toLowerCase().includes('vimplay')) {
+                const baseUrl = providerConfig.base_url.replace(/\/$/, ''); // Remove trailing slash
+                const vimplayEndpoint = `${baseUrl}/api/games/partner/list`;
+                const partnerSecret = providerConfig.metadata?.partner_secret || providerConfig.api_key;
+                response = await axios_1.default.post(vimplayEndpoint, { secret: partnerSecret }, { headers, timeout: 30000 });
+                games = response.data; // Vimplay returns array directly
+                // Filter by category if specified
+                if (category && category !== 'all') {
+                    games = games.filter((g) => (g.type || '').toLowerCase() === category.toLowerCase());
+                }
+                // Apply pagination manually
+                if (offset || limit) {
+                    const start = offset || 0;
+                    const end = start + (limit || games.length);
+                    games = games.slice(start, end);
+                }
+            }
+            else {
+                // Default behavior for other providers (Innova/IGPX)
+                response = await axios_1.default.get(`${providerConfig.base_url}/games`, {
+                    headers,
+                    params: {
+                        category,
+                        limit,
+                        offset
+                    },
+                    timeout: 30000
+                });
+                games = response.data;
+            }
+            return this.transformProviderResponse(games, providerConfig.provider_name);
         }
         catch (error) {
             console.error(`Error fetching games from provider ${providerConfig.provider_name}:`, error);
@@ -455,7 +499,18 @@ class AdminGameImportService {
             // Extract thumbnail and image URLs
             let image_url = undefined;
             let thumbnail_url = undefined;
-            if (item.details && item.details.thumbnails) {
+            // Vimplay-specific image handling
+            if (providerName.toLowerCase().includes('vimplay') && item.images) {
+                // Prefer landscape (ls), then portrait (pr), then square (sq)
+                // Prefer webp format, then avif, then original
+                image_url = item.images.ls?.webp || item.images.ls?.avif || item.images.ls?.org ||
+                    item.images.pr?.webp || item.images.pr?.avif || item.images.pr?.org ||
+                    item.images.sq?.webp || item.images.sq?.avif || item.images.sq?.org;
+                thumbnail_url = item.images.sq?.webp || item.images.sq?.avif || item.images.sq?.org ||
+                    item.images.ls?.webp || item.images.ls?.avif || item.images.ls?.org;
+            }
+            // Default provider image handling (Innova/IGPX)
+            else if (item.details && item.details.thumbnails) {
                 // Prefer 440x590, then 300x300, then any available
                 image_url = item.details.thumbnails["440x590"] || item.details.thumbnails["440x590-jpg"] || item.details.thumbnails["300x300"] || item.details.thumbnails["300x300-gif"] || Object.values(item.details.thumbnails)[0];
                 thumbnail_url = item.details.thumbnails["300x300"] || item.details.thumbnails["300x300-gif"] || item.details.thumbnails["440x590"] || Object.values(item.details.thumbnails)[0];
