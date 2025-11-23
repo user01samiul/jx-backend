@@ -171,7 +171,7 @@ const handleIgpxCallback = async (req: any, res: any, endpointName: string) => {
     const rawBody = req.rawBody || JSON.stringify(req.body);
 
     // Get IGPX provider configuration from game_provider_configs
-    const { pool } = require("./db/postgres");
+    const pool = require("./db/postgres").default;
     const result = await pool.query(
       `SELECT * FROM game_provider_configs WHERE provider_name = $1 AND is_active = true`,
       ['igpixel_sportsbook']
