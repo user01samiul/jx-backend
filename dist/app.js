@@ -29,6 +29,7 @@ const support_ticket_routes_1 = __importDefault(require("./routes/support-ticket
 const support_user_routes_1 = __importDefault(require("./routes/support-user.routes"));
 const user_management_routes_1 = __importDefault(require("./routes/user-management.routes"));
 const withdrawal_routes_1 = __importDefault(require("./routes/withdrawal.routes"));
+const vimplay_routes_1 = __importDefault(require("./routes/vimplay.routes"));
 // import userRoutes from "./api/user/user.routes";
 // Middleware
 const mongo_1 = require("./db/mongo");
@@ -170,6 +171,8 @@ const handleIgpxCallback = async (req, res, endpointName) => {
 app.post('/igpx', (req, res) => handleIgpxCallback(req, res, '/igpx'));
 app.post('/igpx/transaction', (req, res) => handleIgpxCallback(req, res, '/igpx/transaction'));
 app.post('/igpx/transaction-rollback', (req, res) => handleIgpxCallback(req, res, '/igpx/transaction-rollback'));
+// Vimplay callback endpoints at root level (before /api routes)
+app.use('/vimplay', vimplay_routes_1.default);
 // 3. ROUTES AFTER CORS
 app.use("/api", api_1.default);
 // Apply rate limiter to auth routes

@@ -88,6 +88,7 @@ Add to your `.env` file:
 VIMPLAY_ENDPOINT=https://vimplay-api-endpoint.com
 VIMPLAY_TOKEN=Bearer_Token_From_Vimplay
 VIMPLAY_SITE_ID=12345
+VIMPLAY_PARTNER_SECRET=your_secret_key_here
 ```
 
 ### 3. Callback URL Configuration
@@ -105,6 +106,64 @@ Vimplay will call these endpoints:
 - `POST /vimplay/refund`
 
 ## API Endpoints
+
+### Partner Integration Endpoints
+
+#### Get Game List
+
+**Endpoint:** `POST /vimplay/api/games/partner/list`
+
+**Description:** Retrieve list of available games for VimPlay integration
+
+**Request:**
+```json
+{
+  "secret": "PARTNER_SECRET"
+}
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Game Name",
+    "images": {
+      "ls": {
+        "org": "https://backend.jackpotx.net/uploads/game.jpg",
+        "avif": "https://backend.jackpotx.net/uploads/game.avif",
+        "webp": "https://backend.jackpotx.net/uploads/game.webp"
+      },
+      "pr": {
+        "org": "https://backend.jackpotx.net/uploads/game.jpg",
+        "avif": "https://backend.jackpotx.net/uploads/game.avif",
+        "webp": "https://backend.jackpotx.net/uploads/game.webp"
+      },
+      "sq": {
+        "org": "https://backend.jackpotx.net/uploads/game.jpg",
+        "avif": "https://backend.jackpotx.net/uploads/game.avif",
+        "webp": "https://backend.jackpotx.net/uploads/game.webp"
+      }
+    },
+    "type": "slot"
+  }
+]
+```
+
+**Image Types:**
+- `ls` - Landscape format
+- `pr` - Portrait format
+- `sq` - Square format
+
+Each format provides 3 versions: original (org), AVIF, and WebP
+
+**Error Response (403):**
+```json
+{
+  "error": "Unauthorized",
+  "message": "Invalid secret or access denied"
+}
+```
 
 ### User-Facing Endpoints
 
@@ -414,6 +473,16 @@ All endpoints return status code `200` with error information in the response bo
 4. **Balance Consistency**: All operations ensure accurate balance tracking
 
 ## Testing
+
+### Test Game List
+
+```bash
+curl -X POST https://backend.jackpotx.net/vimplay/api/games/partner/list \
+  -H "Content-Type: application/json" \
+  -d '{
+    "secret": "your_partner_secret"
+  }'
+```
 
 ### Test Authentication
 

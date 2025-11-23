@@ -1,9 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { VimplayCallbackService } from '../services/payment/vimplay-callback.service';
-
-const router = Router();
-const vimplayService = VimplayCallbackService.getInstance();
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const vimplay_callback_service_1 = require("../services/payment/vimplay-callback.service");
+const router = (0, express_1.Router)();
+const vimplayService = vimplay_callback_service_1.VimplayCallbackService.getInstance();
 /**
  * @openapi
  * /vimplay/authenticate:
@@ -39,32 +39,29 @@ const vimplayService = VimplayCallbackService.getInstance();
  *                 token:
  *                   type: string
  */
-router.post('/authenticate', async (req: Request, res: Response) => {
-  try {
-    console.log('[VIMPLAY] Authenticate request:', {
-      token: req.body.token ? '***' : undefined
-    });
-
-    const response = await vimplayService.authenticate(req.body);
-
-    console.log('[VIMPLAY] Authenticate response:', {
-      player_id: response.player_id,
-      balance: response.balance,
-      status: response.status
-    });
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    console.error('[VIMPLAY] Authenticate error:', error);
-    res.status(200).json({
-      status: 999,
-      balance: 0,
-      player_id: '',
-      token: ''
-    });
-  }
+router.post('/authenticate', async (req, res) => {
+    try {
+        console.log('[VIMPLAY] Authenticate request:', {
+            token: req.body.token ? '***' : undefined
+        });
+        const response = await vimplayService.authenticate(req.body);
+        console.log('[VIMPLAY] Authenticate response:', {
+            player_id: response.player_id,
+            balance: response.balance,
+            status: response.status
+        });
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('[VIMPLAY] Authenticate error:', error);
+        res.status(200).json({
+            status: 999,
+            balance: 0,
+            player_id: '',
+            token: ''
+        });
+    }
 });
-
 /**
  * @openapi
  * /vimplay/debit:
@@ -133,39 +130,36 @@ router.post('/authenticate', async (req: Request, res: Response) => {
  *                     partnerTransactionId:
  *                       type: string
  */
-router.post('/debit', async (req: Request, res: Response) => {
-  try {
-    console.log('[VIMPLAY] Debit request:', {
-      playerId: req.body.playerId,
-      gameId: req.body.gameId,
-      roundId: req.body.roundId,
-      transactionId: req.body.trnasaction?.transactionId,
-      betAmount: req.body.trnasaction?.betAmount
-    });
-
-    const response = await vimplayService.processDebit(req.body);
-
-    console.log('[VIMPLAY] Debit response:', {
-      playerId: response.playerId,
-      balance: response.balance,
-      status: response.transaction?.status
-    });
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    console.error('[VIMPLAY] Debit error:', error);
-    res.status(200).json({
-      balance: 0,
-      playerId: req.body.playerId,
-      transaction: {
-        status: 999,
-        transactionId: req.body.trnasaction?.transactionId || '',
-        partnerTransactionId: req.body.trnasaction?.transactionId || ''
-      }
-    });
-  }
+router.post('/debit', async (req, res) => {
+    try {
+        console.log('[VIMPLAY] Debit request:', {
+            playerId: req.body.playerId,
+            gameId: req.body.gameId,
+            roundId: req.body.roundId,
+            transactionId: req.body.trnasaction?.transactionId,
+            betAmount: req.body.trnasaction?.betAmount
+        });
+        const response = await vimplayService.processDebit(req.body);
+        console.log('[VIMPLAY] Debit response:', {
+            playerId: response.playerId,
+            balance: response.balance,
+            status: response.transaction?.status
+        });
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('[VIMPLAY] Debit error:', error);
+        res.status(200).json({
+            balance: 0,
+            playerId: req.body.playerId,
+            transaction: {
+                status: 999,
+                transactionId: req.body.trnasaction?.transactionId || '',
+                partnerTransactionId: req.body.trnasaction?.transactionId || ''
+            }
+        });
+    }
 });
-
 /**
  * @openapi
  * /vimplay/credit:
@@ -220,39 +214,36 @@ router.post('/debit', async (req: Request, res: Response) => {
  *       200:
  *         description: Credit processed
  */
-router.post('/credit', async (req: Request, res: Response) => {
-  try {
-    console.log('[VIMPLAY] Credit request:', {
-      playerId: req.body.playerId,
-      gameId: req.body.gameId,
-      roundId: req.body.roundId,
-      transactionId: req.body.transaction?.transactionId,
-      winAmount: req.body.transaction?.winAmount
-    });
-
-    const response = await vimplayService.processCredit(req.body);
-
-    console.log('[VIMPLAY] Credit response:', {
-      playerId: response.playerId,
-      balance: response.balance,
-      status: response.transaction?.status
-    });
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    console.error('[VIMPLAY] Credit error:', error);
-    res.status(200).json({
-      balance: 0,
-      playerId: req.body.playerId,
-      transaction: {
-        status: 999,
-        transactionId: req.body.transaction?.transactionId || '',
-        partnerTransactionId: req.body.transaction?.transactionId || ''
-      }
-    });
-  }
+router.post('/credit', async (req, res) => {
+    try {
+        console.log('[VIMPLAY] Credit request:', {
+            playerId: req.body.playerId,
+            gameId: req.body.gameId,
+            roundId: req.body.roundId,
+            transactionId: req.body.transaction?.transactionId,
+            winAmount: req.body.transaction?.winAmount
+        });
+        const response = await vimplayService.processCredit(req.body);
+        console.log('[VIMPLAY] Credit response:', {
+            playerId: response.playerId,
+            balance: response.balance,
+            status: response.transaction?.status
+        });
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('[VIMPLAY] Credit error:', error);
+        res.status(200).json({
+            balance: 0,
+            playerId: req.body.playerId,
+            transaction: {
+                status: 999,
+                transactionId: req.body.transaction?.transactionId || '',
+                partnerTransactionId: req.body.transaction?.transactionId || ''
+            }
+        });
+    }
 });
-
 /**
  * @openapi
  * /vimplay/betwin:
@@ -305,40 +296,37 @@ router.post('/credit', async (req: Request, res: Response) => {
  *       200:
  *         description: BetWin processed
  */
-router.post('/betwin', async (req: Request, res: Response) => {
-  try {
-    console.log('[VIMPLAY] BetWin request:', {
-      playerId: req.body.playerId,
-      gameId: req.body.gameId,
-      roundId: req.body.roundId,
-      transactionId: req.body.trnasaction?.transactionId,
-      betAmount: req.body.trnasaction?.betAmount,
-      winAmount: req.body.trnasaction?.winAmount
-    });
-
-    const response = await vimplayService.processBetWin(req.body);
-
-    console.log('[VIMPLAY] BetWin response:', {
-      playerId: response.playerId,
-      balance: response.balance,
-      status: response.transaction?.status
-    });
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    console.error('[VIMPLAY] BetWin error:', error);
-    res.status(200).json({
-      balance: 0,
-      playerId: req.body.playerId,
-      transaction: {
-        status: 999,
-        transactionId: req.body.trnasaction?.transactionId || '',
-        partnerTransactionId: req.body.trnasaction?.transactionId || ''
-      }
-    });
-  }
+router.post('/betwin', async (req, res) => {
+    try {
+        console.log('[VIMPLAY] BetWin request:', {
+            playerId: req.body.playerId,
+            gameId: req.body.gameId,
+            roundId: req.body.roundId,
+            transactionId: req.body.trnasaction?.transactionId,
+            betAmount: req.body.trnasaction?.betAmount,
+            winAmount: req.body.trnasaction?.winAmount
+        });
+        const response = await vimplayService.processBetWin(req.body);
+        console.log('[VIMPLAY] BetWin response:', {
+            playerId: response.playerId,
+            balance: response.balance,
+            status: response.transaction?.status
+        });
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('[VIMPLAY] BetWin error:', error);
+        res.status(200).json({
+            balance: 0,
+            playerId: req.body.playerId,
+            transaction: {
+                status: 999,
+                transactionId: req.body.trnasaction?.transactionId || '',
+                partnerTransactionId: req.body.trnasaction?.transactionId || ''
+            }
+        });
+    }
 });
-
 /**
  * @openapi
  * /api/games/partner/list:
@@ -406,24 +394,21 @@ router.post('/betwin', async (req: Request, res: Response) => {
  *                   type:
  *                     type: string
  */
-router.post('/api/games/partner/list', async (req: Request, res: Response) => {
-  try {
-    console.log('[VIMPLAY] Game list request');
-
-    const games = await vimplayService.getGameList(req.body);
-
-    console.log(`[VIMPLAY] Game list response: ${games.length} games`);
-
-    res.status(200).json(games);
-  } catch (error: any) {
-    console.error('[VIMPLAY] Game list error:', error);
-    res.status(403).json({
-      error: 'Unauthorized',
-      message: 'Invalid secret or access denied'
-    });
-  }
+router.post('/api/games/partner/list', async (req, res) => {
+    try {
+        console.log('[VIMPLAY] Game list request');
+        const games = await vimplayService.getGameList(req.body);
+        console.log(`[VIMPLAY] Game list response: ${games.length} games`);
+        res.status(200).json(games);
+    }
+    catch (error) {
+        console.error('[VIMPLAY] Game list error:', error);
+        res.status(403).json({
+            error: 'Unauthorized',
+            message: 'Invalid secret or access denied'
+        });
+    }
 });
-
 /**
  * @openapi
  * /vimplay/refund:
@@ -465,29 +450,26 @@ router.post('/api/games/partner/list', async (req: Request, res: Response) => {
  *                 balance:
  *                   type: number
  */
-router.post('/refund', async (req: Request, res: Response) => {
-  try {
-    console.log('[VIMPLAY] Refund request:', {
-      playerId: req.body.playerId,
-      gameId: req.body.gameId,
-      transactionId: req.body.transactionId
-    });
-
-    const response = await vimplayService.processRefund(req.body);
-
-    console.log('[VIMPLAY] Refund response:', {
-      balance: response.balance,
-      status: response.status
-    });
-
-    res.status(200).json(response);
-  } catch (error: any) {
-    console.error('[VIMPLAY] Refund error:', error);
-    res.status(200).json({
-      status: 999,
-      balance: 0
-    });
-  }
+router.post('/refund', async (req, res) => {
+    try {
+        console.log('[VIMPLAY] Refund request:', {
+            playerId: req.body.playerId,
+            gameId: req.body.gameId,
+            transactionId: req.body.transactionId
+        });
+        const response = await vimplayService.processRefund(req.body);
+        console.log('[VIMPLAY] Refund response:', {
+            balance: response.balance,
+            status: response.status
+        });
+        res.status(200).json(response);
+    }
+    catch (error) {
+        console.error('[VIMPLAY] Refund error:', error);
+        res.status(200).json({
+            status: 999,
+            balance: 0
+        });
+    }
 });
-
-export default router;
+exports.default = router;

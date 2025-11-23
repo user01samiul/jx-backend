@@ -59,6 +59,33 @@ export interface VimplayRefundRequest {
   gameId: string;
 }
 
+export interface VimplayGameListRequest {
+  secret: string;
+}
+
+export interface VimplayGameListResponse {
+  id: number;
+  name: string;
+  images: {
+    ls: {
+      org: string;
+      avif: string;
+      webp: string;
+    };
+    pr: {
+      org: string;
+      avif: string;
+      webp: string;
+    };
+    sq: {
+      org: string;
+      avif: string;
+      webp: string;
+    };
+  };
+  type: string;
+}
+
 export interface VimplayResponse {
   balance?: number;
   playerId?: string;
@@ -664,6 +691,75 @@ export class VimplayCallbackService {
       };
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Get list of games for VimPlay partner integration
+   */
+  async getGameList(request: VimplayGameListRequest): Promise<VimplayGameListResponse[]> {
+    try {
+      // Verify secret
+      const VIMPLAY_SECRET = process.env.VIMPLAY_PARTNER_SECRET || 'vimplay_secret_key';
+
+      if (request.secret !== VIMPLAY_SECRET) {
+        console.error('[VIMPLAY] Invalid secret for game list request');
+        throw new Error('Invalid secret');
+      }
+
+      console.log('[VIMPLAY] Fetching game list');
+
+      // Query games from database - filter for VimPlay provider or all active games
+      const result = await pool.query(
+        `SELECT
+          id,
+          name,
+          image_url,
+          thumbnail_url,
+          category,
+          provider
+         FROM games
+         WHERE is_active = true
+         AND (provider = 'vimplay' OR provider IS NULL OR provider = '')
+         ORDER BY name ASC`
+      );
+
+      // Transform database results to VimPlay format
+      const games: VimplayGameListResponse[] = result.rows.map((game: any) => {
+        // Use existing image URLs or provide defaults
+        const imageUrl = game.image_url || game.thumbnail_url || 'https://backend.jackpotx.net/default-game.jpg';
+
+        return {
+          id: game.id,
+          name: game.name,
+          images: {
+            ls: {
+              org: imageUrl,
+              avif: imageUrl.replace(/\.(jpg|png)$/, '.avif'),
+              webp: imageUrl.replace(/\.(jpg|png)$/, '.webp')
+            },
+            pr: {
+              org: imageUrl,
+              avif: imageUrl.replace(/\.(jpg|png)$/, '.avif'),
+              webp: imageUrl.replace(/\.(jpg|png)$/, '.webp')
+            },
+            sq: {
+              org: imageUrl,
+              avif: imageUrl.replace(/\.(jpg|png)$/, '.avif'),
+              webp: imageUrl.replace(/\.(jpg|png)$/, '.webp')
+            }
+          },
+          type: game.category || 'slot'
+        };
+      });
+
+      console.log(`[VIMPLAY] Returning ${games.length} games`);
+
+      return games;
+
+    } catch (error: any) {
+      console.error('[VIMPLAY] Game list error:', error);
+      throw error;
     }
   }
 }
