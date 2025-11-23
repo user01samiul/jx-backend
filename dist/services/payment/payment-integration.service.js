@@ -72,6 +72,14 @@ class PaymentIntegrationService {
         };
     }
     async convertCryptoToUSD(gatewayCode, config, cryptoAmount, cryptoCurrency) {
+        // IGPX uses USD directly, no conversion needed
+        if (gatewayCode.toLowerCase() === 'igpx' && cryptoCurrency.toUpperCase() === 'USD') {
+            return {
+                success: true,
+                usdAmount: cryptoAmount,
+                rate: 1,
+            };
+        }
         if (gatewayCode.toLowerCase() === 'oxapay') {
             return await this.convertCryptoToUSDInternal(config, cryptoAmount, cryptoCurrency);
         }

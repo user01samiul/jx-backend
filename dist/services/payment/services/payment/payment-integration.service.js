@@ -62,6 +62,32 @@ class PaymentIntegrationService {
             message: `Withdrawal not supported for gateway: ${gatewayCode}`,
         };
     }
+    async convertCurrency(gatewayCode, config, usdAmount, targetCurrency) {
+        if (gatewayCode.toLowerCase() === 'oxapay') {
+            return await this.convertUSDToCrypto(config, usdAmount, targetCurrency);
+        }
+        return {
+            success: false,
+            message: `Currency conversion not supported for gateway: ${gatewayCode}`,
+        };
+    }
+    async convertCryptoToUSD(gatewayCode, config, cryptoAmount, cryptoCurrency) {
+        // IGPX uses USD directly, no conversion needed
+        if (gatewayCode.toLowerCase() === 'igpx' && cryptoCurrency.toUpperCase() === 'USD') {
+            return {
+                success: true,
+                usdAmount: cryptoAmount,
+                rate: 1,
+            };
+        }
+        if (gatewayCode.toLowerCase() === 'oxapay') {
+            return await this.convertCryptoToUSDInternal(config, cryptoAmount, cryptoCurrency);
+        }
+        return {
+            success: false,
+            message: `Currency conversion not supported for gateway: ${gatewayCode}`,
+        };
+    }
     async checkPaymentStatus(gatewayCode, config, transactionId) {
         const handler = this.gatewayHandlers.get(gatewayCode.toLowerCase());
         if (!handler) {
@@ -269,124 +295,369 @@ class PaymentIntegrationService {
             };
         }
     }
-    // Oxapay Payment Handler
+    // Oxapay Payment Handler (Official API: https://docs.oxapay.com/api-reference/creating-an-invoice)
     async handleOxapayPayment(config, request) {
         try {
             const axios = require('axios');
-            // Try different possible endpoints for creating invoices
-            const possibleEndpoints = [
-                '/merchant/invoice',
-                '/invoice',
-                '/payment/invoice',
-                '/general/invoice'
-            ];
-            let lastError = null;
-            for (const endpoint of possibleEndpoints) {
-                try {
-                    const res = await axios.post(`${config.api_endpoint}${endpoint}`, {
-                        amount: request.amount,
-                        currency: request.currency,
-                        callback_url: config.webhook_url,
-                        order_id: request.order_id,
-                        network: config.config?.network || 'TRC20',
-                        lifetime: config.config?.invoice_lifetime || 900,
-                        confirmations: config.config?.callback_confirmations || 1,
-                        description: request.description || 'Deposit',
-                        merchant_id: config.merchant_id,
-                        ...request.metadata,
-                    }, {
-                        headers: {
-                            'merchant_api_key': config.merchant_id || config.api_key,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    console.log('OxaPay response:', JSON.stringify(res.data, null, 2));
-                    return {
-                        success: true,
-                        transaction_id: res.data.data?.track_id || res.data.invoice_id || res.data.id,
-                        payment_url: res.data.data?.payment_url || res.data.payment_url || res.data.pay_address_url || res.data.url,
-                        status: 'pending',
-                        gateway_response: res.data,
-                    };
-                }
-                catch (error) {
-                    lastError = error;
-                    // If it's a 404, try the next endpoint
-                    if (error?.response?.status === 404) {
-                        continue;
-                    }
-                    // If it's a different error, break and return the error
-                    break;
-                }
+            console.log('[Oxapay] Creating invoice with request:', {
+                amount: request.amount,
+                currency: request.currency,
+                order_id: request.order_id,
+                endpoint: `${config.api_endpoint}/payment/invoice`
+            });
+            // Official Oxapay API endpoint
+            const endpoint = `${config.api_endpoint}/payment/invoice`;
+            // Build request body according to official Oxapay API docs
+            const requestBody = {
+                amount: request.amount,
+                currency: request.currency,
+                order_id: request.order_id,
+                description: request.description || 'Deposit',
+            };
+            // Add optional parameters if provided
+            if (config.webhook_url) {
+                requestBody.callback_url = config.webhook_url;
             }
-            // If we get here, none of the endpoints worked
-            return {
-                success: false,
-                status: 'failed',
-                message: lastError?.response?.data?.message || lastError?.message || 'Oxapay payment creation failed - no valid endpoint found',
-                gateway_response: lastError?.response?.data,
-            };
-        }
-        catch (error) {
-            return {
-                success: false,
-                status: 'failed',
-                message: error?.response?.data?.message || error.message || 'Oxapay payment creation failed',
-                gateway_response: error?.response?.data,
-            };
-        }
-    }
-    // Oxapay Withdrawal Handler
-    async handleOxapayWithdrawal(config, request) {
-        try {
-            const axios = require('axios');
-            console.log('OxaPay Withdrawal Request:', {
-                endpoint: `${config.api_endpoint}/payout`,
-                address: request.metadata?.address,
-                amount: request.amount,
-                currency: request.currency,
-                network: request.metadata?.network || config.config?.network || 'TRC20',
-                memo: request.metadata?.memo,
-                description: request.description || 'Withdrawal',
-                order_id: request.order_id,
-                payout_api_key: config.payout_api_key ? 'SET' : 'NOT SET'
-            });
-            // Use the payout API endpoint and authentication header
-            const res = await axios.post(`${config.api_endpoint}/payout`, {
-                address: request.metadata?.address,
-                amount: request.amount,
-                currency: request.currency,
-                network: request.metadata?.network || config.config?.network || 'TRC20',
-                memo: request.metadata?.memo,
-                description: request.description || 'Withdrawal',
-                order_id: request.order_id,
-            }, {
+            if (request.return_url) {
+                requestBody.return_url = request.return_url;
+            }
+            if (request.customer_email) {
+                requestBody.email = request.customer_email;
+            }
+            if (config.config?.invoice_lifetime) {
+                requestBody.lifetime = config.config.invoice_lifetime; // Minutes (15-2880, default: 60)
+            }
+            if (config.config?.fee_paid_by_payer !== undefined) {
+                requestBody.fee_paid_by_payer = config.config.fee_paid_by_payer; // 0 or 1
+            }
+            if (config.config?.under_paid_coverage !== undefined) {
+                requestBody.under_paid_coverage = config.config.under_paid_coverage; // 0-60.00
+            }
+            console.log('[Oxapay] Request body:', JSON.stringify(requestBody, null, 2));
+            const res = await axios.post(endpoint, requestBody, {
                 headers: {
-                    'payout_api_key': config.payout_api_key || config.api_secret,
+                    'merchant_api_key': config.api_key, // Use api_key directly (not merchant_id)
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: 30000 // 30 second timeout
             });
-            console.log('OxaPay Withdrawal Response:', res.data);
+            console.log('[Oxapay] Response:', JSON.stringify(res.data, null, 2));
+            // Check if response is successful
+            if (!res.data || res.data.status !== 200) {
+                throw new Error(res.data?.message || 'Oxapay API returned non-200 status');
+            }
+            // Extract payment details from response
+            const trackId = res.data.data?.track_id;
+            const paymentUrl = res.data.data?.payment_url;
+            if (!trackId || !paymentUrl) {
+                throw new Error('Invalid Oxapay response: missing track_id or payment_url');
+            }
             return {
                 success: true,
-                transaction_id: res.data.payout_id || res.data.id,
-                payment_url: res.data.payment_url || res.data.url,
+                transaction_id: trackId,
+                payment_url: paymentUrl,
                 status: 'pending',
                 gateway_response: res.data,
             };
         }
         catch (error) {
-            console.log('OxaPay Withdrawal Error:', {
+            console.error('[Oxapay] Payment creation error:', {
+                message: error?.response?.data?.message || error.message,
+                status: error?.response?.status,
+                data: error?.response?.data,
+                error: error?.response?.data?.error
+            });
+            // Extract the specific error message from Oxapay response
+            const errorMessage = error?.response?.data?.error?.message ||
+                error?.response?.data?.message ||
+                error.message ||
+                'Oxapay payment creation failed';
+            return {
+                success: false,
+                status: 'failed',
+                message: errorMessage,
+                gateway_response: error?.response?.data,
+            };
+        }
+    }
+    // Currency Conversion using CoinGecko API (Free, no API key needed)
+    async convertUSDToCrypto(config, usdAmount, targetCurrency) {
+        try {
+            const axios = require('axios');
+            // Stablecoins don't need conversion (1:1 with USD)
+            const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'USDD'];
+            if (stablecoins.includes(targetCurrency.toUpperCase())) {
+                console.log('[Conversion] No conversion needed for stablecoin:', targetCurrency);
+                return {
+                    success: true,
+                    cryptoAmount: usdAmount,
+                    rate: 1.0
+                };
+            }
+            console.log('[Conversion] Converting USD to crypto:', {
+                usd_amount: usdAmount,
+                target_currency: targetCurrency
+            });
+            // Map crypto symbols to CoinGecko IDs
+            const currencyMap = {
+                'BTC': 'bitcoin',
+                'ETH': 'ethereum',
+                'LTC': 'litecoin',
+                'BCH': 'bitcoin-cash',
+                'XRP': 'ripple',
+                'TRX': 'tron',
+                'BNB': 'binancecoin',
+                'ADA': 'cardano',
+                'SOL': 'solana',
+                'DOT': 'polkadot',
+                'DOGE': 'dogecoin',
+                'MATIC': 'matic-network',
+                'POL': 'polygon-ecosystem-token',
+                'SHIB': 'shiba-inu',
+                'AVAX': 'avalanche-2',
+                'UNI': 'uniswap',
+                'LINK': 'chainlink',
+                'XLM': 'stellar',
+                'ATOM': 'cosmos',
+                'ETC': 'ethereum-classic',
+                'XMR': 'monero',
+                'TON': 'the-open-network',
+                'NOT': 'notcoin',
+                'DOGS': 'dogs-2',
+                'DAI': 'dai',
+                'USDT': 'tether',
+                'USDC': 'usd-coin'
+            };
+            const coinId = currencyMap[targetCurrency.toUpperCase()];
+            if (!coinId) {
+                throw new Error(`Unsupported currency: ${targetCurrency}. Please contact support to add this currency.`);
+            }
+            // Use CoinGecko API (Free, no API key needed)
+            // Rate limit: 10-50 calls/minute on free tier
+            const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+            console.log('[Conversion] Fetching rate from CoinGecko:', endpoint);
+            const res = await axios.get(endpoint, {
+                timeout: 10000,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            console.log('[Conversion] CoinGecko response:', JSON.stringify(res.data, null, 2));
+            // Extract price
+            const cryptoPrice = res.data?.[coinId]?.usd;
+            if (!cryptoPrice || cryptoPrice <= 0) {
+                throw new Error(`Failed to get price for ${targetCurrency} from CoinGecko`);
+            }
+            // Calculate crypto amount: USD amount / crypto price in USD
+            const cryptoAmount = usdAmount / cryptoPrice;
+            // Determine precision based on crypto value
+            let precision = 8; // Default for most cryptos
+            if (cryptoPrice >= 1000) {
+                precision = 6; // BTC, ETH (high value coins)
+            }
+            else if (cryptoPrice >= 1) {
+                precision = 4; // Mid-range coins
+            }
+            else if (cryptoPrice >= 0.01) {
+                precision = 2; // Low value coins
+            }
+            const roundedAmount = parseFloat(cryptoAmount.toFixed(precision));
+            console.log('[Conversion] Conversion successful:', {
+                usd_amount: usdAmount,
+                crypto_price: cryptoPrice,
+                crypto_amount: roundedAmount,
+                currency: targetCurrency,
+                precision: precision
+            });
+            return {
+                success: true,
+                cryptoAmount: roundedAmount,
+                rate: cryptoPrice
+            };
+        }
+        catch (error) {
+            console.error('[Conversion] Conversion error:', {
                 message: error?.response?.data?.message || error.message,
                 status: error?.response?.status,
                 data: error?.response?.data
             });
-            // Extract the specific error message from OxaPay response
-            const oxaPayError = error?.response?.data?.error?.message || error?.response?.data?.message;
+            // Fallback error message
+            const errorMessage = error?.response?.data?.status?.error_message ||
+                error?.response?.data?.error ||
+                error.message ||
+                'Currency conversion failed';
+            return {
+                success: false,
+                message: errorMessage
+            };
+        }
+    }
+    // Convert Crypto to USD for deposits (opposite of convertUSDToCrypto)
+    async convertCryptoToUSDInternal(config, cryptoAmount, cryptoCurrency) {
+        try {
+            const axios = require('axios');
+            // Stablecoins are 1:1 with USD
+            const stablecoins = ['USDT', 'USDC', 'BUSD', 'DAI', 'USDD'];
+            if (stablecoins.includes(cryptoCurrency.toUpperCase())) {
+                console.log('[Conversion] No conversion needed for stablecoin:', cryptoCurrency);
+                return {
+                    success: true,
+                    usdAmount: cryptoAmount,
+                    rate: 1.0
+                };
+            }
+            console.log('[Conversion] Converting crypto to USD:', {
+                crypto_amount: cryptoAmount,
+                crypto_currency: cryptoCurrency
+            });
+            // Map crypto symbols to CoinGecko IDs
+            const currencyMap = {
+                'BTC': 'bitcoin',
+                'ETH': 'ethereum',
+                'LTC': 'litecoin',
+                'BCH': 'bitcoin-cash',
+                'XRP': 'ripple',
+                'TRX': 'tron',
+                'BNB': 'binancecoin',
+                'ADA': 'cardano',
+                'SOL': 'solana',
+                'DOT': 'polkadot',
+                'DOGE': 'dogecoin',
+                'MATIC': 'matic-network',
+                'POL': 'polygon-ecosystem-token',
+                'SHIB': 'shiba-inu',
+                'AVAX': 'avalanche-2',
+                'UNI': 'uniswap',
+                'LINK': 'chainlink',
+                'XLM': 'stellar',
+                'ATOM': 'cosmos',
+                'ETC': 'ethereum-classic',
+                'XMR': 'monero',
+                'TON': 'the-open-network',
+                'NOT': 'notcoin',
+                'DOGS': 'dogs-2',
+                'DAI': 'dai',
+                'USDT': 'tether',
+                'USDC': 'usd-coin'
+            };
+            const coinId = currencyMap[cryptoCurrency.toUpperCase()];
+            if (!coinId) {
+                throw new Error(`Unsupported currency: ${cryptoCurrency}. Please contact support to add this currency.`);
+            }
+            // Use CoinGecko API (Free, no API key needed)
+            const endpoint = `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`;
+            console.log('[Conversion] Fetching rate from CoinGecko:', endpoint);
+            const res = await axios.get(endpoint, {
+                timeout: 10000,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            console.log('[Conversion] CoinGecko response:', JSON.stringify(res.data, null, 2));
+            // Extract price (price of 1 crypto in USD)
+            const cryptoPrice = res.data?.[coinId]?.usd;
+            if (!cryptoPrice || cryptoPrice <= 0) {
+                throw new Error(`Failed to get price for ${cryptoCurrency} from CoinGecko`);
+            }
+            // Calculate USD amount: crypto amount × crypto price in USD
+            const usdAmount = cryptoAmount * cryptoPrice;
+            // Round to 2 decimal places for USD
+            const roundedUSD = parseFloat(usdAmount.toFixed(2));
+            console.log('[Conversion] Conversion successful:', {
+                crypto_amount: cryptoAmount,
+                crypto_currency: cryptoCurrency,
+                crypto_price: cryptoPrice,
+                usd_amount: roundedUSD
+            });
+            return {
+                success: true,
+                usdAmount: roundedUSD,
+                rate: cryptoPrice // Price of 1 crypto in USD
+            };
+        }
+        catch (error) {
+            console.error('[Conversion] Crypto to USD conversion error:', {
+                message: error?.response?.data?.message || error.message,
+                status: error?.response?.status,
+                data: error?.response?.data
+            });
+            const errorMessage = error?.response?.data?.status?.error_message ||
+                error?.response?.data?.error ||
+                error.message ||
+                'Crypto to USD conversion failed';
+            return {
+                success: false,
+                message: errorMessage
+            };
+        }
+    }
+    // Oxapay Withdrawal Handler (Payout API: https://docs.oxapay.com/api-reference/creating-payout)
+    async handleOxapayWithdrawal(config, request) {
+        try {
+            const axios = require('axios');
+            // Validate required metadata
+            if (!request.metadata?.address) {
+                throw new Error('Withdrawal address is required in metadata.address');
+            }
+            console.log('[Oxapay] Creating payout with request:', {
+                address: request.metadata.address,
+                amount: request.amount,
+                currency: request.currency,
+                network: request.metadata?.network || config.config?.network || 'TRC20',
+                has_payout_key: !!config.payout_api_key
+            });
+            // IMPORTANT: request.amount should already be in crypto currency at this point
+            // The conversion from USD to crypto should happen BEFORE calling this method
+            // Oxapay Official Payout API Endpoint
+            const endpoint = config.config?.payout_api_endpoint || 'https://api.oxapay.com/v1/payout';
+            const requestBody = {
+                address: request.metadata.address,
+                amount: request.amount, // This MUST be in crypto currency amount
+                currency: request.currency, // This MUST be crypto currency code (BTC, ETH, USDT, etc.)
+                network: request.metadata?.network || config.config?.network || 'TRC20',
+                description: request.description || 'Withdrawal',
+            };
+            // Add memo if provided (required for some currencies like XRP, XLM)
+            if (request.metadata?.memo) {
+                requestBody.memo = request.metadata.memo;
+            }
+            console.log('[Oxapay] Payout request body:', JSON.stringify(requestBody, null, 2));
+            const res = await axios.post(endpoint, requestBody, {
+                headers: {
+                    'payout_api_key': config.payout_api_key || config.api_key, // Use payout_api_key if available
+                    'Content-Type': 'application/json'
+                },
+                timeout: 30000 // 30 second timeout
+            });
+            console.log('[Oxapay] Payout response:', JSON.stringify(res.data, null, 2));
+            // Check if response is successful
+            if (!res.data || res.data.status !== 200) {
+                throw new Error(res.data?.message || 'Oxapay API returned non-200 status');
+            }
+            return {
+                success: true,
+                transaction_id: res.data.data?.track_id || res.data.data?.payout_id || request.order_id,
+                payment_url: undefined, // Payouts don't have payment URLs
+                status: 'pending',
+                gateway_response: res.data,
+            };
+        }
+        catch (error) {
+            console.error('[Oxapay] Payout error:', {
+                message: error?.response?.data?.message || error.message,
+                status: error?.response?.status,
+                data: error?.response?.data,
+                error: error?.response?.data?.error
+            });
+            // Extract the specific error message from Oxapay response
+            const errorMessage = error?.response?.data?.error?.message ||
+                error?.response?.data?.message ||
+                error.message ||
+                'Oxapay payout creation failed';
             return {
                 success: false,
                 status: 'failed',
-                message: oxaPayError || error.message || 'Oxapay withdrawal creation failed',
+                message: errorMessage,
                 gateway_response: error?.response?.data,
             };
         }
@@ -395,6 +666,12 @@ class PaymentIntegrationService {
     async handleIgpxPayment(config, request) {
         try {
             const axios = require('axios');
+            console.log('[IGPX] Creating session with request:', {
+                user_id: request.metadata?.user_id,
+                currency: request.currency,
+                language: request.metadata?.language,
+                order_id: request.order_id
+            });
             // Step 1: Authenticate to get token
             const authResponse = await axios.post(`${config.api_endpoint}/auth`, {
                 username: config.api_key, // CLIENT_USERNAME
@@ -405,17 +682,21 @@ class PaymentIntegrationService {
             }
             const token = authResponse.data.token;
             const expiresIn = authResponse.data.expires_in;
+            console.log('[IGPX] Authentication successful');
             // Step 2: Start session to get play URL
             // Note: Callback URL is configured once on IGPX's side, not passed per session
-            const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, {
+            const sessionData = {
                 user_id: request.metadata?.user_id?.toString() || request.order_id,
                 currency: request.currency,
                 lang: request.metadata?.language || 'en'
-            }, {
+            };
+            console.log('[IGPX] Starting session with data:', sessionData);
+            const sessionResponse = await axios.post(`${config.api_endpoint}/start-session`, sessionData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
+            console.log('[IGPX] Session response:', sessionResponse.data);
             if (!sessionResponse.data.url) {
                 throw new Error('Failed to create IGPX session');
             }
@@ -594,37 +875,62 @@ class PaymentIntegrationService {
     async checkOxapayStatus(config, transactionId) {
         try {
             const axios = require('axios');
-            const res = await axios.get(`${config.api_endpoint}/merchant/invoice/${transactionId}`, {
+            console.log('[Oxapay] Checking payment status for:', transactionId);
+            // Use the payment information endpoint
+            const res = await axios.post(`${config.api_endpoint}/payment/info`, {
+                track_id: transactionId
+            }, {
                 headers: {
-                    'general_api_key': config.api_key,
+                    'merchant_api_key': config.api_key,
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: 10000
             });
+            console.log('[Oxapay] Status check response:', JSON.stringify(res.data, null, 2));
+            if (!res.data || res.data.status !== 200) {
+                throw new Error(res.data?.message || 'Oxapay status check failed');
+            }
+            const paymentData = res.data.data;
             let status = 'pending';
-            if (res.data.status === 'paid' || res.data.status === 'confirmed') {
-                status = 'completed';
-            }
-            else if (res.data.status === 'expired' || res.data.status === 'cancelled') {
-                status = 'cancelled';
-            }
-            else if (res.data.status === 'failed') {
-                status = 'failed';
+            // Map Oxapay status to our status
+            switch (paymentData?.status) {
+                case 'Paid':
+                case 'Confirmed':
+                    status = 'completed';
+                    break;
+                case 'Expired':
+                case 'Cancelled':
+                    status = 'cancelled';
+                    break;
+                case 'Failed':
+                    status = 'failed';
+                    break;
+                case 'Waiting':
+                case 'Pending':
+                default:
+                    status = 'pending';
+                    break;
             }
             return {
                 success: true,
                 transaction_id: transactionId,
                 status,
-                amount: res.data.amount,
-                currency: res.data.currency,
+                amount: paymentData?.amount,
+                currency: paymentData?.currency,
                 gateway_response: res.data,
             };
         }
         catch (error) {
+            console.error('[Oxapay] Status check error:', {
+                message: error?.response?.data?.message || error.message,
+                status: error?.response?.status,
+                data: error?.response?.data
+            });
             return {
                 success: false,
                 transaction_id: transactionId,
                 status: 'failed',
-                message: error?.response?.data?.message || error.message || 'Oxapay status check failed',
+                message: error?.response?.data?.error?.message || error?.response?.data?.message || error.message || 'Oxapay status check failed',
                 gateway_response: error?.response?.data,
             };
         }
@@ -743,26 +1049,80 @@ class PaymentIntegrationService {
     async testOxapayConnection(config) {
         try {
             const axios = require('axios');
-            // Test with the general API endpoint that we know works
-            const res = await axios.post(`${config.api_endpoint}/general/swap`, {
-                amount: 0.1,
-                from_currency: "USDT",
-                to_currency: "USDT"
+            console.log('[Oxapay] Testing connection with API key:', config.api_key?.substring(0, 10) + '...');
+            // Test by creating a minimal test invoice (the most reliable way)
+            // This actually validates the API key and connection
+            const testAmount = 0.01; // Minimal test amount
+            const testOrderId = `test_${Date.now()}`;
+            const res = await axios.post(`${config.api_endpoint}/payment/invoice`, {
+                amount: testAmount,
+                currency: 'USD',
+                order_id: testOrderId,
+                description: 'Connection test',
+                lifetime: 1 // Expire in 1 minute
             }, {
                 headers: {
-                    'general_api_key': config.api_key,
+                    'merchant_api_key': config.api_key,
                     'Content-Type': 'application/json'
-                }
+                },
+                timeout: 10000
             });
-            // If we get a response (even with an error), the connection is working
-            return { success: true, message: 'Oxapay connection successful' };
+            console.log('[Oxapay] Connection test response:', {
+                status: res.status,
+                response_status: res.data?.status,
+                has_payment_url: !!res.data?.data?.payment_url
+            });
+            // Check if we got a successful response
+            if (res.data && res.data.status === 200 && res.data.data?.payment_url) {
+                return {
+                    success: true,
+                    message: 'Oxapay connection successful! API key is valid and working'
+                };
+            }
+            // If response is not as expected
+            return {
+                success: false,
+                message: res.data?.message || 'Unexpected response from Oxapay'
+            };
         }
         catch (error) {
-            // If we get a specific error about balance or invalid data, the connection is working
-            if (error?.response?.status === 400 && error?.response?.data?.error?.key) {
-                return { success: true, message: 'Oxapay connection successful' };
+            console.error('[Oxapay] Connection test error:', {
+                status: error?.response?.status,
+                message: error?.response?.data?.message,
+                error: error?.response?.data?.error
+            });
+            // If we get a 401/403, API key is invalid
+            if (error?.response?.status === 401 || error?.response?.status === 403) {
+                return {
+                    success: false,
+                    message: 'Oxapay connection failed: Invalid API key'
+                };
             }
-            return { success: false, message: error?.response?.data?.message || error.message || 'Oxapay connection failed' };
+            // If we get a 400 with specific error about the API key
+            if (error?.response?.status === 400) {
+                const errorKey = error?.response?.data?.error?.key;
+                if (errorKey === 'invalid_merchant_api_key' || errorKey === 'unauthorized') {
+                    return {
+                        success: false,
+                        message: 'Oxapay connection failed: Invalid or unauthorized API key'
+                    };
+                }
+                // Other 400 errors might indicate the API is working but request is invalid
+                // This is actually a good sign - means connection is working
+                return {
+                    success: true,
+                    message: 'Oxapay connection successful! API is responding (request validation working)'
+                };
+            }
+            // Extract error message
+            const errorMessage = error?.response?.data?.error?.message ||
+                error?.response?.data?.message ||
+                error.message ||
+                'Oxapay connection failed';
+            return {
+                success: false,
+                message: errorMessage
+            };
         }
     }
     // Get available gateways
@@ -970,39 +1330,56 @@ class PaymentIntegrationService {
             };
         }
     }
-    // Oxapay Webhook Handler
+    // Oxapay Webhook Handler (Official webhook format: https://docs.oxapay.com/webhook)
     async handleOxapayWebhook(config, data, signature) {
         try {
-            const { status: oxapayStatus, invoice_id, amount, currency } = data;
+            console.log('[Oxapay] Processing webhook:', JSON.stringify(data, null, 2));
+            // Oxapay webhook data structure
+            const { trackId, status: oxapayStatus, amount, currency, payAmount, payCurrency, email, orderId, type: webhookType } = data;
             let status = 'pending';
             let transactionType = 'deposit';
-            switch (oxapayStatus) {
+            // Map Oxapay webhook status
+            switch (oxapayStatus?.toLowerCase()) {
                 case 'paid':
                 case 'confirmed':
                     status = 'completed';
-                    transactionType = 'deposit';
                     break;
                 case 'expired':
                 case 'cancelled':
+                case 'canceled':
                     status = 'failed';
                     break;
+                case 'waiting':
+                case 'pending':
                 default:
                     status = 'pending';
+                    break;
+            }
+            // Determine transaction type (invoice = deposit, payout = withdrawal)
+            if (webhookType?.toLowerCase() === 'payout') {
+                transactionType = 'withdrawal';
             }
             return {
                 success: true,
-                transaction_id: invoice_id,
+                transaction_id: trackId || orderId,
                 status: status,
-                amount: amount ? parseFloat(amount) : 0,
-                currency: currency,
+                amount: payAmount ? parseFloat(payAmount) : (amount ? parseFloat(amount) : 0),
+                currency: payCurrency || currency,
                 type: transactionType,
-                gateway_data: data
+                gateway_data: data,
+                metadata: {
+                    oxapay_track_id: trackId,
+                    oxapay_order_id: orderId,
+                    email: email,
+                    webhook_type: webhookType
+                }
             };
         }
         catch (error) {
+            console.error('[Oxapay] Webhook processing error:', error);
             return {
                 success: false,
-                transaction_id: data?.invoice_id || 'unknown',
+                transaction_id: data?.trackId || data?.orderId || 'unknown',
                 status: 'failed',
                 message: error instanceof Error ? error.message : 'Oxapay webhook processing failed',
                 gateway_data: data
