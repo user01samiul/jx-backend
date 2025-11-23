@@ -19,7 +19,14 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT DISTINCT provider FROM games LIMIT 20;\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, code, type, api_endpoint, is_active FROM payment_gateways WHERE LOWER(code) = ''vimplay'' OR LOWER(name) LIKE ''%vimplay%'';\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = ''games'' ORDER BY ordinal_position LIMIT 20;\")",
-      "Bash(npx pm2 restart backend)"
+      "Bash(npx pm2 restart backend)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, title, subtitle, path, menuName, parentId FROM modules WHERE menuName = ''base'' ORDER BY id;\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete the specified menu items\nDELETE FROM modules\nWHERE \"\"menuName\"\" = ''base''\nAND title IN (''Blog'', ''Forum'', ''Provably Fair'', ''Live Streaming'');\n\n-- Show how many rows were deleted\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Show all modules to verify the complete state\nSELECT id, title, \"\"menuName\"\", \"\"parentId\"\", path\nFROM modules\nORDER BY \"\"menuName\"\", \"\"parentId\"\", id;\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete parent categories with no children\nDELETE FROM modules\nWHERE id IN (10, 21)  -- Sports and Lottery\nRETURNING id, title;\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Verify all remaining sidebar categories have games\nWITH category_games AS (\n  SELECT \n    LOWER(category) as category_lower,\n    COUNT(*) FILTER (WHERE is_active = true) as active_count\n  FROM games\n  GROUP BY LOWER(category)\n)\nSELECT \n  m.id,\n  m.title,\n  m.path,\n  m.\"\"parentId\"\",\n  parent.title as parent_category,\n  COALESCE(cg.active_count, 0) as active_games\nFROM modules m\nLEFT JOIN modules parent ON m.\"\"parentId\"\" = parent.id\nLEFT JOIN category_games cg ON LOWER(m.path) = cg.category_lower\nWHERE m.\"\"menuName\"\" = ''sidebar'' AND m.\"\"parentId\"\" IS NOT NULL\nORDER BY m.\"\"parentId\"\", active_games DESC, m.id;\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Check duplicate Bingo entries\nSELECT id, title, path, \"\"parentId\"\", icons\nFROM modules\nWHERE title = ''Bingo'' AND \"\"menuName\"\" = ''sidebar'';\n\")",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"\n-- Delete the duplicate Bingo entry (keep the first one with lower ID)\nDELETE FROM modules\nWHERE id = 44\nRETURNING id, title, path;\n\")"
     ],
     "deny": [],
     "ask": []
