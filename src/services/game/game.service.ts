@@ -88,9 +88,36 @@ export const getAvailableGamesService = async (filters: {
   let paramCount = 0;
 
   if (category) {
-    paramCount++;
-    query += ` AND category = $${paramCount}`;
-    params.push(category);
+    // Special case: "all-live" returns all live casino games
+    if (category.toLowerCase() === 'all-live') {
+      query += ` AND category IN ('blackjack', 'baccarat', 'roulette', 'gameshow')`;
+    }
+    // Special case: "live-exclusives" returns premium/VIP live games and game shows
+    else if (category.toLowerCase() === 'live-exclusives') {
+      query += ` AND (
+        (provider ILIKE '%evolution%' AND (
+          name ILIKE '%vip%' OR
+          name ILIKE '%salon%' OR
+          name ILIKE '%grand%' OR
+          name ILIKE '%platinum%' OR
+          name ILIKE '%diamond%' OR
+          name ILIKE '%prive%'
+        ))
+        OR
+        (provider ILIKE '%pragmatic%' AND (
+          name ILIKE '%mega%' OR
+          name ILIKE '%powerup%' OR
+          name ILIKE '%fortune%'
+        ))
+        OR
+        category = 'gameshow'
+      )`;
+    }
+    else {
+      paramCount++;
+      query += ` AND category = $${paramCount}`;
+      params.push(category);
+    }
   }
 
   if (provider) {
