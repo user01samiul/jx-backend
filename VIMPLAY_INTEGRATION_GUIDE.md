@@ -559,14 +559,101 @@ For Vimplay-related issues:
 4. Test endpoints using provided curl examples
 5. Contact Vimplay support for API-level issues
 
+## Game Synchronization
+
+Vimplay games can be synced to your database using the Admin Game Import APIs (same as Timeless/Innova):
+
+### Sync All Vimplay Games
+```http
+POST /api/admin/import-all-games
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "provider_name": "Vimplay"
+}
+
+Response:
+{
+  "success": true,
+  "message": "Imported all categories",
+  "results": [
+    {
+      "category": "slot",
+      "imported_count": 150,
+      "updated_count": 0,
+      "failed_count": 0
+    },
+    {
+      "category": "table",
+      "imported_count": 25,
+      "updated_count": 0,
+      "failed_count": 0
+    }
+  ]
+}
+```
+
+### Sync Games by Category
+```http
+POST /api/admin/import-games
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "provider_name": "Vimplay",
+  "category": "slot",
+  "limit": 100,
+  "offset": 0,
+  "force_update": false
+}
+```
+
+### Sync Single Game by ID
+```http
+POST /api/admin/import-game
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "provider_name": "Vimplay",
+  "game_id": "123",
+  "force_update": true
+}
+```
+
+### Check Import Status
+```http
+GET /api/admin/game-import/status
+Authorization: Bearer <admin_token>
+
+Response:
+{
+  "success": true,
+  "data": {
+    "total_games": 175,
+    "providers": {
+      "Vimplay": 175,
+      "Timeless": 500
+    }
+  }
+}
+```
+
+**Important Notes:**
+- Vimplay's API returns all games in one call (no native pagination)
+- The backend automatically filters by category and applies pagination
+- Image URLs are transformed from Vimplay's format (ls/pr/sq with org/avif/webp)
+- Games are stored with `provider = 'Vimplay'` in the `games` table
+
 ## Next Steps
 
 1. ✅ Add Vimplay to database (see Configuration section)
 2. ✅ Register callback URL with Vimplay
-3. ✅ Test game launch flow
-4. ✅ Test callback endpoints
-5. ✅ Monitor transactions in production
-6. ✅ Add Vimplay games to your games catalog
+3. ✅ Sync Vimplay games to your catalog (`POST /api/admin/import-all-games`)
+4. ✅ Test game launch flow
+5. ✅ Test callback endpoints
+6. ✅ Monitor transactions in production
 
 ## Related Files
 
