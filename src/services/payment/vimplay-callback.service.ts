@@ -125,11 +125,67 @@ export class VimplayCallbackService {
    */
   async authenticate(request: VimplayAuthRequest): Promise<VimplayResponse> {
     try {
-      // Validate token and get user ID
-      const { getUserIdFromToken } = require('../auth/jwt.service');
-      const userId = await getUserIdFromToken(request.token);
+      console.log('[VIMPLAY] Authenticate request:', { token: request.token });
+
+      let userId: number | null = null;
+
+      // Check if this is a Vimplay custom token (format: vimplay_userId_gameId_timestamp)
+      if (request.token?.startsWith('vimplay_')) {
+        console.log('[VIMPLAY] Detected Vimplay custom token format');
+
+        // Look up token in database
+        const tokenResult = await pool.query(
+          `SELECT user_id, expired_at, is_active, metadata
+           FROM tokens
+           WHERE access_token = $1`,
+          [request.token]
+        );
+
+        if (tokenResult.rows.length === 0) {
+          console.error('[VIMPLAY] Token not found in database:', request.token);
+          return {
+            status: VimplayStatus.SESSION_EXPIRED,
+            balance: 0,
+            player_id: '',
+            token: ''
+          };
+        }
+
+        const tokenData = tokenResult.rows[0];
+
+        // Check if token is expired
+        if (new Date(tokenData.expired_at) < new Date()) {
+          console.error('[VIMPLAY] Token expired:', request.token);
+          return {
+            status: VimplayStatus.SESSION_EXPIRED,
+            balance: 0,
+            player_id: '',
+            token: ''
+          };
+        }
+
+        // Check if token is active
+        if (!tokenData.is_active) {
+          console.error('[VIMPLAY] Token is inactive:', request.token);
+          return {
+            status: VimplayStatus.SESSION_EXPIRED,
+            balance: 0,
+            player_id: '',
+            token: ''
+          };
+        }
+
+        userId = tokenData.user_id;
+        console.log('[VIMPLAY] Token validated from database, user_id:', userId);
+      } else {
+        // Fallback to JWT validation for backward compatibility
+        console.log('[VIMPLAY] Attempting JWT token validation');
+        const { getUserIdFromToken } = require('../auth/jwt.service');
+        userId = await getUserIdFromToken(request.token);
+      }
 
       if (!userId) {
+        console.error('[VIMPLAY] Could not extract user ID from token');
         return {
           status: VimplayStatus.SESSION_EXPIRED,
           balance: 0,
@@ -145,6 +201,7 @@ export class VimplayCallbackService {
       );
 
       if (balanceResult.rows.length === 0) {
+        console.error('[VIMPLAY] User balance not found for user:', userId);
         return {
           status: VimplayStatus.GENERAL_ERROR,
           balance: 0,

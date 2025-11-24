@@ -179,6 +179,42 @@ export async function launchVimplayGame(
   // Generate unique external token for this session
   const externalToken = `vimplay_${userId}_${game.id}_${Date.now()}`;
 
+  // IMPORTANT: Store the token in database for Vimplay callback validation
+  const tokenExpiry = new Date();
+  tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24 hour expiry
+
+  await pool.query(
+    `INSERT INTO tokens (user_id, access_token, refresh_token, expired_at, is_active, game_id, category, metadata)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     ON CONFLICT (access_token) DO UPDATE SET
+       user_id = EXCLUDED.user_id,
+       expired_at = EXCLUDED.expired_at,
+       is_active = EXCLUDED.is_active,
+       game_id = EXCLUDED.game_id,
+       metadata = EXCLUDED.metadata`,
+    [
+      userId,
+      externalToken,
+      `refresh_${externalToken}`,
+      tokenExpiry,
+      true,
+      game.id,
+      game.category || 'slots',
+      JSON.stringify({
+        provider: 'Vimplay',
+        game_code: game.game_code,
+        created_at: new Date().toISOString()
+      })
+    ]
+  );
+
+  console.log('[VIMPLAY_LAUNCHER] Token stored in database:', {
+    token: externalToken,
+    user_id: userId,
+    game_id: game.id,
+    expiry: tokenExpiry.toISOString()
+  });
+
   const launchResult = await paymentService.createPayment('vimplay', config, {
     amount: 0, // No upfront payment for Vimplay
     currency: userCurrency,
