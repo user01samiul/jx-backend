@@ -1190,24 +1190,39 @@ export const getGamePlayInfoService = async (gameIdOrCode: number, userId: numbe
   // 1. Fetch game info (getGameByIdService already supports game_code lookup)
   const game = await getGameByIdService(gameIdOrCode, provider);
 
-  // 1.5 Check if this is a Vimplay game and route through unified launcher
+  // 1.5 Check if this is a Vimplay game and handle directly (avoid recursion)
   if (game.provider?.toLowerCase().includes('vimplay')) {
-    console.log('[GAME_SERVICE] Detected Vimplay game, routing through GameLauncherService');
-    const { GameLauncherService } = require("./game-launcher.service");
-    const launchResponse = await GameLauncherService.launchGame({
-      gameId: game.id, // Use the resolved database ID
-      userId,
-      currency: undefined, // Will be fetched from user profile
-      language: 'en',
-      mode: 'real'
-    });
+    console.log('[GAME_SERVICE] Detected Vimplay game, launching directly');
+
+    // Get user info and balance
+    const userResult = await pool.query(
+      `SELECT u.id, u.username, u.email, up.currency
+       FROM users u
+       LEFT JOIN user_profiles up ON u.id = up.user_id
+       WHERE u.id = $1`,
+      [userId]
+    );
+
+    if (userResult.rows.length === 0) {
+      throw new ApiError("User not found", 404);
+    }
+
+    const user = userResult.rows[0];
+    const userCurrency = user.currency || 'USD';
+
+    // Get main balance (Vimplay uses unified wallet)
+    const balanceResult = await pool.query(
+      `SELECT balance FROM user_balances WHERE user_id = $1`,
+      [userId]
+    );
+    const userBalance = balanceResult.rows.length > 0 ? balanceResult.rows[0].balance : 0;
+
+    // Launch Vimplay game using the specialized launcher
+    const { launchVimplayGame } = require("./game-launcher.service");
+    const launchResponse = await launchVimplayGame(game, userId, userBalance, userCurrency);
 
     // Return in the unified format
-    return {
-      play_url: launchResponse.play_url,
-      game: launchResponse.game,
-      session_info: launchResponse.session_info || {}
-    };
+    return launchResponse;
   }
 
   // 1.6 Check if this is a JxOriginals game and route through GameRouterService
