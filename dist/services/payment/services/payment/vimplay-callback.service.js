@@ -206,26 +206,34 @@ class VimplayCallbackService {
                 })
             ]);
             const transactionDbId = txnResult.rows[0].id;
-            // INSERT bet record into bets table for bet history tracking
-            await client.query(`INSERT INTO bets
-         (user_id, game_id, transaction_id, bet_amount, win_amount, multiplier, outcome, session_id, round_id, game_data, placed_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)`, [
-                userId,
-                request.gameId,
-                transactionDbId,
-                betAmount,
-                0,
-                0,
-                'pending',
-                transactionId,
-                request.roundId,
-                JSON.stringify({
-                    site_id: request.siteId,
-                    in_game_bonus: request.trnasaction.inGameBouns,
-                    bonus_id: request.trnasaction.bonusId
-                })
-            ]);
-            console.log(`[VIMPLAY] Bet record created: User ${userId}, Game ${request.gameId}, Bet ${betAmount}, Round ${request.roundId}`);
+            // Look up the actual game database ID from game_code
+            const gameResult = await client.query(`SELECT id FROM games WHERE game_code = $1 AND LOWER(provider) = LOWER($2)`, [request.gameId, 'Vimplay']);
+            if (gameResult.rows.length > 0) {
+                const gameDbId = gameResult.rows[0].id;
+                // INSERT bet record into bets table for bet history tracking
+                await client.query(`INSERT INTO bets
+           (user_id, game_id, transaction_id, bet_amount, win_amount, multiplier, outcome, session_id, round_id, game_data, placed_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)`, [
+                    userId,
+                    gameDbId,
+                    transactionDbId,
+                    betAmount,
+                    0,
+                    0,
+                    'pending',
+                    transactionId,
+                    request.roundId,
+                    JSON.stringify({
+                        site_id: request.siteId,
+                        in_game_bonus: request.trnasaction.inGameBouns,
+                        bonus_id: request.trnasaction.bonusId
+                    })
+                ]);
+                console.log(`[VIMPLAY] Bet record created: User ${userId}, Game ${gameDbId} (code: ${request.gameId}), Bet ${betAmount}, Round ${request.roundId}`);
+            }
+            else {
+                console.log(`[VIMPLAY] Warning: Game not found for game_code ${request.gameId}, bet record not created`);
+            }
             await client.query('COMMIT');
             console.log(`[VIMPLAY] Debit processed: User ${userId}, Balance: ${currentBalance} -> ${newBalance}`);
             return {
@@ -317,24 +325,32 @@ class VimplayCallbackService {
                     balance_after: newBalance
                 })
             ]);
-            // UPDATE bet record with win amount and outcome
-            const betUpdateResult = await client.query(`UPDATE bets
-         SET win_amount = $1,
-             multiplier = CASE WHEN bet_amount > 0 THEN $1 / bet_amount ELSE 0 END,
-             outcome = CASE WHEN $1 > 0 THEN 'win' ELSE 'lose' END,
-             result_at = CURRENT_TIMESTAMP
-         WHERE user_id = $2
-           AND game_id = $3
-           AND round_id = $4
-           AND outcome = 'pending'
-         RETURNING id, bet_amount`, [winAmount, userId, request.gameId, request.roundId]);
-            if (betUpdateResult.rows.length > 0) {
-                const betAmount = parseFloat(betUpdateResult.rows[0].bet_amount);
-                const multiplier = betAmount > 0 ? (winAmount / betAmount).toFixed(2) : '0';
-                console.log(`[VIMPLAY] Bet updated: ID ${betUpdateResult.rows[0].id}, Win ${winAmount}, Multiplier ${multiplier}x`);
+            // Look up the actual game database ID from game_code
+            const gameResult = await client.query(`SELECT id FROM games WHERE game_code = $1 AND LOWER(provider) = LOWER($2)`, [request.gameId, 'Vimplay']);
+            if (gameResult.rows.length > 0) {
+                const gameDbId = gameResult.rows[0].id;
+                // UPDATE bet record with win amount and outcome
+                const betUpdateResult = await client.query(`UPDATE bets
+           SET win_amount = $1,
+               multiplier = CASE WHEN bet_amount > 0 THEN $1 / bet_amount ELSE 0 END,
+               outcome = CASE WHEN $1 > 0 THEN 'win' ELSE 'lose' END,
+               result_at = CURRENT_TIMESTAMP
+           WHERE user_id = $2
+             AND game_id = $3
+             AND round_id = $4
+             AND outcome = 'pending'
+           RETURNING id, bet_amount`, [winAmount, userId, gameDbId, request.roundId]);
+                if (betUpdateResult.rows.length > 0) {
+                    const betAmount = parseFloat(betUpdateResult.rows[0].bet_amount);
+                    const multiplier = betAmount > 0 ? (winAmount / betAmount).toFixed(2) : '0';
+                    console.log(`[VIMPLAY] Bet updated: ID ${betUpdateResult.rows[0].id}, Win ${winAmount}, Multiplier ${multiplier}x`);
+                }
+                else {
+                    console.log(`[VIMPLAY] No pending bet found for game ${gameDbId} (code: ${request.gameId}), round ${request.roundId} (might be betwin transaction)`);
+                }
             }
             else {
-                console.log(`[VIMPLAY] No pending bet found for round ${request.roundId} (might be betwin transaction)`);
+                console.log(`[VIMPLAY] Warning: Game not found for game_code ${request.gameId}, bet update skipped`);
             }
             await client.query('COMMIT');
             console.log(`[VIMPLAY] Credit processed: User ${userId}, Balance: ${currentBalance} -> ${newBalance}`);
@@ -451,29 +467,37 @@ class VimplayCallbackService {
                 })
             ]);
             const transactionDbId = txnResult.rows[0].id;
-            // INSERT bet record with immediate outcome (combined bet+win)
-            const outcome = winAmount > 0 ? 'win' : 'lose';
-            const multiplier = betAmount > 0 ? winAmount / betAmount : 0;
-            await client.query(`INSERT INTO bets
-         (user_id, game_id, transaction_id, bet_amount, win_amount, multiplier, outcome, session_id, round_id, game_data, placed_at, result_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`, [
-                userId,
-                request.gameId,
-                transactionDbId,
-                betAmount,
-                winAmount,
-                multiplier,
-                outcome,
-                transactionId,
-                request.roundId,
-                JSON.stringify({
-                    site_id: request.siteId,
-                    in_game_bonus: inGameBonus,
-                    bonus_id: request.trnasaction.bonusId,
-                    betwin: true
-                })
-            ]);
-            console.log(`[VIMPLAY] BetWin record created: User ${userId}, Bet ${betAmount}, Win ${winAmount}, Outcome ${outcome}, Multiplier ${multiplier.toFixed(2)}x`);
+            // Look up the actual game database ID from game_code
+            const gameResult = await client.query(`SELECT id FROM games WHERE game_code = $1 AND LOWER(provider) = LOWER($2)`, [request.gameId, 'Vimplay']);
+            if (gameResult.rows.length > 0) {
+                const gameDbId = gameResult.rows[0].id;
+                // INSERT bet record with immediate outcome (combined bet+win)
+                const outcome = winAmount > 0 ? 'win' : 'lose';
+                const multiplier = betAmount > 0 ? winAmount / betAmount : 0;
+                await client.query(`INSERT INTO bets
+           (user_id, game_id, transaction_id, bet_amount, win_amount, multiplier, outcome, session_id, round_id, game_data, placed_at, result_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`, [
+                    userId,
+                    gameDbId,
+                    transactionDbId,
+                    betAmount,
+                    winAmount,
+                    multiplier,
+                    outcome,
+                    transactionId,
+                    request.roundId,
+                    JSON.stringify({
+                        site_id: request.siteId,
+                        in_game_bonus: inGameBonus,
+                        bonus_id: request.trnasaction.bonusId,
+                        betwin: true
+                    })
+                ]);
+                console.log(`[VIMPLAY] BetWin record created: User ${userId}, Game ${gameDbId} (code: ${request.gameId}), Bet ${betAmount}, Win ${winAmount}, Outcome ${outcome}, Multiplier ${multiplier.toFixed(2)}x`);
+            }
+            else {
+                console.log(`[VIMPLAY] Warning: Game not found for game_code ${request.gameId}, bet record not created`);
+            }
             await client.query('COMMIT');
             console.log(`[VIMPLAY] BetWin processed: User ${userId}, Balance: ${currentBalance} -> ${newBalance}`);
             return {
