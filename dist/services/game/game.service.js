@@ -169,12 +169,35 @@ const getAvailableGamesService = async (filters) => {
 exports.getAvailableGamesService = getAvailableGamesService;
 // Get game by game_code or ID with detailed information
 // Prioritizes game_code lookup since it's more user-facing
-const getGameByIdService = async (gameId) => {
+// Optionally accepts provider to disambiguate game_code collisions
+const getGameByIdService = async (gameId, provider) => {
+    console.log('[DEBUG] getGameByIdService called with:', { gameId, provider });
+    let gameExistsResult;
     // First try to find by game_code (convert number to string)
-    let gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active FROM games WHERE game_code = $1`, [gameId.toString()]);
+    if (provider) {
+        // If provider is specified, look up by game_code AND provider for exact match
+        console.log('[DEBUG] Looking up by game_code AND provider:', gameId.toString(), provider);
+        gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active, provider, game_code FROM games
+       WHERE game_code = $1 AND LOWER(provider) = LOWER($2)
+       AND is_active = TRUE
+       LIMIT 1`, [gameId.toString(), provider]);
+        console.log('[DEBUG] Query result (with provider):', gameExistsResult.rows);
+    }
+    else {
+        // If no provider specified, look up by game_code only
+        // Order by id DESC to get the most recent game with this code
+        console.log('[DEBUG] Looking up by game_code only:', gameId.toString());
+        gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active, provider, game_code FROM games
+       WHERE game_code = $1 AND is_active = TRUE
+       ORDER BY id DESC
+       LIMIT 1`, [gameId.toString()]);
+        console.log('[DEBUG] Query result (without provider):', gameExistsResult.rows);
+    }
     // If not found by game_code, try to find by database ID
     if (gameExistsResult.rows.length === 0) {
-        gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active FROM games WHERE id = $1`, [gameId]);
+        console.log('[DEBUG] Not found by game_code, trying database ID:', gameId);
+        gameExistsResult = await postgres_1.default.query(`SELECT id, name, is_active, provider, game_code FROM games WHERE id = $1`, [gameId]);
+        console.log('[DEBUG] Query result (by ID):', gameExistsResult.rows);
     }
     if (gameExistsResult.rows.length === 0) {
         throw new apiError_1.ApiError("Game not found", 404);
@@ -950,26 +973,30 @@ const generateGameSessionToken = (userId, gameId) => {
     return hash.substring(0, 32);
 };
 // Get play URL and related info from provider (supports game_code or ID)
-const getGamePlayInfoService = async (gameIdOrCode, userId) => {
+const getGamePlayInfoService = async (gameIdOrCode, userId, provider) => {
     // 1. Fetch game info (getGameByIdService already supports game_code lookup)
-    const game = await (0, exports.getGameByIdService)(gameIdOrCode);
-    // 1.5 Check if this is a Vimplay game and route through unified launcher
+    const game = await (0, exports.getGameByIdService)(gameIdOrCode, provider);
+    // 1.5 Check if this is a Vimplay game and handle directly (avoid recursion)
     if (game.provider?.toLowerCase().includes('vimplay')) {
-        console.log('[GAME_SERVICE] Detected Vimplay game, routing through GameLauncherService');
-        const { GameLauncherService } = require("./game-launcher.service");
-        const launchResponse = await GameLauncherService.launchGame({
-            gameId: game.id, // Use the resolved database ID
-            userId,
-            currency: undefined, // Will be fetched from user profile
-            language: 'en',
-            mode: 'real'
-        });
+        console.log('[GAME_SERVICE] Detected Vimplay game, launching directly');
+        // Get user info and balance
+        const userResult = await postgres_1.default.query(`SELECT u.id, u.username, u.email, up.currency
+       FROM users u
+       LEFT JOIN user_profiles up ON u.id = up.user_id
+       WHERE u.id = $1`, [userId]);
+        if (userResult.rows.length === 0) {
+            throw new apiError_1.ApiError("User not found", 404);
+        }
+        const user = userResult.rows[0];
+        const userCurrency = user.currency || 'USD';
+        // Get main balance (Vimplay uses unified wallet)
+        const balanceResult = await postgres_1.default.query(`SELECT balance FROM user_balances WHERE user_id = $1`, [userId]);
+        const userBalance = balanceResult.rows.length > 0 ? balanceResult.rows[0].balance : 0;
+        // Launch Vimplay game using the specialized launcher
+        const { launchVimplayGame } = require("./game-launcher.service");
+        const launchResponse = await launchVimplayGame(game, userId, userBalance, userCurrency);
         // Return in the unified format
-        return {
-            play_url: launchResponse.play_url,
-            game: launchResponse.game,
-            session_info: launchResponse.session_info || {}
-        };
+        return launchResponse;
     }
     // 1.6 Check if this is a JxOriginals game and route through GameRouterService
     if (game.provider === 'JxOriginals') {

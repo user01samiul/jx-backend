@@ -165,32 +165,55 @@ export const getUserTransactionHistoryService = async (userId: number, limit: nu
   return result.rows;
 };
 
-// Get user's betting history
-export const getUserBettingHistoryService = async (userId: number, limit: number = 50) => {
+// Get user's betting history with pagination
+export const getUserBettingHistoryService = async (
+  userId: number,
+  limit: number = 50,
+  offset: number = 0
+) => {
+  // Get total count first
+  const countResult = await pool.query(
+    `SELECT COUNT(*) as total_count FROM bets WHERE user_id = $1 AND outcome != 'pending'`,
+    [userId]
+  );
+
+  const totalCount = parseInt(countResult.rows[0].total_count);
+
+  // Get paginated bets
   const result = await pool.query(
     `
     SELECT
       b.id,
+      b.bet_amount as amount,
       b.bet_amount,
       b.win_amount,
       b.outcome,
+      b.placed_at as created_at,
       b.placed_at,
       b.result_at,
+      b.round_id,
       g.name as game_name,
       g.provider,
+      g.category as game_type,
       g.category,
       g.image_url as game_image
     FROM bets b
-    JOIN games g ON b.game_id = g.id
+    LEFT JOIN games g ON b.game_id = g.id
     WHERE b.user_id = $1
       AND b.outcome != 'pending'
     ORDER BY b.placed_at DESC
-    LIMIT $2
+    LIMIT $2 OFFSET $3
     `,
-    [userId, limit]
+    [userId, limit, offset]
   );
 
-  return result.rows;
+  return {
+    data: result.rows,
+    total: totalCount,
+    limit,
+    offset,
+    hasMore: (offset + limit) < totalCount
+  };
 };
 
 // Get user by username

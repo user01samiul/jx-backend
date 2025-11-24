@@ -22,7 +22,9 @@ const getGameById = async (req, res, next) => {
             res.status(400).json({ success: false, message: "Invalid game ID" });
             return;
         }
-        const game = await (0, game_service_1.getGameByIdService)(gameId);
+        // Optional provider query parameter to disambiguate game_code collisions
+        const provider = req.query.provider;
+        const game = await (0, game_service_1.getGameByIdService)(gameId, provider);
         res.status(200).json({ success: true, data: game });
     }
     catch (err) {
@@ -253,12 +255,12 @@ const playGame = async (req, res, next) => {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const { game_id } = req.validated?.body;
+        const { game_id, provider } = req.validated?.body;
         if (!game_id && game_id !== 0) {
             res.status(400).json({ success: false, message: "game_id is required" });
             return;
         }
-        const playInfo = await (0, game_service_1.getGamePlayInfoService)(game_id, userId);
+        const playInfo = await (0, game_service_1.getGamePlayInfoService)(game_id, userId, provider);
         res.status(200).json({ success: true, data: playInfo });
     }
     catch (err) {

@@ -121,17 +121,34 @@ export const getUserBettingHistory = async (
   try {
     const userId = (req as any).user?.userId;
     const limit = parseInt(req.query.limit as string) || 50;
-    
+    const offset = parseInt(req.query.offset as string) || 0;
+    const page = parseInt(req.query.page as string) || 1;
+
     if (!userId) {
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
-    const bets = await getUserBettingHistoryService(userId, limit);
-    res.status(200).json({ success: true, data: bets });
+    // Calculate offset from page if page is provided
+    const calculatedOffset = req.query.page ? (page - 1) * limit : offset;
+
+    const result = await getUserBettingHistoryService(userId, limit, calculatedOffset);
+
+    res.status(200).json({
+      success: true,
+      data: result.data,
+      pagination: {
+        total: result.total,
+        limit: result.limit,
+        offset: result.offset,
+        page: Math.floor(result.offset / result.limit) + 1,
+        totalPages: Math.ceil(result.total / result.limit),
+        hasMore: result.hasMore
+      }
+    });
   } catch (err) {
     next(err);
-  } 
+  }
 };
 
 // Get comprehensive user activity summary

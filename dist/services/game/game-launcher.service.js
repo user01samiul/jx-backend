@@ -201,14 +201,11 @@ async function launchVimplayGame(game, userId, userBalance, userCurrency) {
  */
 class GameLauncherService {
     /**
-     * Launch a game with unified response structure
+     * Launch a game with pre-fetched game data (avoids refetching)
      */
-    static async launchGame(request) {
-        const { gameId, userId, currency, language = 'en', mode = 'real' } = request;
-        console.log('[GAME_LAUNCHER] Launch request:', { gameId, userId, language, mode });
-        // Get game details
-        const { getGameByIdService } = require("./game.service");
-        const game = await getGameByIdService(gameId);
+    static async launchGameWithData(request) {
+        const { game, userId, currency, language = 'en', mode = 'real' } = request;
+        console.log('[GAME_LAUNCHER] Launch request with data:', { gameId: game.id, gameName: game.name, provider: game.provider, userId, language, mode });
         // Detect provider
         const provider = detectGameProvider(game);
         console.log('[GAME_LAUNCHER] Detected provider:', provider);
@@ -235,10 +232,29 @@ class GameLauncherService {
             case GameProvider.PRAGMATIC:
             default:
                 // For other providers, use the existing getGamePlayInfoService
-                // This ensures backward compatibility
+                // Pass the database ID (game.id) for lookup
                 const { getGamePlayInfoService } = require("./game.service");
-                return await getGamePlayInfoService(gameId, userId);
+                return await getGamePlayInfoService(game.id, userId);
         }
+    }
+    /**
+     * Launch a game with unified response structure (original method for backward compatibility)
+     */
+    static async launchGame(request) {
+        const { gameId, userId, currency, language = 'en', mode = 'real' } = request;
+        console.log('[GAME_LAUNCHER] Launch request:', { gameId, userId, language, mode });
+        // Get game details
+        const { getGameByIdService } = require("./game.service");
+        const game = await getGameByIdService(gameId);
+        // Use launchGameWithData to avoid code duplication
+        return await this.launchGameWithData({
+            game,
+            gameId,
+            userId,
+            currency,
+            language,
+            mode
+        });
     }
     /**
      * Check if a provider is supported

@@ -30,6 +30,7 @@ exports.ToggleGameFavoriteSchema = zod_1.z.object({
 // Schema for playing a game
 exports.PlayGameSchema = zod_1.z.object({
     game_id: zod_1.z.number().positive("Game ID must be a positive number"),
+    provider: zod_1.z.string().optional(), // Optional provider to disambiguate game_code collisions
 });
 // Schema for canceling a game transaction
 exports.CancelGameSchema = zod_1.z.object({
