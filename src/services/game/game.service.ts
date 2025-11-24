@@ -175,36 +175,43 @@ export const getAvailableGamesService = async (filters: {
 // Prioritizes game_code lookup since it's more user-facing
 // Optionally accepts provider to disambiguate game_code collisions
 export const getGameByIdService = async (gameId: number, provider?: string) => {
+  console.log('[DEBUG] getGameByIdService called with:', { gameId, provider });
   let gameExistsResult;
 
   // First try to find by game_code (convert number to string)
   if (provider) {
     // If provider is specified, look up by game_code AND provider for exact match
+    console.log('[DEBUG] Looking up by game_code AND provider:', gameId.toString(), provider);
     gameExistsResult = await pool.query(
-      `SELECT id, name, is_active FROM games
+      `SELECT id, name, is_active, provider, game_code FROM games
        WHERE game_code = $1 AND LOWER(provider) = LOWER($2)
        AND is_active = TRUE
        LIMIT 1`,
       [gameId.toString(), provider]
     );
+    console.log('[DEBUG] Query result (with provider):', gameExistsResult.rows);
   } else {
     // If no provider specified, look up by game_code only
     // Order by id DESC to get the most recent game with this code
+    console.log('[DEBUG] Looking up by game_code only:', gameId.toString());
     gameExistsResult = await pool.query(
-      `SELECT id, name, is_active FROM games
+      `SELECT id, name, is_active, provider, game_code FROM games
        WHERE game_code = $1 AND is_active = TRUE
        ORDER BY id DESC
        LIMIT 1`,
       [gameId.toString()]
     );
+    console.log('[DEBUG] Query result (without provider):', gameExistsResult.rows);
   }
 
   // If not found by game_code, try to find by database ID
   if (gameExistsResult.rows.length === 0) {
+    console.log('[DEBUG] Not found by game_code, trying database ID:', gameId);
     gameExistsResult = await pool.query(
-      `SELECT id, name, is_active FROM games WHERE id = $1`,
+      `SELECT id, name, is_active, provider, game_code FROM games WHERE id = $1`,
       [gameId]
     );
+    console.log('[DEBUG] Query result (by ID):', gameExistsResult.rows);
   }
 
   if (gameExistsResult.rows.length === 0) {
