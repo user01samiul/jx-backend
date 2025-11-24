@@ -135,7 +135,7 @@ export class VimplayCallbackService {
 
         // Look up token in database
         const tokenResult = await pool.query(
-          `SELECT user_id, expired_at, is_active, metadata
+          `SELECT user_id, expired_at, is_active
            FROM tokens
            WHERE access_token = $1`,
           [request.token]
@@ -215,8 +215,10 @@ export class VimplayCallbackService {
       console.log(`[VIMPLAY] Auth successful: User ${userId}, Balance: ${balance}`);
 
       return {
+        status: VimplayStatus.SUCCESS,
         balance,
         player_id: userId.toString(),
+        playerId: userId.toString(),
         token: request.token
       };
     } catch (error: any) {

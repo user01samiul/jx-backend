@@ -33,7 +33,7 @@ class VimplayCallbackService {
             if (request.token?.startsWith('vimplay_')) {
                 console.log('[VIMPLAY] Detected Vimplay custom token format');
                 // Look up token in database
-                const tokenResult = await postgres_1.default.query(`SELECT user_id, expired_at, is_active, metadata
+                const tokenResult = await postgres_1.default.query(`SELECT user_id, expired_at, is_active
            FROM tokens
            WHERE access_token = $1`, [request.token]);
                 if (tokenResult.rows.length === 0) {
@@ -98,8 +98,10 @@ class VimplayCallbackService {
             const balance = parseFloat(balanceResult.rows[0].balance) || 0;
             console.log(`[VIMPLAY] Auth successful: User ${userId}, Balance: ${balance}`);
             return {
+                status: exports.VimplayStatus.SUCCESS,
                 balance,
                 player_id: userId.toString(),
+                playerId: userId.toString(),
                 token: request.token
             };
         }

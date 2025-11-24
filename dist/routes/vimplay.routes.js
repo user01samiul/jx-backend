@@ -132,14 +132,32 @@ router.post('/authenticate', async (req, res) => {
  */
 router.post('/debit', async (req, res) => {
     try {
+        // Log full request body to debug field names
+        console.log('[VIMPLAY] Debit FULL request body:', JSON.stringify(req.body, null, 2));
+        // Normalize: Vimplay may send "transaction", "trnasaction", or data at root level
+        let txData = req.body.transaction || req.body.trnasaction;
+        // If no nested transaction object, check if data is at root level
+        if (!txData && req.body.transactionId) {
+            txData = {
+                transactionId: req.body.transactionId,
+                betAmount: req.body.betAmount,
+                inGameBouns: req.body.inGameBouns || req.body.inGameBonus,
+                bonusId: req.body.bonusId
+            };
+        }
         console.log('[VIMPLAY] Debit request:', {
             playerId: req.body.playerId,
             gameId: req.body.gameId,
             roundId: req.body.roundId,
-            transactionId: req.body.trnasaction?.transactionId,
-            betAmount: req.body.trnasaction?.betAmount
+            transactionId: txData?.transactionId,
+            betAmount: txData?.betAmount
         });
-        const response = await vimplayService.processDebit(req.body);
+        // Normalize the request body to use 'trnasaction' for the service
+        const normalizedRequest = {
+            ...req.body,
+            trnasaction: txData
+        };
+        const response = await vimplayService.processDebit(normalizedRequest);
         console.log('[VIMPLAY] Debit response:', {
             playerId: response.playerId,
             balance: response.balance,
@@ -149,13 +167,14 @@ router.post('/debit', async (req, res) => {
     }
     catch (error) {
         console.error('[VIMPLAY] Debit error:', error);
+        const txData = req.body.transaction || req.body.trnasaction;
         res.status(200).json({
             balance: 0,
             playerId: req.body.playerId,
             transaction: {
                 status: 999,
-                transactionId: req.body.trnasaction?.transactionId || '',
-                partnerTransactionId: req.body.trnasaction?.transactionId || ''
+                transactionId: txData?.transactionId || '',
+                partnerTransactionId: txData?.transactionId || ''
             }
         });
     }
@@ -216,14 +235,34 @@ router.post('/debit', async (req, res) => {
  */
 router.post('/credit', async (req, res) => {
     try {
+        // Log full request body to debug field names
+        console.log('[VIMPLAY] Credit FULL request body:', JSON.stringify(req.body, null, 2));
+        // Normalize: Vimplay may send "transaction", "trnasaction", or data at root level
+        let txData = req.body.transaction || req.body.trnasaction;
+        // If no nested transaction object, check if data is at root level
+        if (!txData && req.body.transactionId) {
+            txData = {
+                transactionId: req.body.transactionId,
+                betAmount: req.body.betAmount,
+                winAmount: req.body.winAmount,
+                inGameBouns: req.body.inGameBouns || req.body.inGameBonus,
+                bonusId: req.body.bonusId,
+                betTransactionId: req.body.betTransactionId
+            };
+        }
         console.log('[VIMPLAY] Credit request:', {
             playerId: req.body.playerId,
             gameId: req.body.gameId,
             roundId: req.body.roundId,
-            transactionId: req.body.transaction?.transactionId,
-            winAmount: req.body.transaction?.winAmount
+            transactionId: txData?.transactionId,
+            winAmount: txData?.winAmount
         });
-        const response = await vimplayService.processCredit(req.body);
+        // Normalize the request body to use 'transaction' for the service
+        const normalizedRequest = {
+            ...req.body,
+            transaction: txData
+        };
+        const response = await vimplayService.processCredit(normalizedRequest);
         console.log('[VIMPLAY] Credit response:', {
             playerId: response.playerId,
             balance: response.balance,
@@ -233,13 +272,14 @@ router.post('/credit', async (req, res) => {
     }
     catch (error) {
         console.error('[VIMPLAY] Credit error:', error);
+        const txData = req.body.transaction || req.body.trnasaction;
         res.status(200).json({
             balance: 0,
             playerId: req.body.playerId,
             transaction: {
                 status: 999,
-                transactionId: req.body.transaction?.transactionId || '',
-                partnerTransactionId: req.body.transaction?.transactionId || ''
+                transactionId: txData?.transactionId || '',
+                partnerTransactionId: txData?.transactionId || ''
             }
         });
     }
@@ -298,15 +338,34 @@ router.post('/credit', async (req, res) => {
  */
 router.post('/betwin', async (req, res) => {
     try {
+        // Log full request body to debug field names
+        console.log('[VIMPLAY] BetWin FULL request body:', JSON.stringify(req.body, null, 2));
+        // Normalize: Vimplay may send "transaction", "trnasaction", or data at root level
+        let txData = req.body.transaction || req.body.trnasaction;
+        // If no nested transaction object, check if data is at root level
+        if (!txData && req.body.transactionId) {
+            txData = {
+                transactionId: req.body.transactionId,
+                betAmount: req.body.betAmount,
+                winAmount: req.body.winAmount,
+                inGameBouns: req.body.inGameBouns || req.body.inGameBonus,
+                bonusId: req.body.bonusId
+            };
+        }
         console.log('[VIMPLAY] BetWin request:', {
             playerId: req.body.playerId,
             gameId: req.body.gameId,
             roundId: req.body.roundId,
-            transactionId: req.body.trnasaction?.transactionId,
-            betAmount: req.body.trnasaction?.betAmount,
-            winAmount: req.body.trnasaction?.winAmount
+            transactionId: txData?.transactionId,
+            betAmount: txData?.betAmount,
+            winAmount: txData?.winAmount
         });
-        const response = await vimplayService.processBetWin(req.body);
+        // Normalize the request body to use 'trnasaction' for the service
+        const normalizedRequest = {
+            ...req.body,
+            trnasaction: txData
+        };
+        const response = await vimplayService.processBetWin(normalizedRequest);
         console.log('[VIMPLAY] BetWin response:', {
             playerId: response.playerId,
             balance: response.balance,
@@ -316,13 +375,14 @@ router.post('/betwin', async (req, res) => {
     }
     catch (error) {
         console.error('[VIMPLAY] BetWin error:', error);
+        const txData = req.body.transaction || req.body.trnasaction;
         res.status(200).json({
             balance: 0,
             playerId: req.body.playerId,
             transaction: {
                 status: 999,
-                transactionId: req.body.trnasaction?.transactionId || '',
-                partnerTransactionId: req.body.trnasaction?.transactionId || ''
+                transactionId: txData?.transactionId || '',
+                partnerTransactionId: txData?.transactionId || ''
             }
         });
     }
