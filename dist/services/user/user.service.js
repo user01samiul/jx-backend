@@ -141,6 +141,23 @@ const getUserBettingHistoryService = async (userId, limit = 50, offset = 0) => {
     // Get total count first (INCLUDE PENDING BETS)
     const countResult = await postgres_1.default.query(`SELECT COUNT(*) as total_count FROM bets WHERE user_id = $1`, [userId]);
     const totalCount = parseInt(countResult.rows[0].total_count);
+    // Get all-time statistics
+    const statsResult = await postgres_1.default.query(`
+    SELECT
+      COUNT(*) as total_bets,
+      COALESCE(SUM(bet_amount), 0) as total_wagered,
+      COALESCE(SUM(CASE WHEN outcome = 'win' THEN win_amount ELSE 0 END), 0) as total_won,
+      COALESCE(
+        CASE
+          WHEN COUNT(*) > 0 THEN
+            (COUNT(CASE WHEN outcome = 'win' THEN 1 END)::FLOAT / COUNT(*)::FLOAT * 100)
+          ELSE 0
+        END, 0
+      ) as win_rate
+    FROM bets
+    WHERE user_id = $1
+    `, [userId]);
+    const stats = statsResult.rows[0];
     // Get paginated bets (INCLUDE PENDING BETS)
     const result = await postgres_1.default.query(`
     SELECT
@@ -169,7 +186,13 @@ const getUserBettingHistoryService = async (userId, limit = 50, offset = 0) => {
         total: totalCount,
         limit,
         offset,
-        hasMore: (offset + limit) < totalCount
+        hasMore: (offset + limit) < totalCount,
+        stats: {
+            totalBets: parseInt(stats.total_bets),
+            totalWagered: parseFloat(stats.total_wagered),
+            totalWon: parseFloat(stats.total_won),
+            winRate: parseFloat(parseFloat(stats.win_rate).toFixed(2))
+        }
     };
 };
 exports.getUserBettingHistoryService = getUserBettingHistoryService;

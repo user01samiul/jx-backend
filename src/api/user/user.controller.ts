@@ -138,13 +138,12 @@ export const getUserBettingHistory = async (
       success: true,
       data: result.data,
       pagination: {
-        total: result.total,
-        limit: result.limit,
-        offset: result.offset,
-        page: Math.floor(result.offset / result.limit) + 1,
+        currentPage: Math.floor(result.offset / result.limit) + 1,
         totalPages: Math.ceil(result.total / result.limit),
-        hasMore: result.hasMore
-      }
+        totalItems: result.total,
+        itemsPerPage: result.limit
+      },
+      stats: result.stats
     });
   } catch (err) {
     next(err);
