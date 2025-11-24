@@ -64,7 +64,7 @@ const resolveGameId = async (gameIdOrCode) => {
 exports.resolveGameId = resolveGameId;
 // Get all available games with filtering
 const getAvailableGamesService = async (filters) => {
-    const { category, provider, is_featured, is_new, is_hot, search, limit = 50, offset = 0 } = filters;
+    const { category, provider, is_featured, is_new, is_hot, search, limit = 50, offset = 0, sortBy, sortOrder = 'desc' } = filters;
     let query = `
     SELECT 
       id,
@@ -152,7 +152,15 @@ const getAvailableGamesService = async (filters) => {
         query += ` AND (name ILIKE $${paramCount} OR provider ILIKE $${paramCount} OR game_code ILIKE $${paramCount})`;
         params.push(`%${search}%`);
     }
-    query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
+    // Handle sorting
+    const validSortColumns = ['created_at', 'name', 'rating', 'popularity', 'id'];
+    const order = sortOrder?.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+    if (sortBy && validSortColumns.includes(sortBy)) {
+        query += ` ORDER BY ${sortBy} ${order}`;
+    }
+    else {
+        query += ` ORDER BY is_featured DESC, is_hot DESC, is_new DESC, name ASC`;
+    }
     query += ` LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
     params.push(limit, offset);
     const result = await postgres_1.default.query(query, params);
@@ -945,7 +953,25 @@ const generateGameSessionToken = (userId, gameId) => {
 const getGamePlayInfoService = async (gameIdOrCode, userId) => {
     // 1. Fetch game info (getGameByIdService already supports game_code lookup)
     const game = await (0, exports.getGameByIdService)(gameIdOrCode);
-    // 1.5 Check if this is a JxOriginals game and route through GameRouterService
+    // 1.5 Check if this is a Vimplay game and route through unified launcher
+    if (game.provider?.toLowerCase().includes('vimplay')) {
+        console.log('[GAME_SERVICE] Detected Vimplay game, routing through GameLauncherService');
+        const { GameLauncherService } = require("./game-launcher.service");
+        const launchResponse = await GameLauncherService.launchGame({
+            gameId: game.id, // Use the resolved database ID
+            userId,
+            currency: undefined, // Will be fetched from user profile
+            language: 'en',
+            mode: 'real'
+        });
+        // Return in the unified format
+        return {
+            play_url: launchResponse.play_url,
+            game: launchResponse.game,
+            session_info: launchResponse.session_info || {}
+        };
+    }
+    // 1.6 Check if this is a JxOriginals game and route through GameRouterService
     if (game.provider === 'JxOriginals') {
         console.log('[GAME_SERVICE] Detected JxOriginals game, routing through GameRouterService');
         const { GameRouterService } = require("./game-router.service");

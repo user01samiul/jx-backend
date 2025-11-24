@@ -704,11 +704,12 @@ class AdminGameImportService {
                         providerResults.push({
                             provider_name: provider.provider_name,
                             success: true,
+                            skipped: true,
                             games_count: 0,
                             imported: 0,
                             updated: 0,
                             failed: 0,
-                            error: 'Skipped - Sportsbook provider'
+                            reason: 'Sportsbook provider - no games to sync'
                         });
                         continue;
                     }

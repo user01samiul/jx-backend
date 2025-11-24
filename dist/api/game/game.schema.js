@@ -47,6 +47,8 @@ exports.GameFiltersSchema = zod_1.z.object({
     search: zod_1.z.string().optional(),
     limit: zod_1.z.string().transform(val => parseInt(val)).optional(),
     offset: zod_1.z.string().transform(val => parseInt(val)).optional(),
+    sortBy: zod_1.z.string().optional(),
+    sortOrder: zod_1.z.string().optional(),
 });
 // Schema for game category filters (query parameters)
 exports.GameCategoryFiltersSchema = zod_1.z.object({
