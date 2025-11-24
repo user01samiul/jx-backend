@@ -100,6 +100,13 @@ import {
   getPromotionClaims
 } from "../api/admin/admin.promotion.controller";
 import {
+  getBetStatistics,
+  getBetAnalytics,
+  getGamePerformance,
+  getResultsDistribution,
+  getProviderPerformance
+} from "../api/admin/admin.bet-analytics.controller";
+import {
   getPendingKYC,
   getKYCByUserId,
   approveKYC,
@@ -5939,6 +5946,283 @@ router.post("/bets/:id/cancel", authenticate, authorize(["Admin"]), async (req, 
     res.status(500).json({ success: false, message: 'Error cancelling bet' });
   }
 });
+
+/**
+ * @swagger
+ * /api/admin/bets/statistics:
+ *   get:
+ *     summary: Get aggregated betting statistics for dashboard
+ *     description: Returns total bets, wagered, won, lost, net profit, active bets, and growth percentages
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d, 90d, all]
+ *           default: 7d
+ *         description: Time range for statistics
+ *     responses:
+ *       200:
+ *         description: Statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalBets:
+ *                       type: integer
+ *                     totalWagered:
+ *                       type: number
+ *                     totalWon:
+ *                       type: number
+ *                     totalLost:
+ *                       type: number
+ *                     netProfit:
+ *                       type: number
+ *                     activeBets:
+ *                       type: integer
+ *                     betGrowth:
+ *                       type: number
+ *                     revenueGrowth:
+ *                       type: number
+ *                     playerGrowth:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/statistics", authenticate, authorize(["Admin"]), getBetStatistics);
+
+/**
+ * @swagger
+ * /api/admin/bets/analytics:
+ *   get:
+ *     summary: Get time-series betting analytics data
+ *     description: Returns daily/hourly/weekly/monthly aggregated betting data for charts
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [7d, 30d, 90d]
+ *           default: 7d
+ *         description: Time range for analytics
+ *       - in: query
+ *         name: groupBy
+ *         schema:
+ *           type: string
+ *           enum: [hour, day, week, month]
+ *           default: day
+ *         description: How to group the data
+ *     responses:
+ *       200:
+ *         description: Analytics data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       date:
+ *                         type: string
+ *                         format: date-time
+ *                       totalBets:
+ *                         type: integer
+ *                       totalWagered:
+ *                         type: number
+ *                       totalWon:
+ *                         type: number
+ *                       netProfit:
+ *                         type: number
+ *                       activePlayers:
+ *                         type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/analytics", authenticate, authorize(["Admin"]), getBetAnalytics);
+
+/**
+ * @swagger
+ * /api/admin/bets/game-performance:
+ *   get:
+ *     summary: Get performance metrics by game
+ *     description: Returns top performing games with bets, wagered, won, net profit, avg bet, and win rate
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d, 90d, all]
+ *           default: 7d
+ *         description: Time range for performance metrics
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of games to return
+ *     responses:
+ *       200:
+ *         description: Game performance data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       game:
+ *                         type: string
+ *                       provider:
+ *                         type: string
+ *                       bets:
+ *                         type: integer
+ *                       wagered:
+ *                         type: number
+ *                       won:
+ *                         type: number
+ *                       netProfit:
+ *                         type: number
+ *                       avgBet:
+ *                         type: number
+ *                       winRate:
+ *                         type: number
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/game-performance", authenticate, authorize(["Admin"]), getGamePerformance);
+
+/**
+ * @swagger
+ * /api/admin/bets/results-distribution:
+ *   get:
+ *     summary: Get win/loss distribution
+ *     description: Returns distribution of bet results (win, loss, pending) with counts and percentages
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d, 90d, all]
+ *           default: 7d
+ *         description: Time range for distribution
+ *     responses:
+ *       200:
+ *         description: Distribution data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       result:
+ *                         type: string
+ *                       count:
+ *                         type: integer
+ *                       amount:
+ *                         type: number
+ *                       percentage:
+ *                         type: number
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/results-distribution", authenticate, authorize(["Admin"]), getResultsDistribution);
+
+/**
+ * @swagger
+ * /api/admin/bets/provider-performance:
+ *   get:
+ *     summary: Get performance metrics by provider
+ *     description: Returns top performing providers with bets, wagered, won, net profit, avg bet, unique players, and win rate
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d, 90d, all]
+ *           default: 7d
+ *         description: Time range for performance metrics
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of providers to return
+ *     responses:
+ *       200:
+ *         description: Provider performance data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       provider:
+ *                         type: string
+ *                       bets:
+ *                         type: integer
+ *                       wagered:
+ *                         type: number
+ *                       won:
+ *                         type: number
+ *                       netProfit:
+ *                         type: number
+ *                       avgBet:
+ *                         type: number
+ *                       uniquePlayers:
+ *                         type: integer
+ *                       winRate:
+ *                         type: number
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/provider-performance", authenticate, authorize(["Admin"]), getProviderPerformance);
 
 /**
  * @swagger
