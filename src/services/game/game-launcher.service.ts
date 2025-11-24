@@ -184,14 +184,14 @@ export async function launchVimplayGame(
   tokenExpiry.setHours(tokenExpiry.getHours() + 24); // 24 hour expiry
 
   await pool.query(
-    `INSERT INTO tokens (user_id, access_token, refresh_token, expired_at, is_active, game_id, category, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO tokens (user_id, access_token, refresh_token, expired_at, is_active, game_id, category)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (access_token) DO UPDATE SET
        user_id = EXCLUDED.user_id,
        expired_at = EXCLUDED.expired_at,
        is_active = EXCLUDED.is_active,
        game_id = EXCLUDED.game_id,
-       metadata = EXCLUDED.metadata`,
+       category = EXCLUDED.category`,
     [
       userId,
       externalToken,
@@ -199,12 +199,7 @@ export async function launchVimplayGame(
       tokenExpiry,
       true,
       game.id,
-      game.category || 'slots',
-      JSON.stringify({
-        provider: 'Vimplay',
-        game_code: game.game_code,
-        created_at: new Date().toISOString()
-      })
+      game.category || 'slots'
     ]
   );
 
