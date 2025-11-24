@@ -173,12 +173,31 @@ export const getAvailableGamesService = async (filters: {
 
 // Get game by game_code or ID with detailed information
 // Prioritizes game_code lookup since it's more user-facing
-export const getGameByIdService = async (gameId: number) => {
+// Optionally accepts provider to disambiguate game_code collisions
+export const getGameByIdService = async (gameId: number, provider?: string) => {
+  let gameExistsResult;
+
   // First try to find by game_code (convert number to string)
-  let gameExistsResult = await pool.query(
-    `SELECT id, name, is_active FROM games WHERE game_code = $1`,
-    [gameId.toString()]
-  );
+  if (provider) {
+    // If provider is specified, look up by game_code AND provider for exact match
+    gameExistsResult = await pool.query(
+      `SELECT id, name, is_active FROM games
+       WHERE game_code = $1 AND LOWER(provider) = LOWER($2)
+       AND is_active = TRUE
+       LIMIT 1`,
+      [gameId.toString(), provider]
+    );
+  } else {
+    // If no provider specified, look up by game_code only
+    // Order by id DESC to get the most recent game with this code
+    gameExistsResult = await pool.query(
+      `SELECT id, name, is_active FROM games
+       WHERE game_code = $1 AND is_active = TRUE
+       ORDER BY id DESC
+       LIMIT 1`,
+      [gameId.toString()]
+    );
+  }
 
   // If not found by game_code, try to find by database ID
   if (gameExistsResult.rows.length === 0) {
@@ -1160,9 +1179,9 @@ const generateGameSessionToken = (userId: number, gameId: number): string => {
 };
 
 // Get play URL and related info from provider (supports game_code or ID)
-export const getGamePlayInfoService = async (gameIdOrCode: number, userId: number) => {
+export const getGamePlayInfoService = async (gameIdOrCode: number, userId: number, provider?: string) => {
   // 1. Fetch game info (getGameByIdService already supports game_code lookup)
-  const game = await getGameByIdService(gameIdOrCode);
+  const game = await getGameByIdService(gameIdOrCode, provider);
 
   // 1.5 Check if this is a Vimplay game and route through unified launcher
   if (game.provider?.toLowerCase().includes('vimplay')) {

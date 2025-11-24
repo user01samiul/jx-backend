@@ -57,7 +57,10 @@ export const getGameById = async (
       return;
     }
 
-    const game = await getGameByIdService(gameId);
+    // Optional provider query parameter to disambiguate game_code collisions
+    const provider = req.query.provider as string | undefined;
+
+    const game = await getGameByIdService(gameId, provider);
     res.status(200).json({ success: true, data: game });
   } catch (err) {
     next(err);
@@ -331,12 +334,12 @@ export const playGame = async (
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
-    const { game_id } = req.validated?.body as PlayGameInput;
+    const { game_id, provider } = req.validated?.body as PlayGameInput;
     if (!game_id && game_id !== 0) {
       res.status(400).json({ success: false, message: "game_id is required" });
       return;
     }
-    const playInfo = await getGamePlayInfoService(game_id, userId);
+    const playInfo = await getGamePlayInfoService(game_id, userId, provider);
     res.status(200).json({ success: true, data: playInfo });
   } catch (err) {
     next(err);

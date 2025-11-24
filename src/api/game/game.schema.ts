@@ -32,6 +32,7 @@ export const ToggleGameFavoriteSchema = z.object({
 // Schema for playing a game
 export const PlayGameSchema = z.object({
   game_id: z.number().positive("Game ID must be a positive number"),
+  provider: z.string().optional(), // Optional provider to disambiguate game_code collisions
 });
 
 // Schema for canceling a game transaction

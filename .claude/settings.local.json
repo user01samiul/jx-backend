@@ -50,7 +50,8 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, game_code, provider, category FROM games WHERE name = ''Aqua Keno'';\")",
       "Bash(tail -5 sleep 3 curl -s \"https://backend.jackpotx.net/api/games?provider=Vimplay&limit=10&sortBy=created_at&sortOrder=desc\")",
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"UPDATE game_provider_configs SET metadata = jsonb_set(COALESCE(metadata, ''{}'')::jsonb, ''{provider_type}'', ''\"\"sportsbook\"\"'') WHERE provider_name ILIKE ''%igpx%'' OR provider_name ILIKE ''%sportsbook%''; SELECT provider_name, metadata->>''provider_type'' as type FROM game_provider_configs WHERE provider_name ILIKE ''%igpx%'' OR provider_name ILIKE ''%sportsbook%'';\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT access_token, user_id, is_active, expired_at FROM tokens WHERE access_token LIKE ''vimplay_%'' ORDER BY created_at DESC LIMIT 5;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT access_token, user_id, is_active, expired_at FROM tokens WHERE access_token LIKE ''vimplay_%'' ORDER BY created_at DESC LIMIT 5;\")",
+      "Bash(node node_modules/typescript/bin/tsc:*)"
     ],
     "deny": [],
     "ask": []
