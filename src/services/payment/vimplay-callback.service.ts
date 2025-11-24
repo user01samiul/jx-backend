@@ -327,10 +327,11 @@ export class VimplayCallbackService {
       );
 
       // Create transaction record
-      await client.query(
+      const txnResult = await client.query(
         `INSERT INTO transactions
          (user_id, type, amount, currency, status, description, external_reference, metadata, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+         RETURNING id`,
         [
           userId,
           'withdrawal',
@@ -353,6 +354,33 @@ export class VimplayCallbackService {
           })
         ]
       );
+
+      const transactionDbId = txnResult.rows[0].id;
+
+      // INSERT bet record into bets table for bet history tracking
+      await client.query(
+        `INSERT INTO bets
+         (user_id, game_id, transaction_id, bet_amount, win_amount, multiplier, outcome, session_id, round_id, game_data, placed_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP)`,
+        [
+          userId,
+          request.gameId,
+          transactionDbId,
+          betAmount,
+          0,
+          0,
+          'pending',
+          transactionId,
+          request.roundId,
+          JSON.stringify({
+            site_id: request.siteId,
+            in_game_bonus: request.trnasaction.inGameBouns,
+            bonus_id: request.trnasaction.bonusId
+          })
+        ]
+      );
+
+      console.log(`[VIMPLAY] Bet record created: User ${userId}, Game ${request.gameId}, Bet ${betAmount}, Round ${request.roundId}`);
 
       await client.query('COMMIT');
 
@@ -468,6 +496,29 @@ export class VimplayCallbackService {
         ]
       );
 
+      // UPDATE bet record with win amount and outcome
+      const betUpdateResult = await client.query(
+        `UPDATE bets
+         SET win_amount = $1,
+             multiplier = CASE WHEN bet_amount > 0 THEN $1 / bet_amount ELSE 0 END,
+             outcome = CASE WHEN $1 > 0 THEN 'win' ELSE 'lose' END,
+             result_at = CURRENT_TIMESTAMP
+         WHERE user_id = $2
+           AND game_id = $3
+           AND round_id = $4
+           AND outcome = 'pending'
+         RETURNING id, bet_amount`,
+        [winAmount, userId, request.gameId, request.roundId]
+      );
+
+      if (betUpdateResult.rows.length > 0) {
+        const betAmount = parseFloat(betUpdateResult.rows[0].bet_amount);
+        const multiplier = betAmount > 0 ? (winAmount / betAmount).toFixed(2) : '0';
+        console.log(`[VIMPLAY] Bet updated: ID ${betUpdateResult.rows[0].id}, Win ${winAmount}, Multiplier ${multiplier}x`);
+      } else {
+        console.log(`[VIMPLAY] No pending bet found for round ${request.roundId} (might be betwin transaction)`);
+      }
+
       await client.query('COMMIT');
 
       console.log(`[VIMPLAY] Credit processed: User ${userId}, Balance: ${currentBalance} -> ${newBalance}`);
@@ -575,10 +626,11 @@ export class VimplayCallbackService {
       );
 
       // Create transaction record
-      await client.query(
+      const txnResult = await client.query(
         `INSERT INTO transactions
          (user_id, type, amount, currency, status, description, external_reference, metadata, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+         RETURNING id`,
         [
           userId,
           'adjustment',
@@ -603,6 +655,37 @@ export class VimplayCallbackService {
           })
         ]
       );
+
+      const transactionDbId = txnResult.rows[0].id;
+
+      // INSERT bet record with immediate outcome (combined bet+win)
+      const outcome = winAmount > 0 ? 'win' : 'lose';
+      const multiplier = betAmount > 0 ? winAmount / betAmount : 0;
+
+      await client.query(
+        `INSERT INTO bets
+         (user_id, game_id, transaction_id, bet_amount, win_amount, multiplier, outcome, session_id, round_id, game_data, placed_at, result_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+          userId,
+          request.gameId,
+          transactionDbId,
+          betAmount,
+          winAmount,
+          multiplier,
+          outcome,
+          transactionId,
+          request.roundId,
+          JSON.stringify({
+            site_id: request.siteId,
+            in_game_bonus: inGameBonus,
+            bonus_id: request.trnasaction.bonusId,
+            betwin: true
+          })
+        ]
+      );
+
+      console.log(`[VIMPLAY] BetWin record created: User ${userId}, Bet ${betAmount}, Win ${winAmount}, Outcome ${outcome}, Multiplier ${multiplier.toFixed(2)}x`);
 
       await client.query('COMMIT');
 
