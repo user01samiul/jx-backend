@@ -138,10 +138,10 @@ const getUserTransactionHistoryService = async (userId, limit = 50) => {
 exports.getUserTransactionHistoryService = getUserTransactionHistoryService;
 // Get user's betting history with pagination
 const getUserBettingHistoryService = async (userId, limit = 50, offset = 0) => {
-    // Get total count first
-    const countResult = await postgres_1.default.query(`SELECT COUNT(*) as total_count FROM bets WHERE user_id = $1 AND outcome != 'pending'`, [userId]);
+    // Get total count first (INCLUDE PENDING BETS)
+    const countResult = await postgres_1.default.query(`SELECT COUNT(*) as total_count FROM bets WHERE user_id = $1`, [userId]);
     const totalCount = parseInt(countResult.rows[0].total_count);
-    // Get paginated bets
+    // Get paginated bets (INCLUDE PENDING BETS)
     const result = await postgres_1.default.query(`
     SELECT
       b.id,
@@ -161,7 +161,6 @@ const getUserBettingHistoryService = async (userId, limit = 50, offset = 0) => {
     FROM bets b
     LEFT JOIN games g ON b.game_id = g.id
     WHERE b.user_id = $1
-      AND b.outcome != 'pending'
     ORDER BY b.placed_at DESC
     LIMIT $2 OFFSET $3
     `, [userId, limit, offset]);

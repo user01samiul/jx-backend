@@ -171,15 +171,15 @@ export const getUserBettingHistoryService = async (
   limit: number = 50,
   offset: number = 0
 ) => {
-  // Get total count first
+  // Get total count first (INCLUDE PENDING BETS)
   const countResult = await pool.query(
-    `SELECT COUNT(*) as total_count FROM bets WHERE user_id = $1 AND outcome != 'pending'`,
+    `SELECT COUNT(*) as total_count FROM bets WHERE user_id = $1`,
     [userId]
   );
 
   const totalCount = parseInt(countResult.rows[0].total_count);
 
-  // Get paginated bets
+  // Get paginated bets (INCLUDE PENDING BETS)
   const result = await pool.query(
     `
     SELECT
@@ -200,7 +200,6 @@ export const getUserBettingHistoryService = async (
     FROM bets b
     LEFT JOIN games g ON b.game_id = g.id
     WHERE b.user_id = $1
-      AND b.outcome != 'pending'
     ORDER BY b.placed_at DESC
     LIMIT $2 OFFSET $3
     `,
