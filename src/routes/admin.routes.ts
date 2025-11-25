@@ -104,7 +104,9 @@ import {
   getBetAnalytics,
   getGamePerformance,
   getResultsDistribution,
-  getProviderPerformance
+  getProviderPerformance,
+  getPlayerAnalytics,
+  getTimeAnalytics
 } from "../api/admin/admin.bet-analytics.controller";
 import {
   getPendingKYC,
@@ -5666,56 +5668,83 @@ router.get("/rtp/report", validate({ query: RTPReportFiltersInput }), getRTPRepo
 router.get("/bets", authenticate, authorize(["Admin"]), async (req, res) => {
   const userId = req.query.user_id ? parseInt(req.query.user_id as string) : undefined;
   const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-  
+  const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+
   try {
-    const { MongoHybridService } = require("../services/mongo/mongo-hybrid.service");
-    const mongoHybridService = new MongoHybridService();
-    
-    // Get bets from MongoDB
-    const bets = await mongoHybridService.getBets(userId, limit);
-    
-    // Get user and game data from PostgreSQL
     const pool = require("../db/postgres").default;
-    const enrichedBets = await Promise.all(bets.map(async (bet: any) => {
-      // Get user data
-      const userResult = await pool.query('SELECT username FROM users WHERE id = $1', [bet.user_id]);
-      const username = userResult.rows[0]?.username || 'Unknown';
-      
-      // Get game data
-      const gameResult = await pool.query('SELECT name, category FROM games WHERE id = $1', [bet.game_id]);
-      const gameName = gameResult.rows[0]?.name || 'Unknown Game';
-      const category = gameResult.rows[0]?.category || 'slots';
-      
-      // Get transaction data
-      const transaction = await mongoHybridService.getTransaction(bet.transaction_id);
-      
-      // Get access token
-      const tokenResult = await pool.query(
-        'SELECT access_token FROM tokens WHERE user_id = $1 AND expired_at > NOW() ORDER BY created_at DESC LIMIT 1',
-        [bet.user_id]
-      );
-      const accessToken = tokenResult.rows[0]?.access_token || '';
-      
-      return {
-        bet_id: bet.id,
-        user_id: bet.user_id,
-        username: username,
-        game_id: bet.game_id,
-        game_name: gameName,
-        category: category,
-        bet_amount: bet.bet_amount,
-        win_amount: bet.win_amount,
-        outcome: bet.outcome,
-        placed_at: bet.placed_at,
-        result_at: bet.result_at,
-        transaction_id: transaction?.external_reference || bet.transaction_id,
-        access_token: accessToken,
-        balance_before: transaction?.balance_before,
-        balance_after: transaction?.balance_after
-      };
+
+    // Build query to get real bets from PostgreSQL
+    let query = `
+      SELECT
+        b.id as bet_id,
+        b.user_id,
+        u.username,
+        b.game_id,
+        g.name as game_name,
+        g.provider,
+        g.category,
+        b.bet_amount,
+        b.win_amount,
+        b.outcome,
+        b.created_at as placed_at,
+        b.result_at,
+        b.transaction_id,
+        t.external_reference,
+        t.balance_before,
+        t.balance_after,
+        tok.access_token
+      FROM bets b
+      LEFT JOIN users u ON b.user_id = u.id
+      LEFT JOIN games g ON b.game_id = g.id
+      LEFT JOIN transactions t ON b.transaction_id = t.id
+      LEFT JOIN LATERAL (
+        SELECT access_token
+        FROM tokens
+        WHERE user_id = b.user_id
+          AND expired_at > NOW()
+        ORDER BY created_at DESC
+        LIMIT 1
+      ) tok ON true
+    `;
+
+    const params: any[] = [];
+
+    // Add user filter if provided
+    if (userId) {
+      query += ` WHERE b.user_id = $1`;
+      params.push(userId);
+    }
+
+    // Order by most recent first
+    query += ` ORDER BY b.created_at DESC`;
+
+    // Add pagination
+    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const result = await pool.query(query, params);
+
+    // Format the response
+    const enrichedBets = result.rows.map((bet: any) => ({
+      bet_id: bet.bet_id,
+      user_id: bet.user_id,
+      username: bet.username || 'Unknown',
+      game_id: bet.game_id,
+      game_name: bet.game_name || 'Unknown Game',
+      provider: bet.provider || 'Unknown',
+      category: bet.category || 'slots',
+      bet_amount: parseFloat(bet.bet_amount) || 0,
+      win_amount: parseFloat(bet.win_amount) || 0,
+      outcome: bet.outcome || 'pending',
+      placed_at: bet.placed_at,
+      result_at: bet.result_at,
+      transaction_id: bet.external_reference || bet.transaction_id,
+      access_token: bet.access_token || '',
+      balance_before: parseFloat(bet.balance_before) || 0,
+      balance_after: parseFloat(bet.balance_after) || 0
     }));
-    
-    res.json({ success: true, data: enrichedBets });
+
+    res.json({ success: true, data: enrichedBets, total: enrichedBets.length });
   } catch (error) {
     console.error('Error fetching bets:', error);
     res.status(500).json({ success: false, message: 'Error fetching bets' });
@@ -6005,7 +6034,7 @@ router.get("/bets/statistics", authenticate, authorize(["Admin"]), getBetStatist
  * /api/admin/bets/analytics:
  *   get:
  *     summary: Get time-series betting analytics data
- *     description: Returns daily/hourly/weekly/monthly aggregated betting data for charts
+ *     description: Returns daily/hourly/weekly/monthly aggregated betting data for charts. Automatically uses hourly grouping for 24h timeRange.
  *     tags: [Admin Bets Analytics]
  *     security:
  *       - BearerAuth: []
@@ -6014,9 +6043,9 @@ router.get("/bets/statistics", authenticate, authorize(["Admin"]), getBetStatist
  *         name: timeRange
  *         schema:
  *           type: string
- *           enum: [7d, 30d, 90d]
+ *           enum: [24h, 7d, 30d, 90d]
  *           default: 7d
- *         description: Time range for analytics
+ *         description: Time range for analytics (24h automatically uses hourly grouping)
  *       - in: query
  *         name: groupBy
  *         schema:
@@ -6223,6 +6252,174 @@ router.get("/bets/results-distribution", authenticate, authorize(["Admin"]), get
  *         description: Unauthorized
  */
 router.get("/bets/provider-performance", authenticate, authorize(["Admin"]), getProviderPerformance);
+
+/**
+ * @swagger
+ * /api/admin/bets/player-analytics:
+ *   get:
+ *     summary: Get player-by-player betting analytics
+ *     description: Returns detailed analytics for individual players including betting patterns, win rates, and favorite games
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d, 90d, all]
+ *           default: 7d
+ *         description: Time range for analytics
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Number of players to return
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [totalBets, totalWagered, netProfit, winRate]
+ *           default: totalWagered
+ *         description: Sort players by this metric
+ *       - in: query
+ *         name: minBets
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 1000
+ *         description: Minimum number of bets required
+ *     responses:
+ *       200:
+ *         description: Player analytics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       playerId:
+ *                         type: integer
+ *                       username:
+ *                         type: string
+ *                       totalBets:
+ *                         type: integer
+ *                       totalWagered:
+ *                         type: number
+ *                       totalWon:
+ *                         type: number
+ *                       netProfit:
+ *                         type: number
+ *                       winRate:
+ *                         type: number
+ *                       avgBet:
+ *                         type: number
+ *                       lastActive:
+ *                         type: string
+ *                         format: date-time
+ *                       favoriteGame:
+ *                         type: string
+ *                       favoriteGameId:
+ *                         type: integer
+ *                       sessionCount:
+ *                         type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/player-analytics", authenticate, authorize(["Admin"]), getPlayerAnalytics);
+
+/**
+ * @swagger
+ * /api/admin/bets/time-analytics:
+ *   get:
+ *     summary: Get hourly betting pattern analytics
+ *     description: Returns betting patterns grouped by hour of day to identify peak activity times
+ *     tags: [Admin Bets Analytics]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: timeRange
+ *         schema:
+ *           type: string
+ *           enum: [24h, 7d, 30d, 90d, all]
+ *           default: 7d
+ *         description: Time range for analytics
+ *       - in: query
+ *         name: timezone
+ *         schema:
+ *           type: string
+ *           default: UTC
+ *         description: Timezone for hour grouping (e.g., UTC, America/New_York)
+ *     responses:
+ *       200:
+ *         description: Time analytics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       hour:
+ *                         type: integer
+ *                         minimum: 0
+ *                         maximum: 23
+ *                       totalBets:
+ *                         type: integer
+ *                       totalWagered:
+ *                         type: number
+ *                       activePlayers:
+ *                         type: integer
+ *                       winRate:
+ *                         type: number
+ *                 peakHours:
+ *                   type: object
+ *                   properties:
+ *                     mostBets:
+ *                       type: object
+ *                       properties:
+ *                         hour:
+ *                           type: integer
+ *                         count:
+ *                           type: integer
+ *                     mostWagered:
+ *                       type: object
+ *                       properties:
+ *                         hour:
+ *                           type: integer
+ *                         amount:
+ *                           type: number
+ *                     mostPlayers:
+ *                       type: object
+ *                       properties:
+ *                         hour:
+ *                           type: integer
+ *                         count:
+ *                           type: integer
+ *       401:
+ *         description: Unauthorized
+ */
+router.get("/bets/time-analytics", authenticate, authorize(["Admin"]), getTimeAnalytics);
 
 /**
  * @swagger
