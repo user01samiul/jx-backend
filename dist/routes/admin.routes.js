@@ -5606,7 +5606,7 @@ router.get("/bets/statistics", authenticate_1.authenticate, (0, authorize_1.auth
  * /api/admin/bets/analytics:
  *   get:
  *     summary: Get time-series betting analytics data
- *     description: Returns daily/hourly/weekly/monthly aggregated betting data for charts
+ *     description: Returns daily/hourly/weekly/monthly aggregated betting data for charts. Automatically uses hourly grouping for 24h timeRange.
  *     tags: [Admin Bets Analytics]
  *     security:
  *       - BearerAuth: []
@@ -5615,9 +5615,9 @@ router.get("/bets/statistics", authenticate_1.authenticate, (0, authorize_1.auth
  *         name: timeRange
  *         schema:
  *           type: string
- *           enum: [7d, 30d, 90d]
+ *           enum: [24h, 7d, 30d, 90d]
  *           default: 7d
- *         description: Time range for analytics
+ *         description: Time range for analytics (24h automatically uses hourly grouping)
  *       - in: query
  *         name: groupBy
  *         schema:

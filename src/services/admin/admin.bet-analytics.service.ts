@@ -184,32 +184,30 @@ export const getGamePerformanceService = async (
 ) => {
   const interval = getTimeRangeInterval(timeRange);
 
-  // Get total bets for popularity calculation
-  const totalBetsResult = await pool.query(
-    `SELECT COUNT(*) as total FROM bets WHERE placed_at >= NOW() - INTERVAL '${interval}'`
-  );
-  const totalBets = parseInt(totalBetsResult.rows[0].total) || 1;
-
   const performanceResult = await pool.query(
     `
     SELECT
       g.name as game,
       g.provider,
-      COUNT(*) as bets,
+      COUNT(b.id) as bets,
       COALESCE(SUM(b.bet_amount), 0) as wagered,
       COALESCE(SUM(CASE WHEN b.outcome = 'win' THEN b.win_amount ELSE 0 END), 0) as won,
       COALESCE(SUM(b.bet_amount) - SUM(CASE WHEN b.outcome = 'win' THEN b.win_amount ELSE 0 END), 0) as net_profit,
-      COALESCE(AVG(b.bet_amount), 0) as avg_bet,
-      COUNT(DISTINCT b.user_id) as player_count,
       CASE
-        WHEN SUM(b.bet_amount) > 0 THEN
-          (SUM(CASE WHEN b.outcome = 'win' THEN b.win_amount ELSE 0 END) / SUM(b.bet_amount) * 100)
+        WHEN COUNT(b.id) > 0 THEN COALESCE(SUM(b.bet_amount) / COUNT(b.id), 0)
+        ELSE 0
+      END as avg_bet,
+      CASE
+        WHEN COUNT(b.id) > 0 THEN
+          ROUND(CAST((COUNT(CASE WHEN b.outcome = 'win' THEN 1 END)::float / COUNT(b.id)::float) * 100 AS numeric), 2)
         ELSE 0
       END as win_rate
-    FROM bets b
-    LEFT JOIN games g ON b.game_id = g.id
-    WHERE b.placed_at >= NOW() - INTERVAL '${interval}'
+    FROM games g
+    LEFT JOIN bets b ON g.id = b.game_id
+      AND b.placed_at >= NOW() - INTERVAL '${interval}'
+      AND b.outcome IN ('win', 'lose', 'loss')
     GROUP BY g.id, g.name, g.provider
+    HAVING COUNT(b.id) > 0
     ORDER BY net_profit DESC
     LIMIT $1
     `,
@@ -217,20 +215,21 @@ export const getGamePerformanceService = async (
   );
 
   return performanceResult.rows.map(row => {
-    const gameBets = parseInt(row.bets) || 0;
-    const popularity = totalBets > 0 ? Math.round((gameBets / totalBets) * 100) : 0;
+    const bets = parseInt(row.bets) || 0;
+    const wagered = parseFloat(row.wagered) || 0;
+    const won = parseFloat(row.won) || 0;
+    const netProfit = parseFloat(row.net_profit) || 0;
+    const avgBet = parseFloat(row.avg_bet) || 0;
+    const winRate = parseFloat(row.win_rate) || 0;
 
     return {
       game: row.game || 'Unknown Game',
-      provider: row.provider || 'Unknown Provider',
-      totalBets: gameBets,
-      totalWagered: parseFloat(row.wagered) || 0,
-      totalWon: parseFloat(row.won) || 0,
-      netProfit: parseFloat(row.net_profit) || 0,
-      avgBet: parseFloat(row.avg_bet) || 0,
-      winRate: parseFloat(row.win_rate) || 0,
-      playerCount: parseInt(row.player_count) || 0,
-      popularity: popularity
+      bets: bets,
+      wagered: parseFloat(wagered.toFixed(2)),
+      won: parseFloat(won.toFixed(2)),
+      netProfit: parseFloat(netProfit.toFixed(2)),
+      avgBet: parseFloat(avgBet.toFixed(2)),
+      winRate: parseFloat(winRate.toFixed(2))
     };
   });
 };

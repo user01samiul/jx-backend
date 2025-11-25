@@ -10,7 +10,7 @@ const postgres_1 = __importDefault(require("../../db/postgres"));
  */
 const getTimeRangeInterval = (timeRange) => {
     const intervals = {
-        '24h': '1 day',
+        '24h': '24 hours',
         '7d': '7 days',
         '30d': '30 days',
         '90d': '90 days',
@@ -67,15 +67,15 @@ const getBetStatisticsService = async (timeRange = '7d') => {
         ? ((currentActivePlayers - previousActivePlayers) / previousActivePlayers * 100)
         : 0;
     return {
-        totalBets: parseInt(currentStats.total_bets),
-        totalWagered: parseFloat(currentStats.total_wagered),
-        totalWon: parseFloat(currentStats.total_won),
-        totalLost: parseFloat(currentStats.total_lost),
-        netProfit: parseFloat(currentStats.net_profit),
-        activeBets: parseInt(currentStats.active_bets),
-        betGrowth: parseFloat(betGrowth.toFixed(2)),
-        revenueGrowth: parseFloat(revenueGrowth.toFixed(2)),
-        playerGrowth: parseFloat(playerGrowth.toFixed(2))
+        totalBets: parseInt(currentStats.total_bets) || 0,
+        totalWagered: parseFloat(currentStats.total_wagered) || 0,
+        totalWon: parseFloat(currentStats.total_won) || 0,
+        totalLost: parseFloat(currentStats.total_lost) || 0,
+        netProfit: parseFloat(currentStats.net_profit) || 0,
+        activeBets: parseInt(currentStats.active_bets) || 0,
+        betGrowth: isNaN(betGrowth) ? 0 : parseFloat(betGrowth.toFixed(2)),
+        revenueGrowth: isNaN(revenueGrowth) ? 0 : parseFloat(revenueGrowth.toFixed(2)),
+        playerGrowth: isNaN(playerGrowth) ? 0 : parseFloat(playerGrowth.toFixed(2))
     };
 };
 exports.getBetStatisticsService = getBetStatisticsService;
@@ -86,6 +86,10 @@ exports.getBetStatisticsService = getBetStatisticsService;
  */
 const getBetAnalyticsService = async (timeRange = '7d', groupBy = 'day') => {
     const interval = getTimeRangeInterval(timeRange);
+    // For 24h, automatically use hourly grouping for better granularity
+    if (timeRange === '24h' && groupBy === 'day') {
+        groupBy = 'hour';
+    }
     // Determine date truncation based on groupBy
     let dateTrunc = 'day';
     if (groupBy === 'hour')
@@ -113,21 +117,21 @@ const getBetAnalyticsService = async (timeRange = '7d', groupBy = 'day') => {
     ORDER BY date ASC
     `);
     const dataRows = analyticsResult.rows.map(row => {
-        const totalWagered = parseFloat(row.total_wagered);
-        const netProfit = parseFloat(row.net_profit);
+        const totalWagered = parseFloat(row.total_wagered) || 0;
+        const netProfit = parseFloat(row.net_profit) || 0;
         const roi = totalWagered > 0 ? parseFloat(((netProfit / totalWagered) * 100).toFixed(2)) : 0;
         return {
             date: row.date,
-            totalBets: parseInt(row.total_bets),
+            totalBets: parseInt(row.total_bets) || 0,
             totalWagered: totalWagered,
-            totalWon: parseFloat(row.total_won),
+            totalWon: parseFloat(row.total_won) || 0,
             netProfit: netProfit,
-            activePlayers: parseInt(row.active_players),
+            activePlayers: parseInt(row.active_players) || 0,
             winRate: parseFloat(row.win_rate) || 0,
             avgBet: parseFloat(row.avg_bet) || 0,
             avgWin: parseFloat(row.avg_win) || 0,
             avgLoss: parseFloat(row.avg_loss) || 0,
-            roi: roi
+            roi: isNaN(roi) ? 0 : roi
         };
     });
     // Calculate summary
@@ -159,33 +163,45 @@ const getGamePerformanceService = async (timeRange = '7d', limit = 10) => {
     SELECT
       g.name as game,
       g.provider,
-      COUNT(*) as bets,
+      COUNT(b.id) as bets,
       COALESCE(SUM(b.bet_amount), 0) as wagered,
       COALESCE(SUM(CASE WHEN b.outcome = 'win' THEN b.win_amount ELSE 0 END), 0) as won,
       COALESCE(SUM(b.bet_amount) - SUM(CASE WHEN b.outcome = 'win' THEN b.win_amount ELSE 0 END), 0) as net_profit,
-      COALESCE(AVG(b.bet_amount), 0) as avg_bet,
       CASE
-        WHEN SUM(b.bet_amount) > 0 THEN
-          (SUM(CASE WHEN b.outcome = 'win' THEN b.win_amount ELSE 0 END) / SUM(b.bet_amount) * 100)
+        WHEN COUNT(b.id) > 0 THEN COALESCE(SUM(b.bet_amount) / COUNT(b.id), 0)
+        ELSE 0
+      END as avg_bet,
+      CASE
+        WHEN COUNT(b.id) > 0 THEN
+          ROUND((COUNT(CASE WHEN b.outcome = 'win' THEN 1 END)::float / COUNT(b.id)::float) * 100, 2)
         ELSE 0
       END as win_rate
-    FROM bets b
-    LEFT JOIN games g ON b.game_id = g.id
-    WHERE b.placed_at >= NOW() - INTERVAL '${interval}'
+    FROM games g
+    LEFT JOIN bets b ON g.id = b.game_id
+      AND b.placed_at >= NOW() - INTERVAL '${interval}'
+      AND b.outcome IN ('win', 'lose', 'loss')
     GROUP BY g.id, g.name, g.provider
+    HAVING COUNT(b.id) > 0
     ORDER BY net_profit DESC
     LIMIT $1
     `, [limit]);
-    return performanceResult.rows.map(row => ({
-        game: row.game || 'Unknown Game',
-        provider: row.provider || 'Unknown Provider',
-        bets: parseInt(row.bets),
-        wagered: parseFloat(row.wagered),
-        won: parseFloat(row.won),
-        netProfit: parseFloat(row.net_profit),
-        avgBet: parseFloat(parseFloat(row.avg_bet).toFixed(2)),
-        winRate: parseFloat(parseFloat(row.win_rate).toFixed(2))
-    }));
+    return performanceResult.rows.map(row => {
+        const bets = parseInt(row.bets) || 0;
+        const wagered = parseFloat(row.wagered) || 0;
+        const won = parseFloat(row.won) || 0;
+        const netProfit = parseFloat(row.net_profit) || 0;
+        const avgBet = parseFloat(row.avg_bet) || 0;
+        const winRate = parseFloat(row.win_rate) || 0;
+        return {
+            game: row.game || 'Unknown Game',
+            bets: bets,
+            wagered: parseFloat(wagered.toFixed(2)),
+            won: parseFloat(won.toFixed(2)),
+            netProfit: parseFloat(netProfit.toFixed(2)),
+            avgBet: parseFloat(avgBet.toFixed(2)),
+            winRate: parseFloat(winRate.toFixed(2))
+        };
+    });
 };
 exports.getGamePerformanceService = getGamePerformanceService;
 /**
@@ -225,10 +241,10 @@ const getResultsDistributionService = async (timeRange = '7d') => {
     ORDER BY rc.count DESC
     `);
     return distributionResult.rows.map(row => ({
-        result: row.result,
-        count: parseInt(row.count),
-        amount: parseFloat(row.amount),
-        percentage: parseFloat(parseFloat(row.percentage).toFixed(2))
+        result: row.result || 'Unknown',
+        count: parseInt(row.count) || 0,
+        amount: parseFloat(row.amount) || 0,
+        percentage: parseFloat(row.percentage) || 0
     }));
 };
 exports.getResultsDistributionService = getResultsDistributionService;
@@ -261,13 +277,13 @@ const getProviderPerformanceService = async (timeRange = '7d', limit = 10) => {
     `, [limit]);
     return performanceResult.rows.map(row => ({
         provider: row.provider || 'Unknown Provider',
-        bets: parseInt(row.bets),
-        wagered: parseFloat(row.wagered),
-        won: parseFloat(row.won),
-        netProfit: parseFloat(row.net_profit),
-        avgBet: parseFloat(parseFloat(row.avg_bet).toFixed(2)),
-        uniquePlayers: parseInt(row.unique_players),
-        winRate: parseFloat(parseFloat(row.win_rate).toFixed(2))
+        totalBets: parseInt(row.bets) || 0,
+        totalWagered: parseFloat(row.wagered) || 0,
+        totalWon: parseFloat(row.won) || 0,
+        netProfit: parseFloat(row.net_profit) || 0,
+        avgBet: parseFloat(row.avg_bet) || 0,
+        uniquePlayers: parseInt(row.unique_players) || 0,
+        winRate: parseFloat(row.win_rate) || 0
     }));
 };
 exports.getProviderPerformanceService = getProviderPerformanceService;
@@ -333,18 +349,18 @@ const getPlayerAnalyticsService = async (timeRange = '7d', limit = 10, sortBy = 
     LIMIT $3
     `, [minBets, sortBy, limit]);
     return playerAnalyticsResult.rows.map(row => ({
-        playerId: parseInt(row.playerId),
-        username: row.username,
-        totalBets: parseInt(row.totalBets),
-        totalWagered: parseFloat(row.totalWagered),
-        totalWon: parseFloat(row.totalWon),
-        netProfit: parseFloat(row.netProfit),
+        playerId: parseInt(row.playerId) || 0,
+        username: row.username || 'Unknown',
+        totalBets: parseInt(row.totalBets) || 0,
+        totalWagered: parseFloat(row.totalWagered) || 0,
+        totalWon: parseFloat(row.totalWon) || 0,
+        netProfit: parseFloat(row.netProfit) || 0,
         winRate: parseFloat(row.winRate) || 0,
         avgBet: parseFloat(row.avgBet) || 0,
         lastActive: row.lastActive,
-        favoriteGame: row.favoriteGame,
-        favoriteGameId: parseInt(row.favoriteGameId),
-        sessionCount: parseInt(row.sessionCount)
+        favoriteGame: row.favoriteGame || 'N/A',
+        favoriteGameId: parseInt(row.favoriteGameId) || 0,
+        sessionCount: parseInt(row.sessionCount) || 0
     }));
 };
 exports.getPlayerAnalyticsService = getPlayerAnalyticsService;
@@ -380,33 +396,43 @@ const getTimeAnalyticsService = async (timeRange = '7d', timezone = 'UTC') => {
     `, [timezone]);
     const hourlyData = timeAnalyticsResult.rows.map(row => ({
         hour: parseInt(row.hour),
-        totalBets: parseInt(row.total_bets),
-        totalWagered: parseFloat(row.total_wagered),
-        activePlayers: parseInt(row.active_players),
+        totalBets: parseInt(row.total_bets) || 0,
+        totalWagered: parseFloat(row.total_wagered) || 0,
+        activePlayers: parseInt(row.active_players) || 0,
         winRate: parseFloat(row.win_rate) || 0
     }));
-    // Calculate peak hours
-    const peakHours = {
-        mostBets: hourlyData.reduce((prev, current) => current.totalBets > prev.totalBets ? current : prev, { hour: 0, totalBets: 0 }),
-        mostWagered: hourlyData.reduce((prev, current) => current.totalWagered > prev.totalWagered ? current : prev, { hour: 0, totalWagered: 0 }),
-        mostPlayers: hourlyData.reduce((prev, current) => current.activePlayers > prev.activePlayers ? current : prev, { hour: 0, activePlayers: 0 })
-    };
-    return {
-        data: hourlyData,
-        peakHours: {
+    // Calculate peak hours with safe defaults
+    let peakHours;
+    if (hourlyData.length === 0) {
+        // Return safe defaults when no data
+        peakHours = {
+            mostBets: { hour: 0, count: 0 },
+            mostWagered: { hour: 0, amount: 0 },
+            mostPlayers: { hour: 0, count: 0 }
+        };
+    }
+    else {
+        const mostBets = hourlyData.reduce((prev, current) => current.totalBets > prev.totalBets ? current : prev, hourlyData[0]);
+        const mostWagered = hourlyData.reduce((prev, current) => current.totalWagered > prev.totalWagered ? current : prev, hourlyData[0]);
+        const mostPlayers = hourlyData.reduce((prev, current) => current.activePlayers > prev.activePlayers ? current : prev, hourlyData[0]);
+        peakHours = {
             mostBets: {
-                hour: peakHours.mostBets.hour,
-                count: peakHours.mostBets.totalBets
+                hour: mostBets.hour || 0,
+                count: mostBets.totalBets || 0
             },
             mostWagered: {
-                hour: peakHours.mostWagered.hour,
-                amount: peakHours.mostWagered.totalWagered
+                hour: mostWagered.hour || 0,
+                amount: mostWagered.totalWagered || 0
             },
             mostPlayers: {
-                hour: peakHours.mostPlayers.hour,
-                count: peakHours.mostPlayers.activePlayers
+                hour: mostPlayers.hour || 0,
+                count: mostPlayers.activePlayers || 0
             }
-        }
+        };
+    }
+    return {
+        data: hourlyData,
+        peakHours: peakHours
     };
 };
 exports.getTimeAnalyticsService = getTimeAnalyticsService;

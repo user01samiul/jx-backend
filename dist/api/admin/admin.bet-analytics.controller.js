@@ -39,7 +39,7 @@ const getBetAnalytics = async (req, res, next) => {
         const timeRange = req.query.timeRange || '7d';
         const groupBy = req.query.groupBy || 'day';
         // Validate timeRange
-        const validTimeRanges = ['7d', '30d', '90d'];
+        const validTimeRanges = ['24h', '7d', '30d', '90d'];
         if (!validTimeRanges.includes(timeRange)) {
             res.status(400).json({
                 success: false,
