@@ -17,7 +17,9 @@
       "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT b.user_id, COUNT(DISTINCT g.provider) as provider_count, COUNT(*) as total_bets FROM bets b LEFT JOIN games g ON b.game_id = g.id GROUP BY b.user_id HAVING COUNT(DISTINCT g.provider) > 1 LIMIT 5;\")",
       "Bash(npm run build:*)",
       "Bash(node test-bet-analytics-apis.js:*)",
-      "Bash(pm2 list:*)"
+      "Bash(pm2 list:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT COUNT(*) as total_bets FROM bets;\")",
+      "Bash(pm2 restart:*)"
     ],
     "deny": [],
     "ask": []
