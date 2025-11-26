@@ -107,7 +107,17 @@ class WithdrawalService {
             if (request.amount > settings.max_withdrawal_amount) {
                 throw new Error(`Maximum withdrawal amount is $${settings.max_withdrawal_amount}`);
             }
-            // 7. Balance check
+            // 7. Bonus system check - MUST come before balance check
+            // Check for active bonuses and cancel/forfeit them if required
+            try {
+                const { BonusEngineService } = require('../bonus/bonus-engine.service');
+                await BonusEngineService.handleWithdrawal(request.user_id);
+                console.log(`[WITHDRAWAL] Bonus check passed for user ${request.user_id}`);
+            }
+            catch (bonusError) {
+                throw new Error(bonusError.message || 'Active bonuses prevent withdrawal. Complete wagering requirements first.');
+            }
+            // 8. Balance check
             if (parseFloat(user.balance) < request.amount) {
                 throw new Error(`Insufficient balance. Available: $${parseFloat(user.balance).toFixed(2)}`);
             }

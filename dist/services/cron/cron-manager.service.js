@@ -63,11 +63,27 @@ class CronManagerService {
         }, 24 * 60 * 60 * 1000); // Check daily
         console.log('[CRON_MANAGER] Monthly cleanup interval set to daily check (runs on 1st of month)');
         this.cronIntervals.push(monthlyCleanupInterval);
+        // Bonus expiry check - run daily at midnight
+        const bonusExpiryInterval = setInterval(() => {
+            console.log('[CRON_MANAGER] Running bonus expiry check...');
+            (async () => {
+                try {
+                    const { BonusEngineService } = require('../bonus/bonus-engine.service');
+                    const expiredCount = await BonusEngineService.expireBonuses();
+                    console.log(`[CRON_MANAGER] Bonus expiry check completed: ${expiredCount} bonuses expired`);
+                }
+                catch (error) {
+                    console.error('[CRON_MANAGER] Error in bonus expiry check:', error);
+                }
+            })();
+        }, 24 * 60 * 60 * 1000); // 24 hours
+        this.cronIntervals.push(bonusExpiryInterval);
         console.log('[CRON_MANAGER] Background cron jobs started successfully');
         console.log('[CRON_MANAGER] - Auto-adjustment: Every 30 minutes');
         console.log('[CRON_MANAGER] - Daily summary: Every 24 hours');
         console.log('[CRON_MANAGER] - Weekly analytics: Every 7 days');
         console.log('[CRON_MANAGER] - Monthly cleanup: Every 30 days');
+        console.log('[CRON_MANAGER] - Bonus expiry: Every 24 hours');
         // Run initial auto-adjustment check after 1 minute
         setTimeout(() => {
             console.log('[CRON_MANAGER] Running initial auto-adjustment check...');

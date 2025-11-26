@@ -479,13 +479,49 @@ export const cancelGame = async (
     console.log(`[CANCEL_GAME_CONTROLLER] User ${userId} requesting cancellation of transaction ${transaction_id}`);
 
     const result = await cancelGameService(userId, transaction_id, game_id, reason);
-    
-    res.status(200).json({ 
-      success: true, 
+
+    res.status(200).json({
+      success: true,
       message: "Transaction cancelled successfully",
-      data: result 
+      data: result
     });
   } catch (err) {
     next(err);
+  }
+};
+
+// Search games by code, name, or ID (for autocomplete)
+export const searchGames = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { q, limit } = req.query;
+
+    if (!q || (q as string).length < 2) {
+      res.status(400).json({
+        success: false,
+        message: 'Search query must be at least 2 characters'
+      });
+      return;
+    }
+
+    // Import here to avoid circular dependency
+    const { WageringEngineService } = require('../../services/bonus/wagering-engine.service');
+    const games = await WageringEngineService.searchGames(
+      q as string,
+      limit ? parseInt(limit as string) : 20
+    );
+
+    res.status(200).json({
+      success: true,
+      data: games
+    });
+  } catch (error: any) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message
+    });
   }
 };

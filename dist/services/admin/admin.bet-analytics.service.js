@@ -173,7 +173,7 @@ const getGamePerformanceService = async (timeRange = '7d', limit = 10) => {
       END as avg_bet,
       CASE
         WHEN COUNT(b.id) > 0 THEN
-          ROUND((COUNT(CASE WHEN b.outcome = 'win' THEN 1 END)::float / COUNT(b.id)::float) * 100, 2)
+          ROUND(CAST((COUNT(CASE WHEN b.outcome = 'win' THEN 1 END)::float / COUNT(b.id)::float) * 100 AS numeric), 2)
         ELSE 0
       END as win_rate
     FROM games g
