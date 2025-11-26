@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cancelGame = exports.getGamesByCategory = exports.getBetResults = exports.getGameDataSample = exports.playGame = exports.getAvailableGamesLegacy = exports.processBetResult = exports.placeBet = exports.recordGamePlay = exports.toggleGameFavorite = exports.getGameStatistics = exports.getPopularGames = exports.getHotGames = exports.getNewGames = exports.getFeaturedGames = exports.getGameProviders = exports.getGameCategories = exports.getGameById = exports.getAvailableGames = void 0;
+exports.searchGames = exports.cancelGame = exports.getGamesByCategory = exports.getBetResults = exports.getGameDataSample = exports.playGame = exports.getAvailableGamesLegacy = exports.processBetResult = exports.placeBet = exports.recordGamePlay = exports.toggleGameFavorite = exports.getGameStatistics = exports.getPopularGames = exports.getHotGames = exports.getNewGames = exports.getFeaturedGames = exports.getGameProviders = exports.getGameCategories = exports.getGameById = exports.getAvailableGames = void 0;
 const game_service_1 = require("../../services/game/game.service");
 // Get all available games with filtering
 const getAvailableGames = async (req, res, next) => {
@@ -396,3 +396,30 @@ const cancelGame = async (req, res, next) => {
     }
 };
 exports.cancelGame = cancelGame;
+// Search games by code, name, or ID (for autocomplete)
+const searchGames = async (req, res, next) => {
+    try {
+        const { q, limit } = req.query;
+        if (!q || q.length < 2) {
+            res.status(400).json({
+                success: false,
+                message: 'Search query must be at least 2 characters'
+            });
+            return;
+        }
+        // Import here to avoid circular dependency
+        const { WageringEngineService } = require('../../services/bonus/wagering-engine.service');
+        const games = await WageringEngineService.searchGames(q, limit ? parseInt(limit) : 20);
+        res.status(200).json({
+            success: true,
+            data: games
+        });
+    }
+    catch (error) {
+        res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+exports.searchGames = searchGames;

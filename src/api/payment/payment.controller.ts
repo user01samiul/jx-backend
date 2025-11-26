@@ -340,6 +340,24 @@ export const checkPaymentStatus = async (
             balance_before: `$${balanceResult.balance_before}`,
             balance_after: `$${balanceResult.balance_after}`
           });
+
+          // BONUS SYSTEM INTEGRATION: Check for eligible deposit bonuses
+          try {
+            const { BonusEngineService } = require('../../services/bonus/bonus-engine.service');
+            const metadata = JSON.parse(transaction.metadata || '{}');
+            const paymentMethodId = metadata.gateway_id || null;
+
+            await BonusEngineService.handleDeposit(
+              userId,
+              usdAmount,  // USD amount
+              parseInt(transaction_id),
+              paymentMethodId
+            );
+            console.log(`[STATUS_CHECK] Deposit bonus check completed for user ${userId}`);
+          } catch (bonusError) {
+            console.error(`[STATUS_CHECK] Deposit bonus check failed (non-critical):`, bonusError);
+            // Don't fail deposit if bonus fails
+          }
         } catch (error) {
           console.error(`[STATUS_CHECK] Error updating balance for user ${userId}:`, error);
           // Don't fail the status check, just log the error
@@ -459,8 +477,9 @@ export const handleWebhook = async (
     // If payment completed, update user balance using BalanceService
     if (webhookResult.status === 'completed' && transaction.status !== 'completed') {
       try {
-        // Import BalanceService
+        // Import BalanceService and BonusEngineService
         const { BalanceService } = require('../../services/user/balance.service');
+        const { BonusEngineService } = require('../../services/bonus/bonus-engine.service');
 
         if (transaction.type === 'deposit') {
           // Extract crypto details from metadata
@@ -493,6 +512,20 @@ export const handleWebhook = async (
               exchange_rate: exchangeRate
             }
           );
+
+          // 🎁 AUTO-GRANT DEPOSIT BONUSES
+          try {
+            await BonusEngineService.handleDeposit(
+              transaction.user_id,
+              usdAmount,  // Use USD amount for bonus calculations
+              transaction.id,
+              gatewayConfig.id
+            );
+            console.log(`[WEBHOOK] ✅ Checked and granted deposit bonuses for user ${transaction.user_id}`);
+          } catch (bonusError) {
+            console.error(`[WEBHOOK] ⚠️ Error granting deposit bonus:`, bonusError);
+            // Don't fail the deposit if bonus grant fails
+          }
 
           // Log successful deposit
           await logUserActivity({

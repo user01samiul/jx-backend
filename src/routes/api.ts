@@ -31,7 +31,7 @@ import {
 } from "../api/user/messages.controller";
 import { proxyGameContent } from "../services/game/game-proxy.service";
 import { GetHome } from "../api/home/home.controller";
-import { 
+import {
   getAvailableGames,
   getGameById,
   getGameCategories,
@@ -50,7 +50,8 @@ import {
   getGameDataSample,
   getBetResults,
   getGamesByCategory,
-  cancelGame
+  cancelGame,
+  searchGames
 } from "../api/game/game.controller";
 import { authenticate } from "../middlewares/authenticate";
 import { authorize } from "../middlewares/authorize";
@@ -83,6 +84,7 @@ import templateRoutes from "./template.routes";
 import settingsRoutes from "./settings.routes";
 import promotionRoutes from "./promotion.routes";
 import notificationRoutes from "./notification.routes";
+import bonusRoutes from "./bonus.routes";
 import pool from "../db/postgres";
 import { getPaymentGatewaysService } from "../services/admin/payment-gateway.service";
 import { PaymentGatewayFiltersInput } from "../api/admin/admin.schema";
@@ -1064,6 +1066,32 @@ router.get("/games/popular", getPopularGames);
  *         description: Invalid filter parameters
  */
 router.get("/games/cate", validateRequest({ query: GameCategoryFiltersSchema }), getGamesByCategory);
+
+/**
+ * @swagger
+ * /api/games/search:
+ *   get:
+ *     summary: Search games by code, name, or ID (for autocomplete)
+ *     tags:
+ *       - Game
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: Search query (min 2 characters) - can search by game code, name, or ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: List of matching games
+ */
+router.get("/games/search", authenticate, authorize(['Admin', 'Manager', 'Support']), searchGames);
 
 /**
  * @openapi
@@ -3690,6 +3718,7 @@ router.use("/admin", adminRoutes);
 router.use("/template", templateRoutes);
 router.use("/promotions", promotionRoutes);
 router.use("/notifications", notificationRoutes);
+router.use(bonusRoutes);
 
 // Golden Pot Lottery Routes
 import {

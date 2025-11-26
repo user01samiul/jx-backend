@@ -24,6 +24,7 @@ const template_routes_1 = __importDefault(require("./template.routes"));
 const settings_routes_1 = __importDefault(require("./settings.routes"));
 const promotion_routes_1 = __importDefault(require("./promotion.routes"));
 const notification_routes_1 = __importDefault(require("./notification.routes"));
+const bonus_routes_1 = __importDefault(require("./bonus.routes"));
 const postgres_1 = __importDefault(require("../db/postgres"));
 const payment_gateway_service_1 = require("../services/admin/payment-gateway.service");
 const admin_schema_1 = require("../api/admin/admin.schema");
@@ -979,6 +980,31 @@ router.get("/games/popular", game_controller_1.getPopularGames);
  *         description: Invalid filter parameters
  */
 router.get("/games/cate", (0, validate_1.validate)({ query: game_schema_1.GameCategoryFiltersSchema }), game_controller_1.getGamesByCategory);
+/**
+ * @swagger
+ * /api/games/search:
+ *   get:
+ *     summary: Search games by code, name, or ID (for autocomplete)
+ *     tags:
+ *       - Game
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: Search query (min 2 characters) - can search by game code, name, or ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: List of matching games
+ */
+router.get("/games/search", authenticate_1.authenticate, (0, authorize_1.authorize)(['Admin', 'Manager', 'Support']), game_controller_1.searchGames);
 /**
  * @openapi
  * /api/games/{id}:
@@ -3421,6 +3447,7 @@ router.use("/admin", admin_routes_1.default);
 router.use("/template", template_routes_1.default);
 router.use("/promotions", promotion_routes_1.default);
 router.use("/notifications", notification_routes_1.default);
+router.use(bonus_routes_1.default);
 // Golden Pot Lottery Routes
 const golden_pot_controller_1 = require("../api/golden-pot/golden-pot.controller");
 const banners_controller_1 = require("../api/banners/banners.controller");

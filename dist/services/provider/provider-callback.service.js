@@ -45,6 +45,7 @@ const callback_filter_service_1 = require("./callback-filter.service");
 const profit_control_service_1 = require("../profit/profit-control.service");
 const currency_utils_1 = require("../../utils/currency.utils");
 const env_1 = require("../../configs/env");
+const wagering_engine_service_1 = require("../bonus/wagering-engine.service");
 // Removed BalanceConsistencyService import - now using simple stored balances
 console.log('[CRITICAL] Provider callback service loaded - VERSION 2.0');
 class ProviderCallbackService {
@@ -1207,9 +1208,26 @@ class ProviderCallbackService {
                             transaction_type: transactionType
                         }
                     });
-                    // UNIFIED WALLET: Update main balance in PostgreSQL
+                    // BONUS SYSTEM INTEGRATION: Handle dual wallet logic for bets
+                    let usedFromMain = betAmount;
+                    let usedFromBonus = 0;
+                    let betUsedBonus = false;
                     try {
-                        const updateResult = await postgres_1.default.query('UPDATE user_balances SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING balance', [betAmount, user.user_id]);
+                        const { BonusEngineService } = require('../bonus/bonus-engine.service');
+                        const bonusResult = await BonusEngineService.processBet(user.user_id, betAmount, game_id || 0, transactionResult || 0);
+                        usedFromMain = bonusResult.usedMainWallet;
+                        usedFromBonus = bonusResult.usedBonusWallet;
+                        betUsedBonus = usedFromBonus > 0;
+                        console.log(`[BONUS] Bet processed: Main=${usedFromMain}, Bonus=${usedFromBonus}`);
+                    }
+                    catch (bonusError) {
+                        console.log(`[BONUS] Bonus system not available or error, using main wallet only:`, bonusError.message);
+                        // Continue with normal flow if bonus system fails
+                    }
+                    // UNIFIED WALLET: Update main balance in PostgreSQL (only deduct what was used from main)
+                    try {
+                        const updateResult = await postgres_1.default.query('UPDATE user_balances SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING balance', [usedFromMain, user.user_id] // Only deduct what was used from main wallet
+                        );
                         if (updateResult.rows.length > 0) {
                             const actualBalanceAfter = parseFloat(updateResult.rows[0].balance);
                             console.log(`[UNIFIED_WALLET] Balance updated: ${this.formatCurrency(currentCategoryBalance)} - ${this.formatCurrency(betAmount)} = ${this.formatCurrency(actualBalanceAfter)}`);
@@ -1271,6 +1289,54 @@ class ProviderCallbackService {
                     });
                     // Log balance update for audit
                     console.log(`[BALANCE_AUDIT] Bet processed - Category: ${category}, Balance: ${currentCategoryBalance} -> ${newCategoryBalance}`);
+                    // ==================== BONUS WAGERING INTEGRATION ====================
+                    // Process bet for bonus wagering (only for BET transactions)
+                    try {
+                        // Get active bonuses for this user
+                        const activeBonusesResult = await postgres_1.default.query(`SELECT id, bonus_amount, wager_requirement_amount, wager_progress_amount
+               FROM bonus_instances
+               WHERE player_id = $1
+               AND status IN ('active', 'wagering')
+               AND expires_at > NOW()
+               ORDER BY granted_at ASC`, [user.user_id]);
+                        if (activeBonusesResult.rows.length > 0) {
+                            console.log(`[WAGERING] Found ${activeBonusesResult.rows.length} active bonus(es) for user ${user.user_id}`);
+                            // Process wagering for each active bonus
+                            for (const bonus of activeBonusesResult.rows) {
+                                try {
+                                    const wageringResult = await wagering_engine_service_1.WageringEngineService.processBetWagering(bonus.id, // bonus_instance_id
+                                    user.user_id, // player_id
+                                    game_id || 'unknown', // game_code (use game_id from callback)
+                                    betAmount // bet amount (positive value)
+                                    );
+                                    console.log(`[WAGERING] ✅ Processed bet for bonus ${bonus.id}:`, {
+                                        bonus_id: bonus.id,
+                                        bet_amount: this.formatCurrency(betAmount),
+                                        wager_contribution: this.formatCurrency(wageringResult.wagerContribution),
+                                        is_completed: wageringResult.isCompleted,
+                                        progress: `${wageringResult.progressPercentage.toFixed(2)}%`
+                                    });
+                                    // If wagering completed, log it
+                                    if (wageringResult.isCompleted) {
+                                        console.log(`[WAGERING] 🎉 Bonus ${bonus.id} wagering COMPLETED! Funds released to main wallet.`);
+                                    }
+                                }
+                                catch (wageringError) {
+                                    // Don't fail the bet transaction if wagering processing fails
+                                    console.error(`[WAGERING] ⚠️ Error processing wagering for bonus ${bonus.id}:`, wageringError);
+                                    // Log the error but continue - bet was already processed successfully
+                                }
+                            }
+                        }
+                        else {
+                            console.log(`[WAGERING] No active bonuses found for user ${user.user_id}`);
+                        }
+                    }
+                    catch (bonusCheckError) {
+                        // Don't fail the bet if bonus checking fails
+                        console.error(`[WAGERING] ⚠️ Error checking active bonuses:`, bonusCheckError);
+                    }
+                    // ==================== END WAGERING INTEGRATION ====================
                 }
                 else if (transactionType === 'WIN' || parsedAmount > 0) {
                     type = 'win';
@@ -1442,12 +1508,51 @@ class ProviderCallbackService {
                     catch (error) {
                         console.error(`[ERROR] Failed to insert WIN transaction into PostgreSQL transactions table:`, error);
                     }
-                    // UNIFIED WALLET: Update main balance in PostgreSQL
+                    // BONUS SYSTEM INTEGRATION: Handle dual wallet logic for wins
+                    // Check if original bet used bonus money to determine where winnings should go
+                    let betUsedBonus = false;
                     try {
-                        const updateResult = await postgres_1.default.query('UPDATE user_balances SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING balance', [profitControl.adjustedAmount, user.user_id]);
-                        if (updateResult.rows.length > 0) {
-                            const actualBalanceAfter = parseFloat(updateResult.rows[0].balance);
-                            console.log(`[UNIFIED_WALLET] Balance updated: ${this.formatCurrency(currentCategoryBalance)} + ${this.formatCurrency(profitControl.adjustedAmount)} = ${this.formatCurrency(actualBalanceAfter)}`);
+                        // Try to find if the bet used bonus money by checking bonus transactions
+                        const { BonusTransactionService } = require('../bonus/bonus-transaction.service');
+                        const bonusBets = await postgres_1.default.query(`SELECT COUNT(*) as count FROM bonus_transactions
+               WHERE player_id = $1
+               AND transaction_type = 'bet_placed'
+               AND bet_id = $2`, [user.user_id, betId]);
+                        betUsedBonus = bonusBets.rows[0]?.count > 0;
+                        console.log(`[BONUS] Bet used bonus: ${betUsedBonus}`);
+                    }
+                    catch (error) {
+                        console.log(`[BONUS] Could not determine if bet used bonus, defaulting to main wallet`);
+                    }
+                    // Process win through bonus system
+                    let winToMain = profitControl.adjustedAmount;
+                    try {
+                        const { BonusEngineService } = require('../bonus/bonus-engine.service');
+                        const winResult = await BonusEngineService.processWin(user.user_id, profitControl.adjustedAmount, game_id || 0, betId || 0, betUsedBonus);
+                        // If win went to bonus wallet, don't add to main wallet
+                        if (winResult.walletType === 'bonus') {
+                            winToMain = 0;
+                            console.log(`[BONUS] Win credited to bonus wallet: ${profitControl.adjustedAmount}`);
+                        }
+                        else {
+                            console.log(`[BONUS] Win credited to main wallet: ${profitControl.adjustedAmount}`);
+                        }
+                    }
+                    catch (bonusError) {
+                        console.log(`[BONUS] Bonus system not available or error, using main wallet:`, bonusError.message);
+                        // Continue with normal flow if bonus system fails
+                    }
+                    // UNIFIED WALLET: Update main balance in PostgreSQL (only if win goes to main)
+                    try {
+                        if (winToMain > 0) {
+                            const updateResult = await postgres_1.default.query('UPDATE user_balances SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2 RETURNING balance', [winToMain, user.user_id]);
+                            if (updateResult.rows.length > 0) {
+                                const actualBalanceAfter = parseFloat(updateResult.rows[0].balance);
+                                console.log(`[UNIFIED_WALLET] Balance updated: ${this.formatCurrency(currentCategoryBalance)} + ${this.formatCurrency(winToMain)} = ${this.formatCurrency(actualBalanceAfter)}`);
+                            }
+                        }
+                        else {
+                            console.log(`[UNIFIED_WALLET] Win went to bonus wallet, main wallet not updated`);
                         }
                     }
                     catch (error) {

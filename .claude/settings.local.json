@@ -1,29 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcyLCJ1c2VybmFtZSI6ImFsZXhkZW1vIiwicm9sZSI6IlBsYXllciIsInJvbGVJZCI6MiwiaWF0IjoxNzYyMzQyNTgxLCJleHAiOjE3NjI0Mjg5ODF9.bXEUr7rb0mWvMqGFsRrSbdIf-FKf320HlsdLIcydXos\")",
-      "Bash(python -m json.tool:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoiQWRtaW4iLCJyb2xlSWQiOjEsImlhdCI6MTc2MzkyODIxMywiZXhwIjoxNzY0MDE0NjEzfQ.1z_NI8CCOz3PXXsMMTEfXHzBHf40_MYfpX3pNLi1e9Y\")",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjM5ODc2MTUsImV4cCI6MTc2NDA3NDAxNX0.tDOxI8jiYgxy-KQmgiQmW7cz6IXXP11-SdeOspPvTLA\")",
-      "Bash(taskkill:*)",
+      "Bash(node test-specific-bonus.js:*)",
       "Bash(PGPASSWORD='12358Voot#' psql:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT g.id, g.name, g.provider FROM games WHERE g.provider ILIKE ''%vimplay%'' AND g.id = 13590 LIMIT 1;\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT id, name, provider FROM games WHERE provider ILIKE ''%vimplay%'' LIMIT 3;\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT COUNT(*) as total_vimplay_bets FROM bets WHERE game_id IN (SELECT id FROM games WHERE LOWER(provider) LIKE ''%vimplay%'');\")",
-      "Bash(npm run dev:*)",
-      "Bash(npx tsc:*)",
-      "Bash(curl:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT g.provider, COUNT(*) as bet_count, SUM(b.bet_amount) as total_wagered FROM bets b LEFT JOIN games g ON b.game_id = g.id WHERE b.user_id = 56 GROUP BY g.provider ORDER BY bet_count DESC;\")",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT b.user_id, COUNT(DISTINCT g.provider) as provider_count, COUNT(*) as total_bets FROM bets b LEFT JOIN games g ON b.game_id = g.id GROUP BY b.user_id HAVING COUNT(DISTINCT g.provider) > 1 LIMIT 5;\")",
       "Bash(npm run build:*)",
-      "Bash(node test-bet-analytics-apis.js:*)",
-      "Bash(pm2 list:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h 194.102.33.209 -U postgres -d jackpotx-db -c \"SELECT COUNT(*) as total_bets FROM bets;\")",
+      "Bash(npx tsc:*)",
+      "Bash(pm2 status:*)",
       "Bash(pm2 restart:*)",
-      "Bash(npm rebuild:*)",
-      "Bash(netstat:*)",
-      "Bash(findstr:*)",
-      "Bash(node test-game-performance.js:*)"
+      "Bash(pm2 logs:*)",
+      "Bash(curl:*)",
+      "Bash(node test-game-contribution-fix.js:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

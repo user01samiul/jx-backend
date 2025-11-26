@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VimplayCallbackService = exports.VimplayStatus = void 0;
 const postgres_1 = __importDefault(require("../../db/postgres"));
+const wagering_engine_service_1 = require("../bonus/wagering-engine.service");
 // Vimplay status codes
 exports.VimplayStatus = {
     SUCCESS: 111,
@@ -235,6 +236,56 @@ class VimplayCallbackService {
                 console.log(`[VIMPLAY] Warning: Game not found for game_code ${request.gameId}, bet record not created`);
             }
             await client.query('COMMIT');
+            // ==================== BONUS WAGERING INTEGRATION ====================
+            // Process bet for bonus wagering
+            if (betAmount > 0) {
+                try {
+                    // Get active bonuses for this user
+                    const activeBonusesResult = await postgres_1.default.query(`SELECT id, bonus_amount, wager_requirement_amount, wager_progress_amount
+             FROM bonus_instances
+             WHERE player_id = $1
+             AND status IN ('active', 'wagering')
+             AND expires_at > NOW()
+             ORDER BY granted_at ASC`, [userId]);
+                    if (activeBonusesResult.rows.length > 0) {
+                        console.log(`[WAGERING] Found ${activeBonusesResult.rows.length} active bonus(es) for user ${userId}`);
+                        // Process wagering for each active bonus
+                        for (const bonus of activeBonusesResult.rows) {
+                            try {
+                                const wageringResult = await wagering_engine_service_1.WageringEngineService.processBetWagering(bonus.id, // bonus_instance_id
+                                userId, // player_id
+                                request.gameId?.toString() || 'unknown', // game_code
+                                betAmount // bet amount (positive value)
+                                );
+                                console.log(`[WAGERING] ✅ Processed bet for bonus ${bonus.id}:`, {
+                                    bonus_id: bonus.id,
+                                    bet_amount: betAmount.toFixed(2),
+                                    wager_contribution: wageringResult.wagerContribution.toFixed(2),
+                                    is_completed: wageringResult.isCompleted,
+                                    progress: `${wageringResult.progressPercentage.toFixed(2)}%`
+                                });
+                                // If wagering completed, log it
+                                if (wageringResult.isCompleted) {
+                                    console.log(`[WAGERING] 🎉 Bonus ${bonus.id} wagering COMPLETED! Funds released to main wallet.`);
+                                }
+                            }
+                            catch (wageringError) {
+                                // Don't fail the bet transaction if wagering processing fails
+                                console.error(`[WAGERING] ⚠️ Error processing wagering for bonus ${bonus.id}:`, wageringError);
+                                // Log the error but continue - bet was already processed successfully
+                            }
+                        }
+                    }
+                    else {
+                        console.log(`[WAGERING] No active bonuses found for user ${userId}`);
+                    }
+                }
+                catch (bonusCheckError) {
+                    // Don't fail the bet if bonus checking fails
+                    console.error(`[WAGERING] ⚠️ Error checking active bonuses:`, bonusCheckError);
+                }
+            }
+            // ==================== END WAGERING INTEGRATION ====================
             console.log(`[VIMPLAY] Debit processed: User ${userId}, Balance: ${currentBalance} -> ${newBalance}`);
             return {
                 balance: newBalance,
@@ -499,6 +550,56 @@ class VimplayCallbackService {
                 console.log(`[VIMPLAY] Warning: Game not found for game_code ${request.gameId}, bet record not created`);
             }
             await client.query('COMMIT');
+            // ==================== BONUS WAGERING INTEGRATION ====================
+            // Process bet for bonus wagering (only for real money bets, not in-game bonuses)
+            if (!inGameBonus && betAmount > 0) {
+                try {
+                    // Get active bonuses for this user
+                    const activeBonusesResult = await postgres_1.default.query(`SELECT id, bonus_amount, wager_requirement_amount, wager_progress_amount
+             FROM bonus_instances
+             WHERE player_id = $1
+             AND status IN ('active', 'wagering')
+             AND expires_at > NOW()
+             ORDER BY granted_at ASC`, [userId]);
+                    if (activeBonusesResult.rows.length > 0) {
+                        console.log(`[WAGERING] Found ${activeBonusesResult.rows.length} active bonus(es) for user ${userId}`);
+                        // Process wagering for each active bonus
+                        for (const bonus of activeBonusesResult.rows) {
+                            try {
+                                const wageringResult = await wagering_engine_service_1.WageringEngineService.processBetWagering(bonus.id, // bonus_instance_id
+                                userId, // player_id
+                                request.gameId?.toString() || 'unknown', // game_code
+                                betAmount // bet amount (positive value)
+                                );
+                                console.log(`[WAGERING] ✅ Processed bet for bonus ${bonus.id}:`, {
+                                    bonus_id: bonus.id,
+                                    bet_amount: betAmount.toFixed(2),
+                                    wager_contribution: wageringResult.wagerContribution.toFixed(2),
+                                    is_completed: wageringResult.isCompleted,
+                                    progress: `${wageringResult.progressPercentage.toFixed(2)}%`
+                                });
+                                // If wagering completed, log it
+                                if (wageringResult.isCompleted) {
+                                    console.log(`[WAGERING] 🎉 Bonus ${bonus.id} wagering COMPLETED! Funds released to main wallet.`);
+                                }
+                            }
+                            catch (wageringError) {
+                                // Don't fail the bet transaction if wagering processing fails
+                                console.error(`[WAGERING] ⚠️ Error processing wagering for bonus ${bonus.id}:`, wageringError);
+                                // Log the error but continue - bet was already processed successfully
+                            }
+                        }
+                    }
+                    else {
+                        console.log(`[WAGERING] No active bonuses found for user ${userId}`);
+                    }
+                }
+                catch (bonusCheckError) {
+                    // Don't fail the bet if bonus checking fails
+                    console.error(`[WAGERING] ⚠️ Error checking active bonuses:`, bonusCheckError);
+                }
+            }
+            // ==================== END WAGERING INTEGRATION ====================
             console.log(`[VIMPLAY] BetWin processed: User ${userId}, Balance: ${currentBalance} -> ${newBalance}`);
             return {
                 balance: newBalance,
