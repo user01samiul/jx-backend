@@ -43,13 +43,20 @@ class BonusEngineService {
                     await client.query('ROLLBACK');
                     throw new apiError_1.ApiError('Insufficient balance (main + bonus)', 400);
                 }
-                usedBonusWallet = remainingBetAmount;
                 // Get active bonuses to track which ones were used
                 const activeBonuses = await bonus_instance_service_1.BonusInstanceService.getPlayerActiveBonuses(playerId);
                 if (activeBonuses.length === 0) {
                     await client.query('ROLLBACK');
                     throw new apiError_1.ApiError('No active bonus found', 400);
                 }
+                // Check if bonus is playable (is_playable flag)
+                const bonus = activeBonuses[0];
+                const bonusPlanResult = await client.query('SELECT is_playable FROM bonus_plans WHERE id = $1', [bonus.bonus_plan_id]);
+                if (bonusPlanResult.rows.length === 0 || !bonusPlanResult.rows[0].is_playable) {
+                    await client.query('ROLLBACK');
+                    throw new apiError_1.ApiError('This bonus cannot be used for betting. Please use your main wallet balance.', 400);
+                }
+                usedBonusWallet = remainingBetAmount;
                 // Deduct from bonus wallet
                 await bonus_wallet_service_1.BonusWalletService.deductBonus(playerId, usedBonusWallet);
                 // Track wagering for each active bonus

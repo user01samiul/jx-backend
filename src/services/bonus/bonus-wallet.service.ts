@@ -20,7 +20,7 @@ export class BonusWalletService {
   /**
    * Get or create bonus wallet for player
    */
-  static async getOrCreateWallet(playerId: number, currency: string = 'NGN'): Promise<BonusWalletInfo> {
+  static async getOrCreateWallet(playerId: number, currency: string = 'USD'): Promise<BonusWalletInfo> {
     const client = await pool.connect();
 
     try {
@@ -70,24 +70,6 @@ export class BonusWalletService {
         [playerId]
       );
 
-      if (result.rows.length === 0) {
-        // Return empty wallet if doesn't exist
-        return {
-          player_id: playerId,
-          total_bonus_balance: 0,
-          locked_bonus_balance: 0,
-          playable_bonus_balance: 0,
-          releasable_amount: 0,
-          total_bonus_received: 0,
-          total_bonus_wagered: 0,
-          total_bonus_released: 0,
-          total_bonus_forfeited: 0,
-          total_bonus_transferred: 0,
-          active_bonus_count: 0,
-          currency: 'NGN'
-        };
-      }
-
       // Calculate releasable amount (from completed bonuses that haven't been transferred yet)
       const releasableResult = await client.query(
         `SELECT COALESCE(SUM(remaining_bonus), 0) as releasable_amount
@@ -99,6 +81,24 @@ export class BonusWalletService {
       );
 
       const releasableAmount = parseFloat(releasableResult.rows[0]?.releasable_amount || '0');
+
+      if (result.rows.length === 0) {
+        // Return wallet with releasable amount even if wallet record doesn't exist
+        return {
+          player_id: playerId,
+          total_bonus_balance: 0,
+          locked_bonus_balance: 0,
+          playable_bonus_balance: 0,
+          releasable_amount: releasableAmount,
+          total_bonus_received: 0,
+          total_bonus_wagered: 0,
+          total_bonus_released: 0,
+          total_bonus_forfeited: 0,
+          total_bonus_transferred: 0,
+          active_bonus_count: 0,
+          currency: 'USD'
+        };
+      }
 
       return this.formatWallet(result.rows[0], releasableAmount);
     } finally {
@@ -447,7 +447,7 @@ export class BonusWalletService {
       total_bonus_forfeited: parseFloat(row.total_bonus_forfeited) || 0,
       total_bonus_transferred: parseFloat(row.total_bonus_transferred) || 0,
       active_bonus_count: parseInt(row.active_bonus_count) || 0,
-      currency: row.currency || 'NGN'
+      currency: row.currency || 'USD'
     };
   }
 }

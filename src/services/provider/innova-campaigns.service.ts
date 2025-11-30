@@ -13,7 +13,7 @@ import { env } from '../../configs/env';
 
 // Configuration
 const INNOVA_CAMPAIGNS_CONFIG = {
-  baseUrl: process.env.INNOVA_API_HOST || 'https://ttlive.me',
+  baseUrl: process.env.INNOVA_CAMPAIGNS_API_HOST || 'https://air.gameprovider.org',
   operatorId: env.SUPPLIER_OPERATOR_ID,
   secretKey: env.SUPPLIER_SECRET_KEY,
   timeout: 30000

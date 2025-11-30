@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS bonus_plans (
   -- Award type and amount
   award_type VARCHAR(20) NOT NULL CHECK (award_type IN ('flat_amount', 'percentage')),
   amount NUMERIC(15,2) NOT NULL, -- Fixed amount or percentage
-  currency VARCHAR(3) DEFAULT 'NGN',
+  currency VARCHAR(3) DEFAULT 'USD',
 
   -- Wagering requirements
   wager_requirement_multiplier NUMERIC(5,2) DEFAULT 0, -- e.g., 35 = 35x bonus
@@ -181,7 +181,7 @@ CREATE TABLE IF NOT EXISTS bonus_wallets (
   -- Active bonuses
   active_bonus_count INT DEFAULT 0,
 
-  currency VARCHAR(3) DEFAULT 'NGN',
+  currency VARCHAR(3) DEFAULT 'USD',
 
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP

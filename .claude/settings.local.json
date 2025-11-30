@@ -10,7 +10,21 @@
       "Bash(pm2 logs:*)",
       "Bash(curl:*)",
       "Bash(node test-game-contribution-fix.js:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(timeout 15 pm2 logs:*)",
+      "Bash(timeout 20 pm2 logs:*)",
+      "Bash(timeout 25 pm2 logs:*)",
+      "Bash(timeout 30 pm2 logs:*)",
+      "Bash(.env)",
+      "Bash(timeout 10 pm2 logs:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)",
+      "Bash(timeout 5 pm2 logs:*)",
+      "Bash(netstat:*)",
+      "Bash(python3:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgwLCJ1c2VybmFtZSI6InRlc3QiLCJyb2xlIjoiUGxheWVyIiwicm9sZUlkIjoyLCJpYXQiOjE3NjQzMjExNjYsImV4cCI6MTc2NDQwNzU2Nn0.-I21mAriSOeI59sDLSpTUMDFFwPo1sR9PbpfXPDbYZE\")",
+      "Bash(cat:*)",
+      "Bash(PGPASSWORD='12358Voot#' psql -h localhost -U postgres -d jackpotx-db -c \"SELECT id, name, type, is_active FROM bonus_plans WHERE type = ''free_spins'' LIMIT 5;\")"
     ],
     "deny": [],
     "ask": []

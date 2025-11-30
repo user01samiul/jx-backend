@@ -12,6 +12,7 @@ import {
   grantManualBonus,
   getBonusStatistics,
   getPlayerBonusesAdmin,
+  getPlayerBonusWalletAdmin,
   forfeitBonusAdmin,
   setGameContribution,
   deleteGameContribution,
@@ -34,6 +35,19 @@ import {
   // Admin - Transactions & Audit
   getPlayerBonusTransactionsAdmin,
   getAuditLogs,
+
+  // Admin - Player Search & Listing
+  searchPlayer,
+  getAllPlayersWithBonuses,
+
+  // Admin - Advanced Analytics & Charts
+  getBonusAnalyticsOverview,
+  getBonusTimeSeries,
+  getBonusDistributionByStatus,
+  getBonusDistributionByPlan,
+  getBonusTopPerformingPlans,
+  getBonusPlayerEngagement,
+  getBonusFinancialMetrics,
 
   // User Controllers
   applyBonusCode,
@@ -295,6 +309,169 @@ bonusRouter.get(
 
 /**
  * @swagger
+ * /api/admin/bonus/analytics/overview:
+ *   get:
+ *     summary: Get comprehensive bonus analytics overview
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Enhanced analytics with detailed metrics
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/overview',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusAnalyticsOverview
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/analytics/time-series:
+ *   get:
+ *     summary: Get bonus time series data for charts
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [hourly, daily, weekly, monthly]
+ *           default: daily
+ *       - in: query
+ *         name: days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *     responses:
+ *       200:
+ *         description: Time series data for line/area charts
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/time-series',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusTimeSeries
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/analytics/distribution/status:
+ *   get:
+ *     summary: Get bonus distribution by status (for pie charts)
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Distribution data for pie/donut charts
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/distribution/status',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusDistributionByStatus
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/analytics/distribution/plan:
+ *   get:
+ *     summary: Get bonus distribution by plan (for bar charts)
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Distribution data for bar charts
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/distribution/plan',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusDistributionByPlan
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/analytics/top-plans:
+ *   get:
+ *     summary: Get top performing bonus plans
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [completion_rate, total_granted, total_value, player_engagement]
+ *           default: completion_rate
+ *     responses:
+ *       200:
+ *         description: Top performing plans with detailed metrics
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/top-plans',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusTopPerformingPlans
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/analytics/player-engagement:
+ *   get:
+ *     summary: Get player engagement metrics
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Player segmentation and engagement data
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/player-engagement',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusPlayerEngagement
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/analytics/financial:
+ *   get:
+ *     summary: Get financial metrics and ROI analysis
+ *     tags: [Admin - Bonus Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Financial metrics, ROI, and profitability data
+ */
+bonusRouter.get(
+  '/admin/bonus/analytics/financial',
+  authenticate,
+  authorize(['Admin', 'Manager']),
+  getBonusFinancialMetrics
+);
+
+/**
+ * @swagger
  * /api/admin/bonus/player/{playerId}/bonuses:
  *   get:
  *     summary: Get all bonuses for a specific player (admin view)
@@ -316,6 +493,31 @@ bonusRouter.get(
   authenticate,
   authorize(['Admin', 'Manager', 'Support']),
   getPlayerBonusesAdmin
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/player/{playerId}/wallet:
+ *   get:
+ *     summary: Get player bonus wallet (admin view)
+ *     tags: [Admin - Bonus]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: playerId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Player bonus wallet details
+ */
+bonusRouter.get(
+  '/admin/bonus/player/:playerId/wallet',
+  authenticate,
+  authorize(['Admin', 'Manager', 'Support']),
+  getPlayerBonusWalletAdmin
 );
 
 /**
@@ -869,6 +1071,80 @@ bonusRouter.get(
   authorize(['Admin', 'Manager']),
   validate({ query: getAuditLogsSchema }),
   getAuditLogs
+);
+
+// =====================================================
+// ADMIN ROUTES - Player Search & Listing
+// =====================================================
+
+/**
+ * @swagger
+ * /api/admin/bonus/players/search:
+ *   get:
+ *     summary: Search for a player by ID, email, or username
+ *     tags: [Admin - Bonus]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: query
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 2
+ *         description: Player ID, email, or username to search for
+ *     responses:
+ *       200:
+ *         description: Player found
+ *       404:
+ *         description: Player not found
+ */
+bonusRouter.get(
+  '/admin/bonus/players/search',
+  authenticate,
+  authorize(['Admin', 'Manager', 'Support']),
+  searchPlayer
+);
+
+/**
+ * @swagger
+ * /api/admin/bonus/players/with-bonuses:
+ *   get:
+ *     summary: Get all players who have bonuses (paginated)
+ *     tags: [Admin - Bonus]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [all, active, wagering, completed, expired, forfeited]
+ *         description: Filter by bonus status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by player ID, email, or username
+ *     responses:
+ *       200:
+ *         description: List of players with bonuses
+ */
+bonusRouter.get(
+  '/admin/bonus/players/with-bonuses',
+  authenticate,
+  authorize(['Admin', 'Manager', 'Support']),
+  getAllPlayersWithBonuses
 );
 
 // =====================================================

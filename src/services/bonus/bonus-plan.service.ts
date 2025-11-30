@@ -90,7 +90,7 @@ export class BonusPlanService {
           planData.payment_method_ids ? JSON.stringify(planData.payment_method_ids) : null,
           planData.award_type,
           planData.amount,
-          planData.currency || 'NGN',
+          planData.currency || 'USD',
           planData.wager_requirement_multiplier,
           planData.wager_requirement_type || 'bonus',
           planData.wager_requirement_action || 'release',
