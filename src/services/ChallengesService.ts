@@ -423,10 +423,11 @@ class ChallengesService {
       const freespinsCount = Math.floor(challenge.reward_value); // reward_value is the number of spins
 
       // Default configuration for free spins
-      // TODO: Make this configurable per challenge template
-      const defaultVendor = '100hp';
-      const defaultGameId = 1073; // Hilo game
-      const defaultBetAmount = 0.20; // $0.20 per spin
+      // Using Pragmatic Play as default vendor (supported by Innova Campaigns API)
+      // Supported vendors: pragmatic, 3oaks, 3oaksP, amigogaming
+      const defaultVendor = 'pragmatic';
+      const defaultGameId = 23000; // Pragmatic Play game (verified via Innova API)
+      const defaultBetAmount = 0.20; // $0.20 per spin (verified in allowed limits)
 
       // Generate unique campaign code
       const campaignCode = InnovaCampaignsService.generateCampaignCode('challenge', challengeId, userId);

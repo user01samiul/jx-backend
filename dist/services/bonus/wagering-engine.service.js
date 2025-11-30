@@ -82,6 +82,23 @@ class WageringEngineService {
         const client = await postgres_1.default.connect();
         try {
             await client.query('BEGIN');
+            // Check if playable bonus bets count toward wagering (playable_bonus_qualifies flag)
+            const bonusInstanceResult = await client.query('SELECT bonus_plan_id FROM bonus_instances WHERE id = $1', [bonusInstanceId]);
+            if (bonusInstanceResult.rows.length === 0) {
+                throw new apiError_1.ApiError('Bonus instance not found', 404);
+            }
+            const bonusPlanResult = await client.query('SELECT playable_bonus_qualifies FROM bonus_plans WHERE id = $1', [bonusInstanceResult.rows[0].bonus_plan_id]);
+            // If playable_bonus_qualifies is false (default), bonus bets don't count toward wagering
+            // This prevents abuse where players bet bonus money to complete wagering requirements
+            if (bonusPlanResult.rows.length === 0 || !bonusPlanResult.rows[0].playable_bonus_qualifies) {
+                await client.query('COMMIT');
+                console.log(`[WAGERING_ENGINE] Bonus bet skipped - playable_bonus_qualifies=false (prevents abuse)`);
+                return {
+                    wagerContribution: 0,
+                    isCompleted: false,
+                    progressPercentage: 0
+                };
+            }
             // Get wagering contribution
             const { contribution, category } = await this.calculateWagerContribution(gameCode, betAmount);
             if (contribution === 0) {

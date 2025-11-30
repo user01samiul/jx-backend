@@ -10,7 +10,7 @@ class BonusWalletService {
     /**
      * Get or create bonus wallet for player
      */
-    static async getOrCreateWallet(playerId, currency = 'NGN') {
+    static async getOrCreateWallet(playerId, currency = 'USD') {
         const client = await postgres_1.default.connect();
         try {
             // Try to get existing wallet
@@ -55,7 +55,7 @@ class BonusWalletService {
                     total_bonus_forfeited: 0,
                     total_bonus_transferred: 0,
                     active_bonus_count: 0,
-                    currency: 'NGN'
+                    currency: 'USD'
                 };
             }
             // Calculate releasable amount (from completed bonuses that haven't been transferred yet)
@@ -337,7 +337,7 @@ class BonusWalletService {
             total_bonus_forfeited: parseFloat(row.total_bonus_forfeited) || 0,
             total_bonus_transferred: parseFloat(row.total_bonus_transferred) || 0,
             active_bonus_count: parseInt(row.active_bonus_count) || 0,
-            currency: row.currency || 'NGN'
+            currency: row.currency || 'USD'
         };
     }
 }

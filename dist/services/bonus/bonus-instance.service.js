@@ -311,6 +311,9 @@ class BonusInstanceService {
                 bp.trigger_type as plan_trigger_type,
                 bp.wager_requirement_multiplier as plan_wager_multiplier,
                 bp.wager_requirement_type as plan_wager_type,
+                bp.is_playable as plan_is_playable,
+                bp.cancel_on_withdrawal as plan_cancel_on_withdrawal,
+                bp.playable_bonus_qualifies as plan_playable_bonus_qualifies,
                 CASE
                   WHEN bi.wager_progress_amount >= bi.wager_requirement_amount THEN 'completed'
                   WHEN NOW() > bi.expires_at THEN 'expired'
@@ -359,6 +362,9 @@ class BonusInstanceService {
                 bp.trigger_type as plan_trigger_type,
                 bp.wager_requirement_multiplier as plan_wager_multiplier,
                 bp.wager_requirement_type as plan_wager_type,
+                bp.is_playable as plan_is_playable,
+                bp.cancel_on_withdrawal as plan_cancel_on_withdrawal,
+                bp.playable_bonus_qualifies as plan_playable_bonus_qualifies,
                 CASE
                   WHEN bi.wager_progress_amount >= bi.wager_requirement_amount THEN 'completed'
                   WHEN NOW() > bi.expires_at THEN 'expired'
@@ -529,7 +535,10 @@ class BonusInstanceService {
                 description: row.plan_description,
                 image_url: row.plan_image_url,
                 bonus_code: row.plan_bonus_code,
-                bonus_type: row.plan_trigger_type
+                bonus_type: row.plan_trigger_type,
+                is_playable: row.plan_is_playable !== undefined ? row.plan_is_playable : true,
+                cancel_on_withdrawal: row.plan_cancel_on_withdrawal !== undefined ? row.plan_cancel_on_withdrawal : true,
+                playable_bonus_qualifies: row.plan_playable_bonus_qualifies !== undefined ? row.plan_playable_bonus_qualifies : false
             };
         }
         return instance;

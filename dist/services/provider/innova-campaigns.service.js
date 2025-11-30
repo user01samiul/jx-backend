@@ -16,7 +16,7 @@ const axios_1 = __importDefault(require("axios"));
 const env_1 = require("../../configs/env");
 // Configuration
 const INNOVA_CAMPAIGNS_CONFIG = {
-    baseUrl: process.env.INNOVA_API_HOST || 'https://ttlive.me',
+    baseUrl: process.env.INNOVA_CAMPAIGNS_API_HOST || 'https://air.gameprovider.org',
     operatorId: env_1.env.SUPPLIER_OPERATOR_ID,
     secretKey: env_1.env.SUPPLIER_SECRET_KEY,
     timeout: 30000
