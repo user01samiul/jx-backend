@@ -22,7 +22,7 @@ const getUserWithBalanceService = async (userId) => {
     const mongoHybridService = new MongoHybridService();
     const categoryBalances = await mongoHybridService.getUserCategoryBalances(userId);
     // Fetch extended profile fields from user_profiles
-    const profileResult = await postgres_1.default.query(`SELECT first_name, last_name, phone_number, date_of_birth, nationality, country, city, address, postal_code, gender, timezone, language, currency FROM user_profiles WHERE user_id = $1 LIMIT 1`, [userId]);
+    const profileResult = await postgres_1.default.query(`SELECT first_name, last_name, phone_number, date_of_birth, nationality, country, city, address, postal_code, gender, avatar_url, timezone, language, currency FROM user_profiles WHERE user_id = $1 LIMIT 1`, [userId]);
     const profile = profileResult.rows[0] || {};
     // Calculate total balance (main + all categories) with proper NaN handling
     const mainBalance = currency_utils_1.CurrencyUtils.safeParseBalance(balanceRow.balance);
@@ -45,6 +45,7 @@ const getUserWithBalanceService = async (userId) => {
         address: profile.address || null,
         postal_code: profile.postal_code || null,
         gender: profile.gender || null,
+        avatar_url: profile.avatar_url || null,
         timezone: profile.timezone || null,
         language: profile.language || null,
         currency: profile.currency || null,
@@ -196,13 +197,13 @@ const getUserBettingHistoryService = async (userId, limit = 50, offset = 0) => {
     };
 };
 exports.getUserBettingHistoryService = getUserBettingHistoryService;
-// Get user by username
+// Get user by username (case-insensitive)
 const getUserByUsernameService = async (username) => {
     const result = await postgres_1.default.query(`
-    SELECT 
-      u.id, 
-      u.username, 
-      u.email, 
+    SELECT
+      u.id,
+      u.username,
+      u.email,
       u.password,
       u.auth_secret,
       u.is_2fa_enabled,
@@ -210,7 +211,7 @@ const getUserByUsernameService = async (username) => {
       s.name as status
     FROM users u
     LEFT JOIN statuses s ON u.status_id = s.id
-    WHERE u.username = $1
+    WHERE LOWER(u.username) = LOWER($1)
     LIMIT 1
     `, [username]);
     if (result.rows.length === 0) {
@@ -222,10 +223,11 @@ exports.getUserByUsernameService = getUserByUsernameService;
 // Get user roles by username
 const getUserRolesService = async (username) => {
     const result = await postgres_1.default.query(`
-    SELECT 
+    SELECT
       r.id,
       r.name,
-      r.description
+      r.description,
+      u.email
     FROM users u
     INNER JOIN user_roles ur ON u.id = ur.user_id
     INNER JOIN roles r ON ur.role_id = r.id
@@ -337,13 +339,13 @@ const getUserActivitySummaryService = async (userId) => {
     return result.rows[0];
 };
 exports.getUserActivitySummaryService = getUserActivitySummaryService;
-// Get user by email
+// Get user by email (case-insensitive)
 const getUserByEmailService = async (email) => {
     const result = await postgres_1.default.query(`
-    SELECT 
-      u.id, 
-      u.username, 
-      u.email, 
+    SELECT
+      u.id,
+      u.username,
+      u.email,
       u.password,
       u.auth_secret,
       u.is_2fa_enabled,
@@ -351,7 +353,7 @@ const getUserByEmailService = async (email) => {
       s.name as status
     FROM users u
     LEFT JOIN statuses s ON u.status_id = s.id
-    WHERE u.email = $1
+    WHERE LOWER(u.email) = LOWER($1)
     LIMIT 1
     `, [email]);
     if (result.rows.length === 0) {
@@ -385,7 +387,8 @@ const updateUserProfileService = async (userId, profileData) => {
             gender: 'gender',
             timezone: 'timezone',
             language: 'language',
-            currency: 'currency'
+            currency: 'currency',
+            avatar_url: 'avatar_url'
         };
         for (const [key, value] of Object.entries(profileData)) {
             if (value !== undefined && value !== null && fieldMappings[key]) {

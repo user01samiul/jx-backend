@@ -1,6 +1,6 @@
 import pool from "../../db/postgres";
 import bcrypt from "bcrypt";
-import { LoginInput, RegisterInput } from "../../api/auth/auth.schema";
+import { LoginInput, RegisterInput, ForgotPasswordInput, ResetPasswordInput } from "../../api/auth/auth.schema";
 import { ErrorMessages, SuccessMessages } from "../../constants/messages";
 import { Query } from "../../api/auth/auth.query";
 import { LoginResponse, RegisterResponse } from "../../api/auth/types/auth";
@@ -15,6 +15,8 @@ import { captchaService } from "../captcha/captcha.service";
 import axios from "axios";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
+import crypto from "crypto";
+import { emailService } from "../email/email.service";
 
 const jwtService = new JwtService();
 
@@ -256,6 +258,18 @@ export const registerService = async (
       }
     }
 
+    // Check username uniqueness (case-insensitive)
+    const existingUsername = await getUserByUsernameService(username);
+    if (existingUsername) {
+      throw new ApiError('Username already exists. Please choose another username.', 409);
+    }
+
+    // Check email uniqueness (case-insensitive)
+    const existingEmail = await getUserByEmailService(email);
+    if (existingEmail) {
+      throw new ApiError('Email already registered. Please use another email.', 409);
+    }
+
     // Fetch QR data with local fallback (optional - can be null)
     const qrData = await fetchQRData(email, username);
 
@@ -370,6 +384,17 @@ export const registerService = async (
 
     } catch (error) {
       await client.query('ROLLBACK');
+
+      // Handle database constraint violations
+      if (error.code === '23505') { // PostgreSQL unique constraint violation
+        if (error.constraint && error.constraint.includes('username')) {
+          throw new ApiError('Username already exists. Please choose another username.', 409);
+        }
+        if (error.constraint && error.constraint.includes('email')) {
+          throw new ApiError('Email already registered. Please use another email.', 409);
+        }
+      }
+
       throw error;
     } finally {
       client.release();
@@ -377,6 +402,17 @@ export const registerService = async (
 
   } catch (err) {
     console.error('[REGISTER] Error:', err);
+
+    // Handle database constraint violations at outer level too
+    if (err.code === '23505') { // PostgreSQL unique constraint violation
+      if (err.constraint && err.constraint.includes('username')) {
+        throw new ApiError('Username already exists. Please choose another username.', 409);
+      }
+      if (err.constraint && err.constraint.includes('email')) {
+        throw new ApiError('Email already registered. Please use another email.', 409);
+      }
+    }
+
     throw err;
   }
 };
@@ -434,7 +470,7 @@ export const refreshToken = async (
 ): Promise<void> => {
   try {
     const refreshToken = req.body?.refresh_token;
-    
+
     if (!refreshToken) {
       res.status(400).json({
         success: false,
@@ -444,7 +480,7 @@ export const refreshToken = async (
     }
 
     const tokens = await refreshTokenService(refreshToken);
-    
+
     res.json({
       success: true,
       message: "Tokens refreshed successfully",
@@ -455,5 +491,196 @@ export const refreshToken = async (
       success: false,
       message: error.message
     });
+  }
+};
+
+/**
+ * Forgot Password Service
+ * Generates a secure reset token and sends email
+ */
+export const forgotPasswordService = async (
+  email: string,
+  req?: Request
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    console.log(`[FORGOT_PASSWORD] Request for email: ${email}`);
+
+    // Check if user exists with this email
+    const user = await getUserByEmailService(email);
+
+    // For security, always return success even if user doesn't exist
+    // This prevents email enumeration attacks
+    if (!user) {
+      console.log(`[FORGOT_PASSWORD] User not found for email: ${email}, but returning success`);
+      return {
+        success: true,
+        message: 'If the email exists, reset instructions have been sent',
+      };
+    }
+
+    // Generate cryptographically secure random token (32 bytes = 64 hex characters)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Token expires in 1 hour
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // Store token in database
+    await pool.query(
+      `INSERT INTO password_reset_tokens
+       (user_id, token, email, expires_at, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        user.id,
+        resetToken,
+        email,
+        expiresAt,
+        req?.ip || req?.headers['x-forwarded-for'] || null,
+        req?.headers['user-agent'] || null,
+      ]
+    );
+
+    // Send password reset email
+    const emailSent = await emailService.sendPasswordResetEmail(
+      email,
+      resetToken,
+      user.username
+    );
+
+    if (!emailSent) {
+      console.error('[FORGOT_PASSWORD] Failed to send email');
+      // Don't throw error, just log it
+      // In production, you might want to queue a retry
+    }
+
+    // Log activity
+    await logUserActivity({
+      userId: user.id,
+      action: 'forgot_password_request',
+      category: 'auth',
+      description: 'Password reset requested',
+      ipAddress: req?.ip || undefined,
+      userAgent: req?.headers['user-agent'] || undefined,
+    });
+
+    console.log(`[FORGOT_PASSWORD] Reset token created for user ${user.id}`);
+
+    return {
+      success: true,
+      message: 'If the email exists, reset instructions have been sent',
+    };
+  } catch (error) {
+    console.error('[FORGOT_PASSWORD] Error:', error);
+    throw new ApiError('Failed to process password reset request', 500);
+  }
+};
+
+/**
+ * Reset Password Service
+ * Validates token and updates password
+ */
+export const resetPasswordService = async (
+  token: string,
+  newPassword: string,
+  req?: Request
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    console.log(`[RESET_PASSWORD] Attempting to reset password with token`);
+
+    // Find and validate token
+    const tokenResult = await pool.query(
+      `SELECT prt.*, u.username, u.email
+       FROM password_reset_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = $1`,
+      [token]
+    );
+
+    if (tokenResult.rows.length === 0) {
+      console.log(`[RESET_PASSWORD] Invalid token`);
+      throw new ApiError('Invalid or expired reset token', 400);
+    }
+
+    const tokenData = tokenResult.rows[0];
+
+    // Check if token has expired
+    if (new Date() > new Date(tokenData.expires_at)) {
+      console.log(`[RESET_PASSWORD] Token expired for user ${tokenData.user_id}`);
+      throw new ApiError('Invalid or expired reset token', 400);
+    }
+
+    // Check if token has already been used
+    if (tokenData.used_at) {
+      console.log(`[RESET_PASSWORD] Token already used for user ${tokenData.user_id}`);
+      throw new ApiError('This reset link has already been used', 400);
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Start transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      // Update user password
+      await client.query(
+        'UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2',
+        [hashedPassword, tokenData.user_id]
+      );
+
+      // Mark token as used
+      await client.query(
+        'UPDATE password_reset_tokens SET used_at = NOW() WHERE token = $1',
+        [token]
+      );
+
+      // Invalidate all active sessions for security
+      await client.query(
+        'UPDATE tokens SET is_active = false WHERE user_id = $1',
+        [tokenData.user_id]
+      );
+
+      // Log activity
+      await client.query(
+        `INSERT INTO user_activity_logs
+         (user_id, action, category, description, metadata)
+         VALUES ($1, 'password_reset', 'auth', 'Password reset successful', $2)`,
+        [
+          tokenData.user_id,
+          JSON.stringify({
+            ip_address: req?.ip || req?.headers['x-forwarded-for'] || null,
+            user_agent: req?.headers['user-agent'] || null,
+            timestamp: new Date().toISOString(),
+          }),
+        ]
+      );
+
+      await client.query('COMMIT');
+
+      console.log(`[RESET_PASSWORD] Password reset successful for user ${tokenData.user_id}`);
+
+      // Send confirmation email
+      await emailService.sendPasswordChangedEmail(
+        tokenData.email,
+        tokenData.username
+      );
+
+      return {
+        success: true,
+        message: 'Password reset successful',
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('[RESET_PASSWORD] Error:', error);
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError('Failed to reset password', 500);
   }
 };

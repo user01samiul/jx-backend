@@ -30,7 +30,7 @@ export const getUserWithBalanceService = async (userId: number) => {
 
   // Fetch extended profile fields from user_profiles
   const profileResult = await pool.query(
-    `SELECT first_name, last_name, phone_number, date_of_birth, nationality, country, city, address, postal_code, gender, timezone, language, currency FROM user_profiles WHERE user_id = $1 LIMIT 1`,
+    `SELECT first_name, last_name, phone_number, date_of_birth, nationality, country, city, address, postal_code, gender, avatar_url, timezone, language, currency FROM user_profiles WHERE user_id = $1 LIMIT 1`,
     [userId]
   );
   const profile = profileResult.rows[0] || {};
@@ -57,6 +57,7 @@ export const getUserWithBalanceService = async (userId: number) => {
     address: profile.address || null,
     postal_code: profile.postal_code || null,
     gender: profile.gender || null,
+    avatar_url: profile.avatar_url || null,
     timezone: profile.timezone || null,
     language: profile.language || null,
     currency: profile.currency || null,
@@ -243,14 +244,14 @@ export const getUserBettingHistoryService = async (
   };
 };
 
-// Get user by username
+// Get user by username (case-insensitive)
 export const getUserByUsernameService = async (username: string) => {
   const result = await pool.query(
     `
-    SELECT 
-      u.id, 
-      u.username, 
-      u.email, 
+    SELECT
+      u.id,
+      u.username,
+      u.email,
       u.password,
       u.auth_secret,
       u.is_2fa_enabled,
@@ -258,7 +259,7 @@ export const getUserByUsernameService = async (username: string) => {
       s.name as status
     FROM users u
     LEFT JOIN statuses s ON u.status_id = s.id
-    WHERE u.username = $1
+    WHERE LOWER(u.username) = LOWER($1)
     LIMIT 1
     `,
     [username]
@@ -275,10 +276,11 @@ export const getUserByUsernameService = async (username: string) => {
 export const getUserRolesService = async (username: string) => {
   const result = await pool.query(
     `
-    SELECT 
+    SELECT
       r.id,
       r.name,
-      r.description
+      r.description,
+      u.email
     FROM users u
     INNER JOIN user_roles ur ON u.id = ur.user_id
     INNER JOIN roles r ON ur.role_id = r.id
@@ -402,14 +404,14 @@ export const getUserActivitySummaryService = async (userId: number) => {
   return result.rows[0];
 };
 
-// Get user by email
+// Get user by email (case-insensitive)
 export const getUserByEmailService = async (email: string) => {
   const result = await pool.query(
     `
-    SELECT 
-      u.id, 
-      u.username, 
-      u.email, 
+    SELECT
+      u.id,
+      u.username,
+      u.email,
       u.password,
       u.auth_secret,
       u.is_2fa_enabled,
@@ -417,7 +419,7 @@ export const getUserByEmailService = async (email: string) => {
       s.name as status
     FROM users u
     LEFT JOIN statuses s ON u.status_id = s.id
-    WHERE u.email = $1
+    WHERE LOWER(u.email) = LOWER($1)
     LIMIT 1
     `,
     [email]
@@ -459,7 +461,8 @@ export const updateUserProfileService = async (userId: number, profileData: any)
       gender: 'gender',
       timezone: 'timezone',
       language: 'language',
-      currency: 'currency'
+      currency: 'currency',
+      avatar_url: 'avatar_url'
     };
 
     for (const [key, value] of Object.entries(profileData)) {

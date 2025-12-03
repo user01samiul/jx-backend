@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { 
-  getUserWithBalanceService, 
+import {
+  getUserWithBalanceService,
   getUserFavoriteGamesService,
   getUserRecentActivityService,
   getUserTransactionHistoryService,
@@ -18,11 +18,12 @@ import {
   getUserGameBetsService,
   skip2FAService
 } from "../../services/user/user.service";
-import { 
+import {
   UpdateProfileInputType,
   ChangePasswordInputType,
   Skip2FAInputType
 } from "./user.schema";
+import { uploadToCDN } from "../../utils/cdn-upload";
 
 export const getUserProfile = async (
   req: Request,
@@ -203,13 +204,31 @@ export const updateUserProfile = async (
 ): Promise<void> => {
   try {
     const userId = (req as any).user?.userId;
-    
+
     if (!userId) {
       res.status(401).json({ success: false, message: "Unauthorized" });
       return;
     }
 
-    const profileData = req.validated?.body as UpdateProfileInputType;
+    // Parse profile data from body (multipart/form-data)
+    const profileData: any = { ...req.body };
+
+    // Handle avatar upload if file is present
+    if (req.file) {
+      const uploadResult = await uploadToCDN(req.file);
+
+      if (!uploadResult.success) {
+        res.status(400).json({
+          success: false,
+          message: "Failed to upload avatar",
+          error: uploadResult.error
+        });
+        return;
+      }
+
+      profileData.avatar_url = uploadResult.url;
+    }
+
     const updatedProfile = await updateUserProfileService(userId, profileData);
     res.status(200).json({ success: true, data: updatedProfile });
   } catch (err) {

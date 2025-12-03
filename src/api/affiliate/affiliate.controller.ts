@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AffiliateService } from '../../services/affiliate/affiliate.service';
 import { EnhancedAffiliateService } from '../../services/affiliate/enhanced-affiliate.service';
+import { AffiliateBalanceService } from '../../services/affiliate/affiliate-balance.service';
+import { AffiliateApplicationService } from '../../services/affiliate/affiliate-application.service';
 import { ApiError } from '../../utils/apiError';
 import pool from '../../db/postgres';
 
@@ -36,7 +38,7 @@ export const getAffiliateProfile = async (
 };
 
 /**
- * Create affiliate profile for current user
+ * Create affiliate application for current user
  */
 export const createAffiliateProfile = async (
   req: Request,
@@ -50,19 +52,84 @@ export const createAffiliateProfile = async (
       return;
     }
 
-    const { display_name, bio, website_url, social_media } = req.body;
+    const { display_name, website_url, social_media } = req.body;
 
-    const profile = await AffiliateService.createAffiliateProfile(userId, {
-      display_name,
-      bio,
-      website_url,
-      social_media
+    // Create application instead of profile - requires admin approval
+    const application = await AffiliateApplicationService.submitApplication({
+      userId,
+      displayName: display_name,
+      websiteUrl: website_url,
+      socialMediaLinks: social_media
     });
 
-    res.status(201).json({ 
-      success: true, 
-      message: "Affiliate profile created successfully",
-      data: profile 
+    res.status(201).json({
+      success: true,
+      message: "Affiliate application submitted successfully. Your application is pending admin review.",
+      data: application
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Get affiliate application status for current user
+ */
+export const getAffiliateApplicationStatus = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    // Check if user has affiliate profile
+    const profile = await AffiliateService.getAffiliateProfile(userId);
+    if (profile) {
+      res.status(200).json({
+        success: true,
+        data: {
+          status: 'approved',
+          hasProfile: true,
+          profile: profile
+        }
+      });
+      return;
+    }
+
+    // Check if user has application
+    const application = await AffiliateApplicationService.getUserApplicationStatus(userId);
+    if (application) {
+      res.status(200).json({
+        success: true,
+        data: {
+          status: application.application_status, // 'pending' or 'rejected'
+          hasProfile: false,
+          application: {
+            id: application.id,
+            display_name: application.display_name,
+            status: application.application_status,
+            rejection_reason: application.rejection_reason,
+            created_at: application.created_at,
+            reviewed_at: application.reviewed_at
+          }
+        }
+      });
+      return;
+    }
+
+    // No application and no profile
+    res.status(200).json({
+      success: true,
+      data: {
+        status: 'none',
+        hasProfile: false,
+        application: null
+      }
     });
   } catch (err) {
     next(err);
@@ -85,10 +152,10 @@ export const getAffiliateStats = async (
     }
 
     const stats = await EnhancedAffiliateService.getAffiliateStats(userId);
-    
-    res.status(200).json({ 
-      success: true, 
-      data: stats 
+
+    res.status(200).json({
+      success: true,
+      data: stats
     });
   } catch (err) {
     next(err);
@@ -157,6 +224,38 @@ export const getAffiliateCommissions = async (
     res.status(200).json({ 
       success: true, 
       data: commissions 
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Get affiliate commission statistics
+ */
+export const getAffiliateCommissionStats = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const { start_date, end_date } = req.query;
+
+    const stats = await EnhancedAffiliateService.getAffiliateCommissionStats(
+      userId,
+      start_date as string,
+      end_date as string
+    );
+
+    res.status(200).json({
+      success: true,
+      data: stats
     });
   } catch (err) {
     next(err);
@@ -317,18 +416,90 @@ export const getAffiliateCommissionSummary = async (
 ): Promise<void> => {
   try {
     const { start_date, end_date, affiliate_id } = req.query;
-    
+
     const summary = await EnhancedAffiliateService.getAffiliateCommissionSummary(
       start_date as string,
       end_date as string,
       affiliate_id ? Number(affiliate_id) : undefined
     );
-    
-    res.status(200).json({ 
-      success: true, 
-      data: summary 
+
+    res.status(200).json({
+      success: true,
+      data: summary
     });
   } catch (err) {
     next(err);
   }
-}; 
+};
+
+/**
+ * Request redemption (Affiliate creates pending redemption request)
+ */
+export const requestRedemption = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const { amount, notes } = req.body;
+
+    if (!amount || parseFloat(amount) <= 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Valid amount is required'
+      });
+      return;
+    }
+
+    const result = await AffiliateBalanceService.processRedemption(
+      userId,
+      parseFloat(amount),
+      notes
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Redemption request submitted successfully. Awaiting admin approval.',
+      data: result
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Get redemption history for current user
+ */
+export const getRedemptionHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    const { page, limit } = req.query;
+
+    const history = await AffiliateBalanceService.getRedemptionHistory(userId, {
+      page: page ? parseInt(page as string) : 1,
+      limit: limit ? parseInt(limit as string) : 20
+    });
+
+    res.status(200).json({
+      success: true,
+      data: history
+    });
+  } catch (err) {
+    next(err);
+  }
+};

@@ -476,11 +476,72 @@ router.post('/:campaignCode/players/add-all', auth_middleware_1.authenticate, au
                 const totalBetAmount = (campaignData.total_bet || 0) * campaignData.freespins_per_player;
                 const beginsAtTimestamp = Math.floor(new Date(campaignData.begins_at).getTime() / 1000);
                 const expiresAtTimestamp = Math.floor(new Date(campaignData.expires_at).getTime() / 1000);
+                // First, create a bonus instance for tracking winnings
+                let bonusInstanceId = null;
+                // Check if a free spins bonus plan exists (by name convention)
+                const bonusPlanResult = await client.query(`SELECT id FROM bonus_plans
+           WHERE name ILIKE '%free%spin%' AND status = 'active'
+           LIMIT 1`);
+                if (bonusPlanResult.rows.length > 0) {
+                    const bonusPlanId = bonusPlanResult.rows[0].id;
+                    // Create bonus instance for this user (completed status = immediately withdrawable)
+                    const bonusInstanceResult = await client.query(`INSERT INTO bonus_instances (
+              bonus_plan_id, player_id, bonus_amount, remaining_bonus,
+              wager_requirement_amount, status, granted_at, completed_at, expires_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, to_timestamp($7))
+            RETURNING id`, [
+                        bonusPlanId,
+                        userIdInt,
+                        0, // Start with 0, will increase as they win
+                        0, // Start with 0
+                        0, // Free spins have no wagering requirement
+                        'completed', // Immediately completed/withdrawable
+                        expiresAtTimestamp
+                    ]);
+                    bonusInstanceId = bonusInstanceResult.rows[0].id;
+                    console.log(`[CAMPAIGNS] Created bonus instance ${bonusInstanceId} for user ${userIdInt}`);
+                }
+                else {
+                    console.log(`[CAMPAIGNS] No free spins bonus plan found, creating one...`);
+                    // Create a generic free spins bonus plan
+                    const newPlanResult = await client.query(`INSERT INTO bonus_plans (
+              name, brand_id, start_date, end_date, trigger_type, award_type, amount,
+              wager_requirement_multiplier, is_playable, cancel_on_withdrawal, status
+            ) VALUES ($1, $2, NOW(), NOW() + INTERVAL '10 years', $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id`, [
+                        'Free Spins Winnings Bonus',
+                        1,
+                        'manual',
+                        'flat_amount',
+                        0,
+                        0, // No wagering requirement for free spins winnings
+                        true, // Playable
+                        false, // Don't cancel on withdrawal
+                        'active'
+                    ]);
+                    const bonusPlanId = newPlanResult.rows[0].id;
+                    // Create bonus instance (completed status = immediately withdrawable)
+                    const bonusInstanceResult = await client.query(`INSERT INTO bonus_instances (
+              bonus_plan_id, player_id, bonus_amount, remaining_bonus,
+              wager_requirement_amount, status, granted_at, completed_at, expires_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, to_timestamp($7))
+            RETURNING id`, [
+                        bonusPlanId,
+                        userIdInt,
+                        0, // Start with 0, will increase as they win
+                        0, // Start with 0
+                        0, // Free spins have no wagering requirement
+                        'completed', // Immediately completed/withdrawable
+                        expiresAtTimestamp
+                    ]);
+                    bonusInstanceId = bonusInstanceResult.rows[0].id;
+                    console.log(`[CAMPAIGNS] Created bonus plan ${bonusPlanId} and instance ${bonusInstanceId} for user ${userIdInt}`);
+                }
                 await client.query(`INSERT INTO user_free_spins_campaigns (
             user_id, campaign_code, source, vendor, game_id, currency_code,
             freespins_total, freespins_remaining, total_bet_amount,
-            status, begins_at, expires_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, to_timestamp($11), to_timestamp($12))
+            status, begins_at, expires_at, bonus_instance_id
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, to_timestamp($11), to_timestamp($12), $13)
           ON CONFLICT (user_id, campaign_code) DO NOTHING`, [
                     userIdInt,
                     campaignCode,
@@ -493,7 +554,8 @@ router.post('/:campaignCode/players/add-all', auth_middleware_1.authenticate, au
                     totalBetAmount,
                     'pending',
                     beginsAtTimestamp,
-                    expiresAtTimestamp
+                    expiresAtTimestamp,
+                    bonusInstanceId
                 ]);
             }
             await client.query('COMMIT');
@@ -806,6 +868,8 @@ router.post('/:campaignCode/spin', auth_middleware_1.authenticate, async (req, r
                 await postgres_1.default.query(`UPDATE bonus_instances
            SET bonus_amount = bonus_amount + $1,
                remaining_bonus = remaining_bonus + $1,
+               status = 'completed',
+               completed_at = CASE WHEN completed_at IS NULL THEN CURRENT_TIMESTAMP ELSE completed_at END,
                updated_at = CURRENT_TIMESTAMP
            WHERE id = $2`, [winAmount, updatedCampaign.bonus_instance_id]);
             }

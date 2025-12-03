@@ -41,14 +41,21 @@ class BonusWalletService {
         const client = await postgres_1.default.connect();
         try {
             const result = await client.query('SELECT * FROM bonus_wallets WHERE player_id = $1', [playerId]);
+            // Calculate releasable amount (from completed bonuses that haven't been transferred yet)
+            const releasableResult = await client.query(`SELECT COALESCE(SUM(remaining_bonus), 0) as releasable_amount
+         FROM bonus_instances
+         WHERE player_id = $1
+         AND status = 'completed'
+         AND remaining_bonus > 0`, [playerId]);
+            const releasableAmount = parseFloat(releasableResult.rows[0]?.releasable_amount || '0');
             if (result.rows.length === 0) {
-                // Return empty wallet if doesn't exist
+                // Return wallet with releasable amount even if wallet record doesn't exist
                 return {
                     player_id: playerId,
                     total_bonus_balance: 0,
                     locked_bonus_balance: 0,
                     playable_bonus_balance: 0,
-                    releasable_amount: 0,
+                    releasable_amount: releasableAmount,
                     total_bonus_received: 0,
                     total_bonus_wagered: 0,
                     total_bonus_released: 0,
@@ -58,13 +65,6 @@ class BonusWalletService {
                     currency: 'USD'
                 };
             }
-            // Calculate releasable amount (from completed bonuses that haven't been transferred yet)
-            const releasableResult = await client.query(`SELECT COALESCE(SUM(remaining_bonus), 0) as releasable_amount
-         FROM bonus_instances
-         WHERE player_id = $1
-         AND status = 'completed'
-         AND remaining_bonus > 0`, [playerId]);
-            const releasableAmount = parseFloat(releasableResult.rows[0]?.releasable_amount || '0');
             return this.formatWallet(result.rows[0], releasableAmount);
         }
         finally {

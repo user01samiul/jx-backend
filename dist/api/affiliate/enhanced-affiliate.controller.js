@@ -124,7 +124,7 @@ const getAdminAffiliateDashboard = async (req, res) => {
 exports.getAdminAffiliateDashboard = getAdminAffiliateDashboard;
 const adminGetAllAffiliates = async (req, res) => {
     try {
-        const { page = 1, limit = 20, status, team_id, manager_id } = req.query;
+        const { page = 1, limit = 20, status } = req.query;
         const offset = (parseInt(page) - 1) * parseInt(limit);
         const client = await postgres_1.default.connect();
         try {
@@ -135,16 +135,6 @@ const adminGetAllAffiliates = async (req, res) => {
                 paramCount++;
                 whereClause += ` AND ap.is_active = $${paramCount}`;
                 params.push(status === 'active');
-            }
-            if (team_id) {
-                paramCount++;
-                whereClause += ` AND ap.team_id = $${paramCount}`;
-                params.push(parseInt(team_id));
-            }
-            if (manager_id) {
-                paramCount++;
-                whereClause += ` AND ap.manager_id = $${paramCount}`;
-                params.push(parseInt(manager_id));
             }
             // Get affiliates with pagination
             const affiliatesResult = await client.query(`SELECT 

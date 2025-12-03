@@ -110,15 +110,14 @@ export class AffiliateService {
       // Create affiliate profile
       const profileResult = await client.query(
         `INSERT INTO affiliate_profiles (
-          user_id, referral_code, display_name, bio, website_url, 
-          social_media, commission_rate, is_active
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+          user_id, referral_code, display_name, website_url,
+          social_media_links, commission_rate, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, true)
         RETURNING *`,
         [
           userId,
           referralCode,
           profileData.display_name,
-          profileData.bio || null,
           profileData.website_url || null,
           profileData.social_media ? JSON.stringify(profileData.social_media) : null,
           5.0 // Default commission rate
@@ -150,10 +149,37 @@ export class AffiliateService {
    */
   static async getAffiliateProfile(userId: number): Promise<AffiliateProfile | null> {
     const result = await pool.query(
-      'SELECT * FROM affiliate_profiles WHERE user_id = $1',
+      `SELECT
+        ap.*,
+        COALESCE(ub.affiliate_balance, 0) as affiliate_balance,
+        COALESCE(ub.affiliate_balance_locked, 0) as affiliate_balance_locked,
+        COALESCE(ub.affiliate_total_earned, 0) as affiliate_total_earned,
+        COALESCE(ub.affiliate_total_redeemed, 0) as affiliate_total_redeemed
+      FROM affiliate_profiles ap
+      LEFT JOIN user_balances ub ON ap.user_id = ub.user_id
+      WHERE ap.user_id = $1`,
       [userId]
     );
-    return result.rows[0] || null;
+
+    const profile = result.rows[0] || null;
+
+    if (profile) {
+      // Get redemption settings to include minimum_redemption
+      const settingsResult = await pool.query(
+        "SELECT setting_value FROM affiliate_settings WHERE setting_key = 'redemption_settings'"
+      );
+
+      const redemptionSettings = settingsResult.rows[0]?.setting_value || {
+        minimum_redemption: 50.00,
+        instant_percentage: 50,
+        lock_days: 7
+      };
+
+      // Add minimum_payout to profile (for FE compatibility)
+      profile.minimum_payout = parseFloat(redemptionSettings.minimum_redemption);
+    }
+
+    return profile;
   }
 
   /**
@@ -544,14 +570,12 @@ export class AffiliateService {
       // Create affiliate relationship
       await client.query(
         `INSERT INTO affiliate_relationships (
-          affiliate_id, referred_user_id, referral_code, conversion_type, conversion_amount
-        ) VALUES ($1, $2, $3, $4, $5)`,
+          affiliate_id, referred_user_id, referral_code
+        ) VALUES ($1, $2, $3)`,
         [
           affiliateId,
           convertedUserId,
-          referralCode,
-          conversionType,
-          conversionAmount || 0
+          referralCode
         ]
       );
 
@@ -669,26 +693,11 @@ export class AffiliateService {
       }
 
       const commissionRate = affiliateResult.rows[0].commission_rate || 5.0;
-      
-      // Calculate commission based on type
-      let commissionAmount = 0;
-      
-      switch (commissionType) {
-        case 'deposit':
-          commissionAmount = (amount * 10.0) / 100; // 10% of deposit
-          break;
-        case 'bet_revenue':
-          commissionAmount = (amount * 3.0) / 100; // 3% of bet amount
-          break;
-        case 'win_revenue':
-          commissionAmount = (amount * 2.0) / 100; // 2% of win amount
-          break;
-        case 'loss_revenue':
-          commissionAmount = (amount * 5.0) / 100; // 5% of loss amount
-          break;
-        default:
-          commissionAmount = (amount * commissionRate) / 100; // Use affiliate's rate
-      }
+
+      // Calculate commission using affiliate's custom rate for all types
+      const commissionAmount = (amount * commissionRate) / 100;
+
+      console.log(`[AFFILIATE] Calculating commission: ${commissionType}, amount: $${amount}, rate: ${commissionRate}%, commission: $${commissionAmount}`);
 
       // Create commission record
       const commissionResult = await client.query(

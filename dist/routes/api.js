@@ -13,6 +13,7 @@ const game_controller_1 = require("../api/game/game.controller");
 const authenticate_1 = require("../middlewares/authenticate");
 const authorize_1 = require("../middlewares/authorize");
 const validate_1 = require("../middlewares/validate");
+const upload_1 = require("../middlewares/upload");
 const game_schema_1 = require("../api/game/game.schema");
 const user_schema_1 = require("../api/user/user.schema");
 const kyc_schema_1 = require("../api/user/kyc.schema");
@@ -371,7 +372,7 @@ router.get("/user/balance", authenticate_1.authenticate, user_controller_1.getUs
  *       401:
  *         description: Unauthorized
  */
-router.put("/user/profile/update", authenticate_1.authenticate, (0, validate_1.validate)({ body: user_schema_1.UpdateProfileInput }), user_controller_1.updateUserProfile);
+router.put("/user/profile/update", authenticate_1.authenticate, upload_1.uploadAvatar, user_controller_1.updateUserProfile);
 /**
  * @openapi
  * /api/user/password/change:
@@ -2691,6 +2692,8 @@ router.post("/payment/webhook/oxapay", async (req, res) => {
     try {
         // Import the handleWebhook function from payment controller
         const { handleWebhook } = require("../api/payment/payment.controller");
+        // Set gateway_code in params since this is a dedicated route without :gateway_code param
+        req.params.gateway_code = 'oxapay';
         // Call the handleWebhook function with the request
         await handleWebhook(req, res, (error) => {
             if (error) {

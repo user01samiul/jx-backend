@@ -30,8 +30,8 @@ class EnhancedAffiliateService {
             const profileResult = await client.query(`INSERT INTO affiliate_profiles (
           user_id, referral_code, display_name, website_url, social_media_links,
           commission_rate, minimum_payout, payment_methods, is_active,
-          manager_id, team_id, level, upline_id, downline_count, total_downline_commission
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+          level, upline_id, downline_count, total_downline_commission
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *`, [
                 userId,
                 referralCode,
@@ -42,8 +42,6 @@ class EnhancedAffiliateService {
                 profileData.minimum_payout || 50.0,
                 profileData.payment_methods,
                 true,
-                profileData.manager_id,
-                profileData.team_id,
                 level,
                 uplineId,
                 0,
@@ -135,8 +133,11 @@ class EnhancedAffiliateService {
                 const levelAffiliateId = level === 1 ? baseAffiliateId : mlmStructure.upline_id;
                 if (!levelAffiliateId)
                     break;
-                // Different commission rates for different levels
-                const levelCommissionRate = level === 1 ? 5.0 : level === 2 ? 2.0 : 1.0;
+                // Fetch commission rate from affiliate profile (admin-set rate)
+                const affiliateRateResult = await client.query('SELECT commission_rate FROM affiliate_profiles WHERE user_id = $1', [levelAffiliateId]);
+                // Use affiliate's custom commission rate, with fallback based on level
+                const levelCommissionRate = affiliateRateResult.rows[0]?.commission_rate ||
+                    (level === 1 ? 5.0 : level === 2 ? 2.0 : 1.0);
                 const commissionAmount = (amount * levelCommissionRate) / 100;
                 // Create commission record
                 const commissionResult = await client.query(`INSERT INTO affiliate_commissions (
@@ -486,12 +487,15 @@ class EnhancedAffiliateService {
                 params.push(level);
                 paramIndex++;
             }
-            const referralsResult = await client.query(`SELECT 
+            const referralsResult = await client.query(`SELECT
           ar.id,
           ar.referred_user_id,
           ar.level,
           ar.is_indirect,
-          ar.created_at,
+          ar.status,
+          ar.created_at as registered_at,
+          ar.first_deposit_amount as total_deposits,
+          ar.total_commission_earned as total_commission_generated,
           u.username,
           u.email,
           up.avatar_url,
@@ -499,10 +503,10 @@ class EnhancedAffiliateService {
         FROM affiliate_relationships ar
         LEFT JOIN users u ON ar.referred_user_id = u.id
         LEFT JOIN user_profiles up ON u.id = up.user_id
-        LEFT JOIN affiliate_commissions ac ON ar.referred_user_id = ac.referred_user_id 
+        LEFT JOIN affiliate_commissions ac ON ar.referred_user_id = ac.referred_user_id
           AND ar.affiliate_id = ac.affiliate_id
         ${whereClause}
-        GROUP BY ar.id, ar.referred_user_id, ar.level, ar.is_indirect, ar.created_at, u.username, u.email, up.avatar_url
+        GROUP BY ar.id, ar.referred_user_id, ar.level, ar.is_indirect, ar.status, ar.created_at, ar.first_deposit_amount, ar.total_commission_earned, u.username, u.email, up.avatar_url
         ORDER BY ar.created_at DESC
         LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`, [...params, limit, offset]);
             // Get total count
@@ -582,12 +586,48 @@ class EnhancedAffiliateService {
         }
     }
     /**
+     * Get affiliate commission statistics
+     */
+    static async getAffiliateCommissionStats(userId, startDate, endDate) {
+        const client = await postgres_1.default.connect();
+        try {
+            let whereClause = 'WHERE affiliate_id = $1';
+            const params = [userId];
+            let paramIndex = 2;
+            if (startDate) {
+                whereClause += ` AND created_at >= $${paramIndex}`;
+                params.push(startDate);
+                paramIndex++;
+            }
+            if (endDate) {
+                whereClause += ` AND created_at <= $${paramIndex} + INTERVAL '1 day'`;
+                params.push(endDate);
+                paramIndex++;
+            }
+            const statsResult = await client.query(`SELECT
+          COUNT(*)::TEXT as total_commissions,
+          COALESCE(SUM(commission_amount), 0)::TEXT as total_amount,
+          COUNT(*) FILTER (WHERE status = 'pending')::TEXT as pending_count,
+          COALESCE(SUM(commission_amount) FILTER (WHERE status = 'pending'), 0)::TEXT as pending_amount,
+          COUNT(*) FILTER (WHERE status = 'paid')::TEXT as paid_count,
+          COALESCE(SUM(commission_amount) FILTER (WHERE status = 'paid'), 0)::TEXT as paid_amount,
+          COUNT(*) FILTER (WHERE status = 'cancelled')::TEXT as rejected_count,
+          COALESCE(SUM(commission_amount) FILTER (WHERE status = 'cancelled'), 0)::TEXT as rejected_amount
+        FROM affiliate_commissions
+        ${whereClause}`, params);
+            return statsResult.rows[0];
+        }
+        finally {
+            client.release();
+        }
+    }
+    /**
      * Get affiliate team structure
      */
     static async getAffiliateTeam(userId, level = 1) {
         const client = await postgres_1.default.connect();
         try {
-            const teamResult = await client.query(`SELECT 
+            const teamResult = await client.query(`SELECT
           ar.id,
           ar.referred_user_id,
           ar.level,
@@ -603,7 +643,7 @@ class EnhancedAffiliateService {
         LEFT JOIN users u ON ar.referred_user_id = u.id
         LEFT JOIN user_profiles up ON u.id = up.user_id
         LEFT JOIN affiliate_profiles ap ON u.id = ap.user_id
-        LEFT JOIN affiliate_commissions ac ON ar.referred_user_id = ac.referred_user_id 
+        LEFT JOIN affiliate_commissions ac ON ar.referred_user_id = ac.referred_user_id
           AND ar.affiliate_id = ac.affiliate_id
         WHERE ar.affiliate_id = $1 AND ar.level = $2
         GROUP BY ar.id, ar.referred_user_id, ar.level, ar.is_indirect, ar.created_at, 
@@ -655,8 +695,22 @@ class EnhancedAffiliateService {
         try {
             // Get basic stats
             const stats = await this.getAffiliateStats(userId);
+            // Get balance information from user_balances
+            const balanceResult = await client.query(`SELECT
+          COALESCE(affiliate_balance, 0) as affiliate_balance,
+          COALESCE(affiliate_balance_locked, 0) as affiliate_balance_locked,
+          COALESCE(affiliate_total_earned, 0) as affiliate_total_earned,
+          COALESCE(affiliate_total_redeemed, 0) as affiliate_total_redeemed
+        FROM user_balances
+        WHERE user_id = $1`, [userId]);
+            const balance = balanceResult.rows[0] || {
+                affiliate_balance: 0,
+                affiliate_balance_locked: 0,
+                affiliate_total_earned: 0,
+                affiliate_total_redeemed: 0
+            };
             // Get recent referrals
-            const recentReferralsResult = await client.query(`SELECT 
+            const recentReferralsResult = await client.query(`SELECT
           ar.referred_user_id,
           ar.created_at,
           u.username,
@@ -667,7 +721,7 @@ class EnhancedAffiliateService {
         ORDER BY ar.created_at DESC
         LIMIT 5`, [userId]);
             // Get recent commissions
-            const recentCommissionsResult = await client.query(`SELECT 
+            const recentCommissionsResult = await client.query(`SELECT
           commission_amount,
           commission_type,
           status,
@@ -676,17 +730,28 @@ class EnhancedAffiliateService {
         WHERE affiliate_id = $1
         ORDER BY created_at DESC
         LIMIT 5`, [userId]);
+            // Get pending commissions total
+            const pendingCommissionsResult = await client.query(`SELECT COALESCE(SUM(commission_amount), 0) as pending_total
+        FROM affiliate_commissions
+        WHERE affiliate_id = $1 AND status = 'pending'`, [userId]);
+            const pendingCommissionTotal = parseFloat(pendingCommissionsResult.rows[0]?.pending_total || 0);
             // Get monthly chart data
-            const monthlyDataResult = await client.query(`SELECT 
+            const monthlyDataResult = await client.query(`SELECT
           DATE_TRUNC('day', created_at) as date,
           SUM(commission_amount) as daily_commission
         FROM affiliate_commissions
-        WHERE affiliate_id = $1 
+        WHERE affiliate_id = $1
         AND created_at >= DATE_TRUNC('month', CURRENT_DATE)
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date`, [userId]);
             return {
-                ...stats,
+                overview: {
+                    ...stats,
+                    ...balance,
+                    available_balance: balance.affiliate_balance || 0,
+                    pending_commission: pendingCommissionTotal,
+                    monthly_commission: stats.monthly_commission || 0
+                },
                 recent_referrals: recentReferralsResult.rows,
                 recent_commissions: recentCommissionsResult.rows,
                 monthly_chart_data: monthlyDataResult.rows

@@ -56,6 +56,7 @@ import {
 import { authenticate } from "../middlewares/authenticate";
 import { authorize } from "../middlewares/authorize";
 import { validate as validateRequest } from "../middlewares/validate";
+import { uploadAvatar } from "../middlewares/upload";
 import { 
   PlaceBetSchema, 
   ProcessBetResultSchema, 
@@ -444,7 +445,7 @@ router.get("/user/balance", authenticate, getUserBalance);
  *       401:
  *         description: Unauthorized
  */
-router.put("/user/profile/update", authenticate, validateRequest({ body: UpdateProfileInput }), updateUserProfile);
+router.put("/user/profile/update", authenticate, uploadAvatar, updateUserProfile);
 
 /**
  * @openapi
@@ -2893,7 +2894,10 @@ router.post("/payment/webhook/oxapay", async (req, res) => {
   try {
     // Import the handleWebhook function from payment controller
     const { handleWebhook } = require("../api/payment/payment.controller");
-    
+
+    // Set gateway_code in params since this is a dedicated route without :gateway_code param
+    req.params.gateway_code = 'oxapay';
+
     // Call the handleWebhook function with the request
     await handleWebhook(req, res, (error: any) => {
       if (error) {

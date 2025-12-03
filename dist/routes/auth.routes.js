@@ -7,7 +7,20 @@ const express_1 = __importDefault(require("express"));
 const auth_controller_1 = require("../api/auth/auth.controller");
 const auth_schema_1 = require("../api/auth/auth.schema");
 const validate_1 = require("../middlewares/validate");
+const rate_limiter_middleware_1 = require("../middlewares/rate-limiter.middleware");
 const router = express_1.default.Router();
+// Rate limiter for availability check endpoints (10 requests per minute)
+const availabilityCheckRateLimiter = (0, rate_limiter_middleware_1.createRateLimiter)({
+    windowMs: 60 * 1000, // 1 minute
+    max: 10,
+    message: 'Too many availability check requests, please try again later.'
+});
+// Rate limiter for forgot password endpoint (3 requests per hour per IP)
+const forgotPasswordRateLimiter = (0, rate_limiter_middleware_1.createRateLimiter)({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 3,
+    message: 'Too many password reset requests, please try again later.'
+});
 /**
  * @openapi
  * /api/auth/captcha:
@@ -37,6 +50,86 @@ const router = express_1.default.Router();
  *                       example: <svg>...</svg>
  */
 router.get("/captcha", auth_controller_1.getCaptcha);
+/**
+ * @openapi
+ * /api/auth/check-username:
+ *   get:
+ *     summary: Check username availability
+ *     tags:
+ *       - Auth
+ *     parameters:
+ *       - in: query
+ *         name: username
+ *         required: true
+ *         schema:
+ *           type: string
+ *           minLength: 3
+ *         description: Username to check
+ *         example: newuser123
+ *     responses:
+ *       200:
+ *         description: Username availability checked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     available:
+ *                       type: boolean
+ *                       example: true
+ *                     message:
+ *                       type: string
+ *                       example: Username is available
+ *       400:
+ *         description: Invalid username format
+ */
+router.get("/check-username", availabilityCheckRateLimiter, auth_controller_1.checkUsername);
+/**
+ * @openapi
+ * /api/auth/check-email:
+ *   get:
+ *     summary: Check email availability
+ *     tags:
+ *       - Auth
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: Email to check
+ *         example: newuser@email.com
+ *     responses:
+ *       200:
+ *         description: Email availability checked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     available:
+ *                       type: boolean
+ *                       example: true
+ *                     message:
+ *                       type: string
+ *                       example: Email is available
+ *       400:
+ *         description: Invalid email format
+ */
+router.get("/check-email", availabilityCheckRateLimiter, auth_controller_1.checkEmail);
 /**
  * @openapi
  * /api/auth/login:
@@ -264,4 +357,97 @@ router.post("/refresh", auth_controller_1.refreshToken);
  *         description: Username is required
  */
 router.get("/user-roles", auth_controller_1.getUserRoles);
+/**
+ * @openapi
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Password reset email sent (if email exists)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: If the email exists, reset instructions have been sent
+ *       400:
+ *         description: Invalid email format
+ *       429:
+ *         description: Too many requests (rate limited to 3 per hour)
+ */
+router.post("/forgot-password", forgotPasswordRateLimiter, (0, validate_1.validate)({ body: auth_schema_1.ForgotPasswordSchema }), auth_controller_1.forgotPassword);
+/**
+ * @openapi
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset password using token
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *                 example: newSecurePassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Password reset successful
+ *       400:
+ *         description: Invalid or expired token, or token already used
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Invalid or expired reset token
+ */
+router.post("/reset-password", (0, validate_1.validate)({ body: auth_schema_1.ResetPasswordSchema }), auth_controller_1.resetPassword);
 exports.default = router;

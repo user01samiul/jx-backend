@@ -26,7 +26,8 @@ exports.UpdateProfileInput = zod_1.z.object({
     gender: zod_1.z.enum(["male", "female", "other"]).optional(),
     timezone: zod_1.z.string().max(50).optional().transform(val => val === "" ? undefined : val),
     language: zod_1.z.string().max(10).optional().transform(val => val === "" ? undefined : val),
-    currency: zod_1.z.string().max(3).optional().transform(val => val === "" ? undefined : val)
+    currency: zod_1.z.string().max(3).optional().transform(val => val === "" ? undefined : val),
+    avatar_url: zod_1.z.string().url().optional().transform(val => val === "" ? undefined : val)
 });
 // =====================================================
 // 2FA MANAGEMENT SCHEMAS

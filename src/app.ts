@@ -10,6 +10,7 @@ import apiRoutes from "./routes/api";
 // Routes
 import adminModulesRoutes from "./routes/admin-modules.routes";
 import adminRoutes from "./routes/admin.routes";
+import adminAffiliateRoutes from "./routes/admin-affiliate.routes";
 import affiliateRoutes from "./routes/affiliate.routes";
 import authRoutes from "./routes/auth.routes";
 import chatRoutes from "./routes/chat.routes";
@@ -18,7 +19,6 @@ import dashboardRoutes from "./routes/dashboard.routes";
 import enhancedAffiliateRoutes from "./routes/enhanced-affiliate.routes";
 import isoftbetProxyRoutes from "./routes/isoftbet-proxy.routes";
 import jxOriginalsRoutes from "./routes/jxoriginals.routes";
-import managerRoutes from "./routes/manager.routes";
 import roleRoutes from "./routes/role.routes";
 import supportTicketRoutes from "./routes/support-ticket.routes";
 import supportUserRoutes from "./routes/support-user.routes";
@@ -234,14 +234,14 @@ app.use("/api/affiliate", affiliateRoutes);
 // Enhanced affiliate routes
 app.use("/api/enhanced-affiliate", enhancedAffiliateRoutes);
 
-// Manager routes
-app.use("/api/manager", managerRoutes);
-
 // Admin modules routes
 app.use("/api/admin-modules", adminModulesRoutes);
 
 // Admin routes
 app.use("/api/admin", adminRoutes);
+
+// Admin affiliate management routes (new enhanced system)
+app.use("/api/admin", adminAffiliateRoutes);
 
 // CRM routes (Player 360 View, Support, VIP Management)
 app.use("/api/admin/crm", crmRoutes);

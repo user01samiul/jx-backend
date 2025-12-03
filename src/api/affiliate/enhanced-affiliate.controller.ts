@@ -143,7 +143,7 @@ export const getAdminAffiliateDashboard = async (req: Request, res: Response) =>
 
 export const adminGetAllAffiliates = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 20, status, team_id, manager_id } = req.query;
+    const { page = 1, limit = 20, status } = req.query;
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
     const client = await pool.connect();
@@ -156,18 +156,6 @@ export const adminGetAllAffiliates = async (req: Request, res: Response) => {
         paramCount++;
         whereClause += ` AND ap.is_active = $${paramCount}`;
         params.push(status === 'active');
-      }
-
-      if (team_id) {
-        paramCount++;
-        whereClause += ` AND ap.team_id = $${paramCount}`;
-        params.push(parseInt(team_id as string));
-      }
-
-      if (manager_id) {
-        paramCount++;
-        whereClause += ` AND ap.manager_id = $${paramCount}`;
-        params.push(parseInt(manager_id as string));
       }
 
       // Get affiliates with pagination

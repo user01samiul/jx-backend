@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAffiliateCommissionSummary = exports.updateAffiliateCommissionRate = exports.getAllAffiliateProfiles = exports.getAffiliateDashboard = exports.generateAffiliateLink = exports.getAffiliateTeam = exports.getAffiliateCommissions = exports.getAffiliateReferrals = exports.getAffiliateStats = exports.createAffiliateProfile = exports.getAffiliateProfile = void 0;
+exports.getRedemptionHistory = exports.requestRedemption = exports.getAffiliateCommissionSummary = exports.updateAffiliateCommissionRate = exports.getAllAffiliateProfiles = exports.getAffiliateDashboard = exports.generateAffiliateLink = exports.getAffiliateTeam = exports.getAffiliateCommissionStats = exports.getAffiliateCommissions = exports.getAffiliateReferrals = exports.getAffiliateStats = exports.getAffiliateApplicationStatus = exports.createAffiliateProfile = exports.getAffiliateProfile = void 0;
 const affiliate_service_1 = require("../../services/affiliate/affiliate.service");
 const enhanced_affiliate_service_1 = require("../../services/affiliate/enhanced-affiliate.service");
+const affiliate_balance_service_1 = require("../../services/affiliate/affiliate-balance.service");
+const affiliate_application_service_1 = require("../../services/affiliate/affiliate-application.service");
 /**
  * Get affiliate profile for current user
  */
@@ -29,7 +31,7 @@ const getAffiliateProfile = async (req, res, next) => {
 };
 exports.getAffiliateProfile = getAffiliateProfile;
 /**
- * Create affiliate profile for current user
+ * Create affiliate application for current user
  */
 const createAffiliateProfile = async (req, res, next) => {
     try {
@@ -38,17 +40,18 @@ const createAffiliateProfile = async (req, res, next) => {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const { display_name, bio, website_url, social_media } = req.body;
-        const profile = await affiliate_service_1.AffiliateService.createAffiliateProfile(userId, {
-            display_name,
-            bio,
-            website_url,
-            social_media
+        const { display_name, website_url, social_media } = req.body;
+        // Create application instead of profile - requires admin approval
+        const application = await affiliate_application_service_1.AffiliateApplicationService.submitApplication({
+            userId,
+            displayName: display_name,
+            websiteUrl: website_url,
+            socialMediaLinks: social_media
         });
         res.status(201).json({
             success: true,
-            message: "Affiliate profile created successfully",
-            data: profile
+            message: "Affiliate application submitted successfully. Your application is pending admin review.",
+            data: application
         });
     }
     catch (err) {
@@ -56,6 +59,64 @@ const createAffiliateProfile = async (req, res, next) => {
     }
 };
 exports.createAffiliateProfile = createAffiliateProfile;
+/**
+ * Get affiliate application status for current user
+ */
+const getAffiliateApplicationStatus = async (req, res, next) => {
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        // Check if user has affiliate profile
+        const profile = await affiliate_service_1.AffiliateService.getAffiliateProfile(userId);
+        if (profile) {
+            res.status(200).json({
+                success: true,
+                data: {
+                    status: 'approved',
+                    hasProfile: true,
+                    profile: profile
+                }
+            });
+            return;
+        }
+        // Check if user has application
+        const application = await affiliate_application_service_1.AffiliateApplicationService.getUserApplicationStatus(userId);
+        if (application) {
+            res.status(200).json({
+                success: true,
+                data: {
+                    status: application.application_status, // 'pending' or 'rejected'
+                    hasProfile: false,
+                    application: {
+                        id: application.id,
+                        display_name: application.display_name,
+                        status: application.application_status,
+                        rejection_reason: application.rejection_reason,
+                        created_at: application.created_at,
+                        reviewed_at: application.reviewed_at
+                    }
+                }
+            });
+            return;
+        }
+        // No application and no profile
+        res.status(200).json({
+            success: true,
+            data: {
+                status: 'none',
+                hasProfile: false,
+                application: null
+            }
+        });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.getAffiliateApplicationStatus = getAffiliateApplicationStatus;
 /**
  * Get affiliate statistics
  */
@@ -121,6 +182,28 @@ const getAffiliateCommissions = async (req, res, next) => {
     }
 };
 exports.getAffiliateCommissions = getAffiliateCommissions;
+/**
+ * Get affiliate commission statistics
+ */
+const getAffiliateCommissionStats = async (req, res, next) => {
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const { start_date, end_date } = req.query;
+        const stats = await enhanced_affiliate_service_1.EnhancedAffiliateService.getAffiliateCommissionStats(userId, start_date, end_date);
+        res.status(200).json({
+            success: true,
+            data: stats
+        });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.getAffiliateCommissionStats = getAffiliateCommissionStats;
 /**
  * Get affiliate team structure
  */
@@ -242,3 +325,58 @@ const getAffiliateCommissionSummary = async (req, res, next) => {
     }
 };
 exports.getAffiliateCommissionSummary = getAffiliateCommissionSummary;
+/**
+ * Request redemption (Affiliate creates pending redemption request)
+ */
+const requestRedemption = async (req, res, next) => {
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const { amount, notes } = req.body;
+        if (!amount || parseFloat(amount) <= 0) {
+            res.status(400).json({
+                success: false,
+                message: 'Valid amount is required'
+            });
+            return;
+        }
+        const result = await affiliate_balance_service_1.AffiliateBalanceService.processRedemption(userId, parseFloat(amount), notes);
+        res.status(200).json({
+            success: true,
+            message: 'Redemption request submitted successfully. Awaiting admin approval.',
+            data: result
+        });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.requestRedemption = requestRedemption;
+/**
+ * Get redemption history for current user
+ */
+const getRedemptionHistory = async (req, res, next) => {
+    try {
+        const userId = req.user?.userId;
+        if (!userId) {
+            res.status(401).json({ success: false, message: "Unauthorized" });
+            return;
+        }
+        const { page, limit } = req.query;
+        const history = await affiliate_balance_service_1.AffiliateBalanceService.getRedemptionHistory(userId, {
+            page: page ? parseInt(page) : 1,
+            limit: limit ? parseInt(limit) : 20
+        });
+        res.status(200).json({
+            success: true,
+            data: history
+        });
+    }
+    catch (err) {
+        next(err);
+    }
+};
+exports.getRedemptionHistory = getRedemptionHistory;
