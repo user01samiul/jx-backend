@@ -15,6 +15,7 @@ const api_1 = __importDefault(require("./routes/api"));
 // Routes
 const admin_modules_routes_1 = __importDefault(require("./routes/admin-modules.routes"));
 const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
+const admin_affiliate_routes_1 = __importDefault(require("./routes/admin-affiliate.routes"));
 const affiliate_routes_1 = __importDefault(require("./routes/affiliate.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const chat_routes_1 = __importDefault(require("./routes/chat.routes"));
@@ -23,7 +24,6 @@ const dashboard_routes_1 = __importDefault(require("./routes/dashboard.routes"))
 const enhanced_affiliate_routes_1 = __importDefault(require("./routes/enhanced-affiliate.routes"));
 const isoftbet_proxy_routes_1 = __importDefault(require("./routes/isoftbet-proxy.routes"));
 const jxoriginals_routes_1 = __importDefault(require("./routes/jxoriginals.routes"));
-const manager_routes_1 = __importDefault(require("./routes/manager.routes"));
 const role_routes_1 = __importDefault(require("./routes/role.routes"));
 const support_ticket_routes_1 = __importDefault(require("./routes/support-ticket.routes"));
 const support_user_routes_1 = __importDefault(require("./routes/support-user.routes"));
@@ -181,12 +181,12 @@ app.use("/api/auth", rate_limiter_middleware_1.authRateLimiter, auth_routes_1.de
 app.use("/api/affiliate", affiliate_routes_1.default);
 // Enhanced affiliate routes
 app.use("/api/enhanced-affiliate", enhanced_affiliate_routes_1.default);
-// Manager routes
-app.use("/api/manager", manager_routes_1.default);
 // Admin modules routes
 app.use("/api/admin-modules", admin_modules_routes_1.default);
 // Admin routes
 app.use("/api/admin", admin_routes_1.default);
+// Admin affiliate management routes (new enhanced system)
+app.use("/api/admin", admin_affiliate_routes_1.default);
 // CRM routes (Player 360 View, Support, VIP Management)
 app.use("/api/admin/crm", crm_routes_1.default);
 // Dashboard routes (Statistics, Metrics, Real-time data)

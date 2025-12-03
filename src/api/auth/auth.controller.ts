@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { loginService, registerService, refreshToken as refreshTokenService } from "../../services/auth/auth.service";
+import { loginService, registerService, refreshToken as refreshTokenService, forgotPasswordService, resetPasswordService } from "../../services/auth/auth.service";
 import { getUserRolesService, getUserByUsernameService, getUserByEmailService } from "../../services/user/user.service";
-import { LoginInput, RegisterInput } from "./auth.schema";
+import { LoginInput, RegisterInput, ForgotPasswordInput, ResetPasswordInput } from "./auth.schema";
 import { SuccessMessages } from "../../constants/messages";
 import { captchaService } from "../../services/captcha/captcha.service";
 
@@ -135,5 +135,161 @@ export const refreshCaptcha = async (
     });
   } catch (err) {
     next(err);
+  }
+};
+
+export const checkUsername = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { username } = req.query;
+
+    // Validate input
+    if (!username || typeof username !== 'string') {
+      res.json({
+        success: false,
+        message: 'Username is required'
+      });
+      return;
+    }
+
+    if (username.length < 3) {
+      res.json({
+        success: false,
+        message: 'Username must be at least 3 characters long'
+      });
+      return;
+    }
+
+    // Check database (case-insensitive)
+    const existingUser = await getUserByUsernameService(username);
+
+    res.json({
+      success: true,
+      data: {
+        available: !existingUser,
+        message: existingUser ? 'Username already exists' : 'Username is available'
+      }
+    });
+  } catch (err) {
+    console.error('Username check error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking username availability'
+    });
+  }
+};
+
+export const checkEmail = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { email } = req.query;
+
+    // Validate input
+    if (!email || typeof email !== 'string') {
+      res.json({
+        success: false,
+        message: 'Email is required'
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.json({
+        success: false,
+        message: 'Invalid email format'
+      });
+      return;
+    }
+
+    // Check database (case-insensitive)
+    const existingUser = await getUserByEmailService(email);
+
+    res.json({
+      success: true,
+      data: {
+        available: !existingUser,
+        message: existingUser ? 'Email already registered' : 'Email is available'
+      }
+    });
+  } catch (err) {
+    console.error('Email check error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking email availability'
+    });
+  }
+};
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const reqBody = req.validated?.body as ForgotPasswordInput;
+    const { email } = reqBody;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+      return;
+    }
+
+    const result = await forgotPasswordService(email, req);
+
+    res.json({
+      success: true,
+      message: result.message
+    });
+  } catch (err: any) {
+    console.error('Forgot password error:', err);
+    const status = err.status || 500;
+    res.status(status).json({
+      success: false,
+      message: err.message || 'Failed to process password reset request'
+    });
+  }
+};
+
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const reqBody = req.validated?.body as ResetPasswordInput;
+    const { token, password } = reqBody;
+
+    if (!token || !password) {
+      res.status(400).json({
+        success: false,
+        message: 'Token and password are required'
+      });
+      return;
+    }
+
+    const result = await resetPasswordService(token, password, req);
+
+    res.json({
+      success: true,
+      message: result.message
+    });
+  } catch (err: any) {
+    console.error('Reset password error:', err);
+    const status = err.status || 500;
+    res.status(status).json({
+      success: false,
+      message: err.message || 'Failed to reset password'
+    });
   }
 };

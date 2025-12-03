@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getUserGameBets = exports.transferUserCategoryBalance = exports.getUserCategoryBalances = exports.skip2FA = exports.disable2FA = exports.enable2FA = exports.get2FAStatus = exports.changeUserPassword = exports.updateUserProfile = exports.getUserBalance = exports.getUserActivitySummary = exports.getUserBettingHistory = exports.getUserTransactionHistory = exports.getUserRecentActivity = exports.getUserFavoriteGames = exports.getUserProfile = void 0;
 const user_service_1 = require("../../services/user/user.service");
+const cdn_upload_1 = require("../../utils/cdn-upload");
 const getUserProfile = async (req, res, next) => {
     try {
         const userId = req.user?.userId;
@@ -143,7 +144,21 @@ const updateUserProfile = async (req, res, next) => {
             res.status(401).json({ success: false, message: "Unauthorized" });
             return;
         }
-        const profileData = req.validated?.body;
+        // Parse profile data from body (multipart/form-data)
+        const profileData = { ...req.body };
+        // Handle avatar upload if file is present
+        if (req.file) {
+            const uploadResult = await (0, cdn_upload_1.uploadToCDN)(req.file);
+            if (!uploadResult.success) {
+                res.status(400).json({
+                    success: false,
+                    message: "Failed to upload avatar",
+                    error: uploadResult.error
+                });
+                return;
+            }
+            profileData.avatar_url = uploadResult.url;
+        }
         const updatedProfile = await (0, user_service_1.updateUserProfileService)(userId, profileData);
         res.status(200).json({ success: true, data: updatedProfile });
     }

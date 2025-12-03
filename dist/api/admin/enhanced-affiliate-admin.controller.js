@@ -15,22 +15,20 @@ const getAdminAffiliateSystemOverview = async (req, res) => {
         try {
             // Get comprehensive system overview
             const overviewResult = await client.query(`
-        SELECT 
+        SELECT
           -- Overall statistics
           (SELECT COUNT(*) FROM affiliate_profiles) as total_affiliates,
           (SELECT COUNT(*) FROM affiliate_profiles WHERE is_active = true) as active_affiliates,
-          (SELECT COUNT(*) FROM affiliate_teams) as total_teams,
-          (SELECT COUNT(*) FROM users WHERE id IN (SELECT DISTINCT manager_id FROM affiliate_teams)) as total_managers,
-          
+
           -- Financial statistics
           (SELECT COALESCE(SUM(total_commission_earned), 0) FROM affiliate_profiles) as total_commission_paid,
           (SELECT COALESCE(SUM(total_payouts_received), 0) FROM affiliate_profiles) as total_payouts_processed,
           (SELECT COALESCE(SUM(commission_amount), 0) FROM affiliate_commissions WHERE status = 'pending') as pending_commissions,
-          
+
           -- Performance statistics
           (SELECT COALESCE(SUM(total_referrals), 0) FROM affiliate_profiles) as total_referrals,
           (SELECT COUNT(*) FROM affiliate_relationships WHERE first_deposit_amount > 0) as successful_conversions,
-          
+
           -- MLM statistics
           (SELECT COALESCE(SUM(downline_count), 0) FROM affiliate_profiles) as total_downline_affiliates,
           (SELECT COALESCE(SUM(total_downline_commission), 0) FROM affiliate_profiles) as total_downline_commission
@@ -76,51 +74,25 @@ const getAdminAffiliateSystemOverview = async (req, res) => {
       `);
             // Get top performing affiliates
             const topAffiliates = await client.query(`
-        SELECT 
+        SELECT
           ap.id,
           u.username,
           ap.display_name,
           ap.total_commission_earned,
           ap.total_referrals,
           ap.downline_count,
-          ap.is_active,
-          at.name as team_name,
-          um.username as manager_name
+          ap.is_active
         FROM affiliate_profiles ap
         JOIN users u ON ap.user_id = u.id
-        LEFT JOIN affiliate_teams at ON ap.team_id = at.id
-        LEFT JOIN users um ON ap.manager_id = um.id
         ORDER BY ap.total_commission_earned DESC
         LIMIT 10
-      `);
-            // Get team performance
-            const teamPerformance = await client.query(`
-        SELECT 
-          at.id,
-          at.name,
-          at.manager_id,
-          um.username as manager_name,
-          COUNT(ap.id) as affiliate_count,
-          COALESCE(SUM(ap.total_commission_earned), 0) as total_commission,
-          COALESCE(SUM(ap.total_referrals), 0) as total_referrals,
-          CASE 
-            WHEN COUNT(ap.id) > 0 THEN 
-              COALESCE(SUM(ap.total_commission_earned), 0) / COUNT(ap.id)
-            ELSE 0 
-          END as avg_commission_per_affiliate
-        FROM affiliate_teams at
-        LEFT JOIN users um ON at.manager_id = um.id
-        LEFT JOIN affiliate_profiles ap ON at.id = ap.team_id
-        GROUP BY at.id, at.name, at.manager_id, um.username
-        ORDER BY total_commission DESC
       `);
             res.json({
                 success: true,
                 data: {
                     overview: overviewResult.rows[0],
                     recent_activities: recentActivities.rows,
-                    top_affiliates: topAffiliates.rows,
-                    team_performance: teamPerformance.rows
+                    top_affiliates: topAffiliates.rows
                 }
             });
         }

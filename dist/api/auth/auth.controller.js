@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshCaptcha = exports.getCaptcha = exports.getUserRoles = exports.refreshToken = exports.register = exports.login = void 0;
+exports.resetPassword = exports.forgotPassword = exports.checkEmail = exports.checkUsername = exports.refreshCaptcha = exports.getCaptcha = exports.getUserRoles = exports.refreshToken = exports.register = exports.login = void 0;
 const auth_service_1 = require("../../services/auth/auth.service");
 const user_service_1 = require("../../services/user/user.service");
 const messages_1 = require("../../constants/messages");
@@ -119,3 +119,133 @@ const refreshCaptcha = async (req, res, next) => {
     }
 };
 exports.refreshCaptcha = refreshCaptcha;
+const checkUsername = async (req, res, next) => {
+    try {
+        const { username } = req.query;
+        // Validate input
+        if (!username || typeof username !== 'string') {
+            res.json({
+                success: false,
+                message: 'Username is required'
+            });
+            return;
+        }
+        if (username.length < 3) {
+            res.json({
+                success: false,
+                message: 'Username must be at least 3 characters long'
+            });
+            return;
+        }
+        // Check database (case-insensitive)
+        const existingUser = await (0, user_service_1.getUserByUsernameService)(username);
+        res.json({
+            success: true,
+            data: {
+                available: !existingUser,
+                message: existingUser ? 'Username already exists' : 'Username is available'
+            }
+        });
+    }
+    catch (err) {
+        console.error('Username check error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error checking username availability'
+        });
+    }
+};
+exports.checkUsername = checkUsername;
+const checkEmail = async (req, res, next) => {
+    try {
+        const { email } = req.query;
+        // Validate input
+        if (!email || typeof email !== 'string') {
+            res.json({
+                success: false,
+                message: 'Email is required'
+            });
+            return;
+        }
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            res.json({
+                success: false,
+                message: 'Invalid email format'
+            });
+            return;
+        }
+        // Check database (case-insensitive)
+        const existingUser = await (0, user_service_1.getUserByEmailService)(email);
+        res.json({
+            success: true,
+            data: {
+                available: !existingUser,
+                message: existingUser ? 'Email already registered' : 'Email is available'
+            }
+        });
+    }
+    catch (err) {
+        console.error('Email check error:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error checking email availability'
+        });
+    }
+};
+exports.checkEmail = checkEmail;
+const forgotPassword = async (req, res, next) => {
+    try {
+        const reqBody = req.validated?.body;
+        const { email } = reqBody;
+        if (!email) {
+            res.status(400).json({
+                success: false,
+                message: 'Email is required'
+            });
+            return;
+        }
+        const result = await (0, auth_service_1.forgotPasswordService)(email, req);
+        res.json({
+            success: true,
+            message: result.message
+        });
+    }
+    catch (err) {
+        console.error('Forgot password error:', err);
+        const status = err.status || 500;
+        res.status(status).json({
+            success: false,
+            message: err.message || 'Failed to process password reset request'
+        });
+    }
+};
+exports.forgotPassword = forgotPassword;
+const resetPassword = async (req, res, next) => {
+    try {
+        const reqBody = req.validated?.body;
+        const { token, password } = reqBody;
+        if (!token || !password) {
+            res.status(400).json({
+                success: false,
+                message: 'Token and password are required'
+            });
+            return;
+        }
+        const result = await (0, auth_service_1.resetPasswordService)(token, password, req);
+        res.json({
+            success: true,
+            message: result.message
+        });
+    }
+    catch (err) {
+        console.error('Reset password error:', err);
+        const status = err.status || 500;
+        res.status(status).json({
+            success: false,
+            message: err.message || 'Failed to reset password'
+        });
+    }
+};
+exports.resetPassword = resetPassword;

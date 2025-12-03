@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.refreshToken = exports.refreshTokenService = exports.registerService = exports.loginService = void 0;
+exports.resetPasswordService = exports.forgotPasswordService = exports.refreshToken = exports.refreshTokenService = exports.registerService = exports.loginService = void 0;
 const postgres_1 = __importDefault(require("../../db/postgres"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const messages_1 = require("../../constants/messages");
@@ -49,6 +49,8 @@ const captcha_service_1 = require("../captcha/captcha.service");
 const axios_1 = __importDefault(require("axios"));
 const speakeasy_1 = __importDefault(require("speakeasy"));
 const qrcode_1 = __importDefault(require("qrcode"));
+const crypto_1 = __importDefault(require("crypto"));
+const email_service_1 = require("../email/email.service");
 const jwtService = new jwt_service_1.JwtService();
 /**
  * Validate Google Authenticator code
@@ -252,6 +254,16 @@ const registerService = async (reqBody) => {
                 throw new apiError_1.ApiError(messages_1.ErrorMessages.INVALID_CAPTCHA, 400);
             }
         }
+        // Check username uniqueness (case-insensitive)
+        const existingUsername = await (0, user_service_1.getUserByUsernameService)(username);
+        if (existingUsername) {
+            throw new apiError_1.ApiError('Username already exists. Please choose another username.', 409);
+        }
+        // Check email uniqueness (case-insensitive)
+        const existingEmail = await (0, user_service_1.getUserByEmailService)(email);
+        if (existingEmail) {
+            throw new apiError_1.ApiError('Email already registered. Please use another email.', 409);
+        }
         // Fetch QR data with local fallback (optional - can be null)
         const qrData = await fetchQRData(email, username);
         const hashedPassword = await bcrypt_1.default.hash(password, 10);
@@ -323,6 +335,15 @@ const registerService = async (reqBody) => {
         }
         catch (error) {
             await client.query('ROLLBACK');
+            // Handle database constraint violations
+            if (error.code === '23505') { // PostgreSQL unique constraint violation
+                if (error.constraint && error.constraint.includes('username')) {
+                    throw new apiError_1.ApiError('Username already exists. Please choose another username.', 409);
+                }
+                if (error.constraint && error.constraint.includes('email')) {
+                    throw new apiError_1.ApiError('Email already registered. Please use another email.', 409);
+                }
+            }
             throw error;
         }
         finally {
@@ -331,6 +352,15 @@ const registerService = async (reqBody) => {
     }
     catch (err) {
         console.error('[REGISTER] Error:', err);
+        // Handle database constraint violations at outer level too
+        if (err.code === '23505') { // PostgreSQL unique constraint violation
+            if (err.constraint && err.constraint.includes('username')) {
+                throw new apiError_1.ApiError('Username already exists. Please choose another username.', 409);
+            }
+            if (err.constraint && err.constraint.includes('email')) {
+                throw new apiError_1.ApiError('Email already registered. Please use another email.', 409);
+            }
+        }
         throw err;
     }
 };
@@ -396,3 +426,141 @@ const refreshToken = async (req, res, next) => {
     }
 };
 exports.refreshToken = refreshToken;
+/**
+ * Forgot Password Service
+ * Generates a secure reset token and sends email
+ */
+const forgotPasswordService = async (email, req) => {
+    try {
+        console.log(`[FORGOT_PASSWORD] Request for email: ${email}`);
+        // Check if user exists with this email
+        const user = await (0, user_service_1.getUserByEmailService)(email);
+        // For security, always return success even if user doesn't exist
+        // This prevents email enumeration attacks
+        if (!user) {
+            console.log(`[FORGOT_PASSWORD] User not found for email: ${email}, but returning success`);
+            return {
+                success: true,
+                message: 'If the email exists, reset instructions have been sent',
+            };
+        }
+        // Generate cryptographically secure random token (32 bytes = 64 hex characters)
+        const resetToken = crypto_1.default.randomBytes(32).toString('hex');
+        // Token expires in 1 hour
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 1);
+        // Store token in database
+        await postgres_1.default.query(`INSERT INTO password_reset_tokens
+       (user_id, token, email, expires_at, ip_address, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6)`, [
+            user.id,
+            resetToken,
+            email,
+            expiresAt,
+            req?.ip || req?.headers['x-forwarded-for'] || null,
+            req?.headers['user-agent'] || null,
+        ]);
+        // Send password reset email
+        const emailSent = await email_service_1.emailService.sendPasswordResetEmail(email, resetToken, user.username);
+        if (!emailSent) {
+            console.error('[FORGOT_PASSWORD] Failed to send email');
+            // Don't throw error, just log it
+            // In production, you might want to queue a retry
+        }
+        // Log activity
+        await (0, user_activity_service_1.logUserActivity)({
+            userId: user.id,
+            action: 'forgot_password_request',
+            category: 'auth',
+            description: 'Password reset requested',
+            ipAddress: req?.ip || undefined,
+            userAgent: req?.headers['user-agent'] || undefined,
+        });
+        console.log(`[FORGOT_PASSWORD] Reset token created for user ${user.id}`);
+        return {
+            success: true,
+            message: 'If the email exists, reset instructions have been sent',
+        };
+    }
+    catch (error) {
+        console.error('[FORGOT_PASSWORD] Error:', error);
+        throw new apiError_1.ApiError('Failed to process password reset request', 500);
+    }
+};
+exports.forgotPasswordService = forgotPasswordService;
+/**
+ * Reset Password Service
+ * Validates token and updates password
+ */
+const resetPasswordService = async (token, newPassword, req) => {
+    try {
+        console.log(`[RESET_PASSWORD] Attempting to reset password with token`);
+        // Find and validate token
+        const tokenResult = await postgres_1.default.query(`SELECT prt.*, u.username, u.email
+       FROM password_reset_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = $1`, [token]);
+        if (tokenResult.rows.length === 0) {
+            console.log(`[RESET_PASSWORD] Invalid token`);
+            throw new apiError_1.ApiError('Invalid or expired reset token', 400);
+        }
+        const tokenData = tokenResult.rows[0];
+        // Check if token has expired
+        if (new Date() > new Date(tokenData.expires_at)) {
+            console.log(`[RESET_PASSWORD] Token expired for user ${tokenData.user_id}`);
+            throw new apiError_1.ApiError('Invalid or expired reset token', 400);
+        }
+        // Check if token has already been used
+        if (tokenData.used_at) {
+            console.log(`[RESET_PASSWORD] Token already used for user ${tokenData.user_id}`);
+            throw new apiError_1.ApiError('This reset link has already been used', 400);
+        }
+        // Hash new password
+        const hashedPassword = await bcrypt_1.default.hash(newPassword, 10);
+        // Start transaction
+        const client = await postgres_1.default.connect();
+        try {
+            await client.query('BEGIN');
+            // Update user password
+            await client.query('UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2', [hashedPassword, tokenData.user_id]);
+            // Mark token as used
+            await client.query('UPDATE password_reset_tokens SET used_at = NOW() WHERE token = $1', [token]);
+            // Invalidate all active sessions for security
+            await client.query('UPDATE tokens SET is_active = false WHERE user_id = $1', [tokenData.user_id]);
+            // Log activity
+            await client.query(`INSERT INTO user_activity_logs
+         (user_id, action, category, description, metadata)
+         VALUES ($1, 'password_reset', 'auth', 'Password reset successful', $2)`, [
+                tokenData.user_id,
+                JSON.stringify({
+                    ip_address: req?.ip || req?.headers['x-forwarded-for'] || null,
+                    user_agent: req?.headers['user-agent'] || null,
+                    timestamp: new Date().toISOString(),
+                }),
+            ]);
+            await client.query('COMMIT');
+            console.log(`[RESET_PASSWORD] Password reset successful for user ${tokenData.user_id}`);
+            // Send confirmation email
+            await email_service_1.emailService.sendPasswordChangedEmail(tokenData.email, tokenData.username);
+            return {
+                success: true,
+                message: 'Password reset successful',
+            };
+        }
+        catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        }
+        finally {
+            client.release();
+        }
+    }
+    catch (error) {
+        console.error('[RESET_PASSWORD] Error:', error);
+        if (error instanceof apiError_1.ApiError) {
+            throw error;
+        }
+        throw new apiError_1.ApiError('Failed to reset password', 500);
+    }
+};
+exports.resetPasswordService = resetPasswordService;

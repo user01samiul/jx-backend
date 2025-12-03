@@ -2393,25 +2393,25 @@ router.post("/users/:id/ban", authenticate_1.authenticate, (0, authorize_1.autho
  *       500:
  *         description: Internal server error
  */
-router.get("/affiliates", authenticate_1.authenticate, (0, authorize_1.authorize)(["Admin"]), async (req, res) => {
-    try {
-        // For now, return empty array since affiliates table doesn't exist yet
-        // This can be expanded when affiliate system is implemented
-        res.status(200).json({
-            success: true,
-            data: [],
-            pagination: {
-                total: 0,
-                page: parseInt(req.query.page) || 1,
-                limit: parseInt(req.query.limit) || 20,
-                total_pages: 0
-            }
-        });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
+// OLD PLACEHOLDER ROUTE - Removed in favor of admin-affiliate.routes.ts
+// router.get("/affiliates", authenticate, authorize(["Admin"]), async (req, res) => {
+//   try {
+//     // For now, return empty array since affiliates table doesn't exist yet
+//     // This can be expanded when affiliate system is implemented
+//     res.status(200).json({
+//       success: true,
+//       data: [],
+//       pagination: {
+//         total: 0,
+//         page: parseInt(req.query.page as string) || 1,
+//         limit: parseInt(req.query.limit as string) || 20,
+//         total_pages: 0
+//       }
+//     });
+//   } catch (error: any) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// });
 /**
  * @swagger
  * /api/admin/users/{id}/topup:

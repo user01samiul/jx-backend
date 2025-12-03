@@ -24,7 +24,8 @@ export const UpdateProfileInput = z.object({
   gender: z.enum(["male", "female", "other"]).optional(),
   timezone: z.string().max(50).optional().transform(val => val === "" ? undefined : val),
   language: z.string().max(10).optional().transform(val => val === "" ? undefined : val),
-  currency: z.string().max(3).optional().transform(val => val === "" ? undefined : val)
+  currency: z.string().max(3).optional().transform(val => val === "" ? undefined : val),
+  avatar_url: z.string().url().optional().transform(val => val === "" ? undefined : val)
 });
 
 export type UpdateProfileInputType = z.infer<typeof UpdateProfileInput>;

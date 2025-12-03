@@ -24,7 +24,22 @@
       "Bash(python3:*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjgwLCJ1c2VybmFtZSI6InRlc3QiLCJyb2xlIjoiUGxheWVyIiwicm9sZUlkIjoyLCJpYXQiOjE3NjQzMjExNjYsImV4cCI6MTc2NDQwNzU2Nn0.-I21mAriSOeI59sDLSpTUMDFFwPo1sR9PbpfXPDbYZE\")",
       "Bash(cat:*)",
-      "Bash(PGPASSWORD='12358Voot#' psql -h localhost -U postgres -d jackpotx-db -c \"SELECT id, name, type, is_active FROM bonus_plans WHERE type = ''free_spins'' LIMIT 5;\")"
+      "Bash(PGPASSWORD='12358Voot#' psql -h localhost -U postgres -d jackpotx-db -c \"SELECT id, name, type, is_active FROM bonus_plans WHERE type = ''free_spins'' LIMIT 5;\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTY3NjIsImV4cCI6MTc2NDYwMzE2Mn0.wlq5wi4wsZUx_qJ9pNmtmzN5op7hyT5UzPyS-BKOsyA\" curl -s -X GET \"https://backend.jackpotx.net/api/admin/affiliate-redemptions?page=1&limit=5\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTY3NjIsImV4cCI6MTc2NDYwMzE2Mn0.wlq5wi4wsZUx_qJ9pNmtmzN5op7hyT5UzPyS-BKOsyA\" curl -s -X GET \"https://backend.jackpotx.net/api/admin/affiliate-payouts?page=1&limit=3\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTg0NzUsImV4cCI6MTc2NDYwNDg3NX0.GMPuYM2O9Tcfibdk2MNbHlJNFnsdpTukqWsoAQaHQB0\" curl -s -X GET \"https://backend.jackpotx.net/api/admin/affiliate-payouts?page=1&limit=3\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTg0NTMsImV4cCI6MTc2NDYwNDg1M30.89x5zrInhFggJjVlH8uI8_xnLxJwrAenqgbQG0rCM_Q\" curl -s -X GET \"https://backend.jackpotx.net/api/admin/affiliate-payouts?page=1&limit=3\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTg0NTMsImV4cCI6MTc2NDYwNDg1M30.89x5zrInhFggJjVlH8uI8_xnLxJwrAenqgbQG0rCM_Q\" curl -s -X GET \"http://localhost:3001/api/admin/affiliate-payouts?page=1&limit=3\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTg0NTMsImV4cCI6MTc2NDYwNDg1M30.89x5zrInhFggJjVlH8uI8_xnLxJwrAenqgbQG0rCM_Q\" curl -s -X GET \"http://localhost:3001/api/admin/affiliate-dashboard\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1MTg0NTMsImV4cCI6MTc2NDYwNDg1M30.89x5zrInhFggJjVlH8uI8_xnLxJwrAenqgbQG0rCM_Q\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1NzM5MDcsImV4cCI6MTc2NDY2MDMwN30.COOLTqzUgd4d3onXLNkiMMk5rDSOg4OCEe1RxTVBRmI\" curl -s -X GET \"http://localhost:3001/api/affiliate/profile\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(find:*)",
+      "Bash(pm2 info:*)",
+      "Bash(./test-affiliate-tracking.sh:*)",
+      "Bash(timeout 3 pm2 logs:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1NzM5MDcsImV4cCI6MTc2NDY2MDMwN30.COOLTqzUgd4d3onXLNkiMMk5rDSOg4OCEe1RxTVBRmI\" curl -s -X GET \"http://localhost:3001/api/admin/commissions?page=1&limit=5&status=pending\" -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\")",
+      "Bash(npm install:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjU2LCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IkFkbWluIiwicm9sZUlkIjoxLCJpYXQiOjE3NjQ1NzM5MDcsImV4cCI6MTc2NDY2MDMwN30.COOLTqzUgd4d3onXLNkiMMk5rDSOg4OCEe1RxTVBRmI\" curl -s -X GET \"http://localhost:3001/api/user/profile\" -H \"Authorization: Bearer $TOKEN\")"
     ],
     "deny": [],
     "ask": []

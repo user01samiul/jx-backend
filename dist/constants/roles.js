@@ -9,4 +9,7 @@ exports.Roles = {
     ACCOUNTANT: "Accountant",
     MANAGER: "Manager",
     MODERATOR: "Moderator",
+    AFFILIATE: "Affiliate",
+    AFFILIATES_MANAGER: "Affiliates Manager",
+    INFLUENCER: "Influencer",
 };

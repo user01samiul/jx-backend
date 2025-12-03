@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AdminCreateUserSchema = exports.RegisterSchema = exports.AuthHeaderSchema = exports.LoginSchema = void 0;
+exports.ResetPasswordSchema = exports.ForgotPasswordSchema = exports.AdminCreateUserSchema = exports.RegisterSchema = exports.AuthHeaderSchema = exports.LoginSchema = void 0;
 const zod_1 = require("zod");
 const messages_1 = require("../../constants/messages");
 exports.LoginSchema = zod_1.z.object({
@@ -61,4 +61,22 @@ exports.AdminCreateUserSchema = zod_1.z.object({
     timezone: zod_1.z.string().optional(),
     is_active: zod_1.z.boolean().default(true),
     send_welcome_email: zod_1.z.boolean().default(false),
+});
+// Forgot password schema
+exports.ForgotPasswordSchema = zod_1.z.object({
+    email: zod_1.z
+        .string()
+        .email(messages_1.ErrorMessages.INVALID_EMAIL)
+        .describe('Email address associated with the account'),
+});
+// Reset password schema
+exports.ResetPasswordSchema = zod_1.z.object({
+    token: zod_1.z
+        .string()
+        .min(1, 'Reset token is required')
+        .describe('Password reset token from email'),
+    password: zod_1.z
+        .string()
+        .min(8, messages_1.ErrorMessages.INVALID_PASSWORD)
+        .describe('New password (minimum 8 characters)'),
 });

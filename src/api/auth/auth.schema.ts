@@ -64,6 +64,26 @@ export const AdminCreateUserSchema = z.object({
   send_welcome_email: z.boolean().default(false),
 });
 
+// Forgot password schema
+export const ForgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email(ErrorMessages.INVALID_EMAIL)
+    .describe('Email address associated with the account'),
+});
+
+// Reset password schema
+export const ResetPasswordSchema = z.object({
+  token: z
+    .string()
+    .min(1, 'Reset token is required')
+    .describe('Password reset token from email'),
+  password: z
+    .string()
+    .min(8, ErrorMessages.INVALID_PASSWORD)
+    .describe('New password (minimum 8 characters)'),
+});
+
 // ============================
 // Type Definitions
 // ============================
@@ -72,6 +92,8 @@ export type LoginInput = z.infer<typeof LoginSchema>;
 export type AuthHeaderInput = z.infer<typeof AuthHeaderSchema>;
 export type RegisterInput = z.infer<typeof RegisterSchema>;
 export type AdminCreateUserInput = z.infer<typeof AdminCreateUserSchema>;
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;
 
 export type LoginResponse = {
   access_token: string;
